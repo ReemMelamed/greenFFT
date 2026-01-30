@@ -122,6 +122,7 @@ variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] 
 theorem simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
+    (hD : ∃ x, D = greenDClass x)
     (_ : IsRegularDClass D)
     (h_range : ∀ x y, x < y → σ.σ x y ∈ D) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
