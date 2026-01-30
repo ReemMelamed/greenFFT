@@ -3,7 +3,7 @@ import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Finset.Max
 import Mathlib.Tactic
 
-import Project.Green
+import Semigroup.Green
 
 /-!
 # The Factorisation Forest Theorem
