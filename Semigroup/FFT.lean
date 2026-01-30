@@ -123,6 +123,7 @@ theorem simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
     (hD : ∃ x, D = greenDClass x)
+    (h_ne : Nonempty (Fin (nD D)) := Fin.pos_iff_nonempty.mp (nD_pos D hD))
     (_ : IsRegularDClass D)
     (h_range : ∀ x y, x < y → σ.σ x y ∈ D) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
