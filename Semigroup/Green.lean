@@ -12,6 +12,7 @@ open Classical
 variable {S : Type*} [Semigroup S]
 
 
+
 section GreenDefinitions
 
 def GreenLeftDvd (a b : S) : Prop := a = b ∨ ∃ z, a = z * b
@@ -27,6 +28,7 @@ def GreenD (a b : S) : Prop := ∃ z, GreenL a z ∧ GreenR z b
 def GreenJ (a b : S) : Prop := GreenJRel a b ∧ GreenJRel b a
 
 end GreenDefinitions
+
 
 
 section GreenEquivalences
@@ -119,6 +121,7 @@ instance greenDSetoid : Setoid S := ⟨GreenD, green_d_equivalence⟩
 end GreenEquivalences
 
 
+
 section GreenClasses
 
 def greenLClass (x : S) : Set S := { y | GreenL y x }
@@ -130,6 +133,7 @@ def IsGreenRegular (a : S) : Prop := ∃ s, a * s * a = a
 def IsRegularDClass (D : Set S) : Prop := ∀ x ∈ D, IsGreenRegular x
 
 end GreenClasses
+
 
 
 section GreensFacts
@@ -160,14 +164,17 @@ theorem green_l_mul_right_and_r_mul_left (a b c : S) :
       · left; rw [h_eq]
       · right; use z; rw [hz, ← mul_assoc]
 
+
 -- Fact 2.2
 theorem green_d_eq_j_of_finite [Fintype S] : (GreenD : S → S → Prop) = GreenJ := by
   sorry
+
 
 -- Fact 2.3
 theorem is_regular_d_class_iff_exists_idempotent [Fintype S] (D : Set S) (hD : ∃ x, D = greenDClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
   sorry
+
 
 -- Fact 2.4
 theorem mul_mem_green_d_properties [Fintype S] {D : Set S} (hD : ∃ x, D = greenDClass x)
@@ -176,10 +183,37 @@ theorem mul_mem_green_d_properties [Fintype S] {D : Set S} (hD : ∃ x, D = gree
     (∃ e ∈ D, e * e = e ∧ GreenL a e ∧ GreenR b e) := by
   sorry
 
+
+theorem green_l_cancellation {a x u v : S} (hx : GreenL x a) (h_cancel : a * u * v = a) :
+    x * u * v = x := by
+  rcases hx.left with rfl | ⟨k, rfl⟩
+  · exact h_cancel
+  · simp only [mul_assoc, h_cancel]
+
+theorem green_r_cancellation {a x u v : S} (hx : GreenR x a) (h_cancel : v * u * a = a) :
+    v * u * x = x := by
+  rcases hx.left with rfl | ⟨k, rfl⟩
+  · exact h_cancel
+  · simp only [← mul_assoc, h_cancel]
+
+noncomputable def equivHClassOfGreenR {a b : S} (h : GreenR a b) :
+    greenHClass a ≃ greenHClass b := by
+  sorry
+
+noncomputable def equivHClassOfGreenL {a b : S} (h : GreenL a b) :
+    greenHClass a ≃ greenHClass b := by
+  sorry
+
 -- Fact 2.5
 theorem card_green_h_eq_of_green_d [Fintype S] (a b : S) (h : GreenD a b) :
     Fintype.card (greenHClass a) = Fintype.card (greenHClass b) := by
-  sorry
+  rcases h with ⟨z, hL, hR⟩
+  let equiv_az := equivHClassOfGreenL hL
+  let equiv_zb := equivHClassOfGreenR hR
+  trans Fintype.card (greenHClass z)
+  · exact Fintype.card_congr equiv_az
+  · exact Fintype.card_congr equiv_zb
+
 
 -- Fact 2.6
 theorem is_group_green_h_iff_idempotent [Fintype S] (H : Set S) (hH : ∃ a, H = greenHClass a) :
@@ -188,6 +222,7 @@ theorem is_group_green_h_iff_idempotent [Fintype S] (H : Set S) (hH : ∃ a, H =
   sorry
 
 end GreensFacts
+
 
 
 section nD
