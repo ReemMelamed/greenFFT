@@ -165,9 +165,32 @@ theorem green_l_mul_right_and_r_mul_left (a b c : S) :
       · right; use z; rw [hz, ← mul_assoc]
 
 
+lemma green_d_implies_j_rel {a b : S} (h : GreenD a b) : GreenJRel a b := by
+  rcases h with ⟨z, hL, hR⟩
+  rcases hL.left with rfl | ⟨u, hu⟩
+  · rcases hR.left with rfl | ⟨v, hv⟩
+    · exact Or.inl rfl
+    · exact Or.inr (Or.inr (Or.inl ⟨v, hv⟩))
+  · rcases hR.left with rfl | ⟨v, hv⟩
+    · exact Or.inr (Or.inl ⟨u, hu⟩)
+    · exact Or.inr (Or.inr (Or.inr ⟨u, v, by rw [hu, hv, mul_assoc]⟩))
+
+lemma green_d_implies_j {a b : S} (h : GreenD a b) : GreenJ a b := by
+  constructor
+  · exact green_d_implies_j_rel h
+  · have h_symm : GreenD b a := green_d_equivalence.symm h
+    exact green_d_implies_j_rel h_symm
+
+lemma green_j_implies_d [Fintype S] {a b : S} (h : GreenJ a b) : GreenD a b := by
+  sorry
+
 -- Fact 2.2
 theorem green_d_eq_j_of_finite [Fintype S] : (GreenD : S → S → Prop) = GreenJ := by
-  sorry
+  funext a b
+  apply propext
+  constructor
+  · exact green_d_implies_j
+  · exact green_j_implies_d
 
 
 -- Fact 2.3
@@ -210,14 +233,6 @@ theorem is_regular_d_class_iff_exists_idempotent [Fintype S] (D : Set S) (hD : �
     · exact ⟨u, hy_uz⟩
     · use u * q
       rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
-
-
--- Fact 2.4
-theorem mul_mem_green_d_properties [Fintype S] {D : Set S} (hD : ∃ x, D = greenDClass x)
-    (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
-    (GreenR a (a * b) ∧ GreenL b (a * b)) ∧
-    (∃ e ∈ D, e * e = e ∧ GreenL a e ∧ GreenR b e) := by
-  sorry
 
 
 theorem green_l_cancellation {a x u v : S} (hx : GreenL x a) (h_cancel : a * u * v = a) :
@@ -313,6 +328,14 @@ theorem card_green_h_eq_of_green_d [Fintype S] (a b : S) (h : GreenD a b) :
   trans Fintype.card (greenHClass z)
   · exact Fintype.card_congr equiv_az
   · exact Fintype.card_congr equiv_zb
+
+
+-- Fact 2.4
+theorem mul_mem_green_d_properties [Fintype S] {D : Set S} (hD : ∃ x, D = greenDClass x)
+    (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
+    (GreenR a (a * b) ∧ GreenL b (a * b)) ∧
+    (∃ e ∈ D, e * e = e ∧ GreenL a e ∧ GreenR b e) := by
+  sorry
 
 
 -- Fact 2.6
