@@ -198,11 +198,75 @@ theorem green_r_cancellation {a x u v : S} (hx : GreenR x a) (h_cancel : v * u *
 
 noncomputable def equivHClassOfGreenR {a b : S} (h : GreenR a b) :
     greenHClass a ≃ greenHClass b := by
-  sorry
+  by_cases hab_eq : a = b
+  · subst hab_eq; exact Equiv.refl _
+  · have hex_w : ∃ w, a = b * w := h.left.resolve_left hab_eq
+    let w := Classical.choose hex_w
+    have hw : a = b * w := Classical.choose_spec hex_w
+    have hba_neq : b ≠ a := fun heq => hab_eq heq.symm
+    have hex_z : ∃ z, b = a * z := h.right.resolve_left hba_neq
+    let z := Classical.choose hex_z
+    have hz : b = a * z := Classical.choose_spec hex_z
+    have h_cancel_a : a * z * w = a := by rw [← hz, ← hw]
+    have h_cancel_b : b * w * z = b := by rw [← hw, ← hz]
+    refine {
+      toFun := fun ⟨x, hx⟩ => ⟨x * z, ?_⟩
+      invFun := fun ⟨y, hy⟩ => ⟨y * w, ?_⟩
+      left_inv := fun ⟨x, hx⟩ => Subtype.ext (by dsimp only; exact green_l_cancellation hx.left h_cancel_a)
+      right_inv := fun ⟨y, hy⟩ => Subtype.ext (by dsimp only; exact green_l_cancellation hy.left h_cancel_b)
+    }
+    · have hL1 : GreenL (x * z) (a * z) := (green_l_mul_right_and_r_mul_left x a z).1 hx.left
+      have hL : GreenL (x * z) b := by rwa [← hz] at hL1
+      have h_cancel_x : x * z * w = x := green_l_cancellation hx.left h_cancel_a
+      have hdvd1 : GreenRightDvd (x * z) x := Or.inr ⟨z, rfl⟩
+      have hdvd2 : GreenRightDvd x (x * z) := Or.inr ⟨w, h_cancel_x.symm⟩
+      have hR1 : GreenR (x * z) x := ⟨hdvd1, hdvd2⟩
+      have hR : GreenR (x * z) b := green_r_trans hR1 (green_r_trans hx.right h)
+      exact ⟨hL, hR⟩
+    · have hL1 : GreenL (y * w) (b * w) := (green_l_mul_right_and_r_mul_left y b w).1 hy.left
+      have hL : GreenL (y * w) a := by rwa [← hw] at hL1
+      have h_cancel_y : y * w * z = y := green_l_cancellation hy.left h_cancel_b
+      have hdvd1 : GreenRightDvd (y * w) y := Or.inr ⟨w, rfl⟩
+      have hdvd2 : GreenRightDvd y (y * w) := Or.inr ⟨z, h_cancel_y.symm⟩
+      have hR1 : GreenR (y * w) y := ⟨hdvd1, hdvd2⟩
+      have hR : GreenR (y * w) a := green_r_trans hR1 (green_r_trans hy.right (green_r_symm h))
+      exact ⟨hL, hR⟩
 
 noncomputable def equivHClassOfGreenL {a b : S} (h : GreenL a b) :
     greenHClass a ≃ greenHClass b := by
-  sorry
+  by_cases hab_eq : a = b
+  · subst hab_eq; exact Equiv.refl _
+  · have hex_w : ∃ w, a = w * b := h.left.resolve_left hab_eq
+    let w := Classical.choose hex_w
+    have hw : a = w * b := Classical.choose_spec hex_w
+    have hba_neq : b ≠ a := fun heq => hab_eq heq.symm
+    have hex_z : ∃ z, b = z * a := h.right.resolve_left hba_neq
+    let z := Classical.choose hex_z
+    have hz : b = z * a := Classical.choose_spec hex_z
+    have h_cancel_a : w * z * a = a := by rw [mul_assoc, ← hz, ← hw]
+    have h_cancel_b : z * w * b = b := by rw [mul_assoc, ← hw, ← hz]
+    refine {
+      toFun := fun ⟨x, hx⟩ => ⟨z * x, ?_⟩
+      invFun := fun ⟨y, hy⟩ => ⟨w * y, ?_⟩
+      left_inv := fun ⟨x, hx⟩ => Subtype.ext (by dsimp only; rw [← mul_assoc]; exact green_r_cancellation hx.right h_cancel_a)
+      right_inv := fun ⟨y, hy⟩ => Subtype.ext (by dsimp only; rw [← mul_assoc]; exact green_r_cancellation hy.right h_cancel_b)
+    }
+    · have hR1 : GreenR (z * x) (z * a) := (green_l_mul_right_and_r_mul_left x a z).2 hx.right
+      have hR : GreenR (z * x) b := by rwa [← hz] at hR1
+      have h_cancel_x : w * z * x = x := green_r_cancellation hx.right h_cancel_a
+      have hdvd1 : GreenLeftDvd (z * x) x := Or.inr ⟨z, rfl⟩
+      have hdvd2 : GreenLeftDvd x (z * x) := Or.inr ⟨w, by rw [← mul_assoc, h_cancel_x]⟩
+      have hL1 : GreenL (z * x) x := ⟨hdvd1, hdvd2⟩
+      have hL : GreenL (z * x) b := green_l_trans hL1 (green_l_trans hx.left h)
+      exact ⟨hL, hR⟩
+    · have hR1 : GreenR (w * y) (w * b) := (green_l_mul_right_and_r_mul_left y b w).2 hy.right
+      have hR : GreenR (w * y) a := by rwa [← hw] at hR1
+      have h_cancel_y : z * w * y = y := green_r_cancellation hy.right h_cancel_b
+      have hdvd1 : GreenLeftDvd (w * y) y := Or.inr ⟨w, rfl⟩
+      have hdvd2 : GreenLeftDvd y (w * y) := Or.inr ⟨z, by rw [← mul_assoc, h_cancel_y]⟩
+      have hL1 : GreenL (w * y) y := ⟨hdvd1, hdvd2⟩
+      have hL : GreenL (w * y) a := green_l_trans hL1 (green_l_trans hy.left (green_l_symm h))
+      exact ⟨hL, hR⟩
 
 -- Fact 2.5
 theorem card_green_h_eq_of_green_d [Fintype S] (a b : S) (h : GreenD a b) :
@@ -217,9 +281,54 @@ theorem card_green_h_eq_of_green_d [Fintype S] (a b : S) (h : GreenD a b) :
 
 -- Fact 2.6
 theorem is_group_green_h_iff_idempotent [Fintype S] (H : Set S) (hH : ∃ a, H = greenHClass a) :
-    (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
-    (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by
-  sorry
+  (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
+  (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by
+  obtain ⟨a, rfl⟩ := hH
+  by_cases h : ∀ x y, x ∈ greenHClass a → y ∈ greenHClass a → x * y ∉ greenHClass a
+  · exact Or.inl h
+  · right
+    push_neg at h
+    obtain ⟨x₀, y₀, hx₀, hy₀, hxy₀⟩ := h
+    have hx₀H : GreenH x₀ a := hx₀
+    have hy₀H : GreenH y₀ a := hy₀
+    have hxy₀H : GreenH (x₀ * y₀) a := hxy₀
+    have hx₀D : x₀ ∈ greenDClass a := by
+      simp only [greenDClass, Set.mem_setOf_eq]
+      exact ⟨a, hx₀H.left, green_r_refl a⟩
+    have hy₀D : y₀ ∈ greenDClass a := by
+      simp only [greenDClass, Set.mem_setOf_eq]
+      exact ⟨a, hy₀H.left, green_r_refl a⟩
+    have hxy₀D : x₀ * y₀ ∈ greenDClass a := by
+      simp only [greenDClass, Set.mem_setOf_eq]
+      exact ⟨a, hxy₀H.left, green_r_refl a⟩
+    obtain ⟨_, e, heD, he_idem, hLx₀e, hRy₀e⟩ :=
+      mul_mem_green_d_properties (D := greenDClass a) ⟨a, rfl⟩ x₀ y₀ hx₀D hy₀D hxy₀D
+    have hLx₀a : GreenL x₀ a := hx₀H.left
+    have hRy₀a : GreenR y₀ a := hy₀H.right
+    have hLae : GreenL a e := green_l_trans (green_l_symm hLx₀a) hLx₀e
+    have hRae : GreenR a e := green_r_trans (green_r_symm hRy₀a) hRy₀e
+    have heH : e ∈ greenHClass a := ⟨green_l_symm hLae, green_r_symm hRae⟩
+    refine ⟨e, heH, he_idem, ?_⟩
+    intro u v huH hvH
+    have hue : GreenH u e := green_h_equivalence.trans huH (green_h_equivalence.symm heH)
+    have hve : GreenH v e := green_h_equivalence.trans hvH (green_h_equivalence.symm heH)
+    have hLue : GreenL u e := hue.left
+    have hRve : GreenR v e := hve.right
+    have hev : e * v = v := by
+      rcases hRve.left with rfl | ⟨z, hz⟩
+      · exact he_idem
+      · rw [hz, ← mul_assoc, he_idem]
+    have hue_eq : u * e = u := by
+      rcases hLue.left with rfl | ⟨w, hw⟩
+      · exact he_idem
+      · rw [hw, mul_assoc, he_idem]
+    have hLuv_ev : GreenL (u * v) (e * v) := (green_l_mul_right_and_r_mul_left u e v).1 hLue
+    have hLuv_v : GreenL (u * v) v := by rwa [hev] at hLuv_ev
+    have hRuv_ue : GreenR (u * v) (u * e) := (green_l_mul_right_and_r_mul_left v e u).2 hRve
+    have hRuv_u : GreenR (u * v) u := by rwa [hue_eq] at hRuv_ue
+    have hLuv_a : GreenL (u * v) a := green_l_trans hLuv_v hvH.left
+    have hRuv_a : GreenR (u * v) a := green_r_trans hRuv_u huH.right
+    exact ⟨hLuv_a, hRuv_a⟩
 
 end GreensFacts
 
