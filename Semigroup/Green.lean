@@ -173,7 +173,43 @@ theorem green_d_eq_j_of_finite [Fintype S] : (GreenD : S → S → Prop) = Green
 -- Fact 2.3
 theorem is_regular_d_class_iff_exists_idempotent [Fintype S] (D : Set S) (hD : ∃ x, D = greenDClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
-  sorry
+  obtain ⟨x₀, rfl⟩ := hD
+  constructor
+  · intro hReg
+    have hx₀_in : x₀ ∈ greenDClass x₀ := green_d_equivalence.refl x₀
+    obtain ⟨s, hs⟩ := hReg x₀ hx₀_in
+    let e := x₀ * s
+    have he_idem : e * e = e := by
+      dsimp [e]
+      rw [← mul_assoc (x₀ * s) x₀ s, hs]
+    have he_R_x₀ : GreenR e x₀ := by
+      constructor
+      · right; exact ⟨s, rfl⟩
+      · right; exact ⟨x₀, hs.symm⟩
+    have he_D_x₀ : GreenD e x₀ := ⟨e, green_l_refl e, he_R_x₀⟩
+    exact ⟨e, he_D_x₀, he_idem⟩
+  · rintro ⟨e, heD, he_idem⟩
+    intro y hyD
+    have h_ye : GreenD y e := green_d_equivalence.trans hyD (green_d_equivalence.symm heD)
+    obtain ⟨z, hL_yz, hR_ze⟩ := h_ye
+    have h_ez_z : e * z = z := by
+      rcases hR_ze.left with rfl | ⟨v, hv⟩
+      · exact he_idem
+      · rw [hv, ← mul_assoc e e v, he_idem]
+    have hz_reg : ∃ u, z * u * z = z := by
+      rcases hR_ze.right with rfl | ⟨u, hu⟩
+      · exact ⟨e, by rw [he_idem, he_idem]⟩
+      · use u
+        rw [← hu, h_ez_z]
+    obtain ⟨u, hu_z⟩ := hz_reg
+    have hy_uz : y * u * z = y := by
+      rcases hL_yz.left with rfl | ⟨p, hp⟩
+      · exact hu_z
+      · rw [hp, mul_assoc p z u, mul_assoc p (z * u) z, hu_z]
+    rcases hL_yz.right with rfl | ⟨q, hq⟩
+    · exact ⟨u, hy_uz⟩
+    · use u * q
+      rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
 
 
 -- Fact 2.4
