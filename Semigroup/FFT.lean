@@ -167,15 +167,80 @@ section RegularDClassCase
 
 variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] [Nonempty α]
 
--- Lemma 3.3
 lemma simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
     (hD : ∃ x, D = greenDClass x)
     (h_ne : Nonempty (Fin (nD D)) := Fin.pos_iff_nonempty.mp (nD_pos D hD))
-    (_ : IsRegularDClass D)
+    (hReg : IsRegularDClass D)
     (h_range : ∀ x y, x < y → σ.σ x y ∈ D) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
+
+  let is_max (x : α) : Prop := ∀ y, y ≤ x
+  let is_min (x : α) : Prop := ∀ y, x ≤ y
+
+  let L_of (x : α) : Set S :=
+    if h_min : is_min x then
+      let x₀ := Classical.choose hD
+      greenLClass x₀
+    else
+      have h_exists : ∃ y, y < x := by
+        contrapose! h_min
+        exact h_min
+      let y := Classical.choose h_exists
+      greenLClass (σ.σ y x)
+
+  have h_L_well : ∀ x y1 y2 (h_not_min : ¬ is_min x) (hy1 : y1 < x) (hy2 : y2 < x),
+      greenLClass (σ.σ y1 x) = greenLClass (σ.σ y2 x) := by
+    intro x y1 y2 h_not_min hy1 hy2
+    wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
+    · exact (this y2 y1 hy2 hy1 (not_le.mp h_le).le).symm
+    · rcases h_le.eq_or_lt with rfl | h_lt
+      · rfl
+      · have h_prod : σ.σ y1 x = σ.σ y1 y2 * σ.σ y2 x := (σ.prop y1 y2 x h_lt hy2).symm
+        have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
+        have h2x : σ.σ y2 x ∈ D := h_range y2 x hy2
+        have h1x : σ.σ y1 x ∈ D := h_range y1 x hy1
+        have hL_raw := (mul_mem_green_d_properties hD (σ.σ y1 y2) (σ.σ y2 x) h12 h2x (h_prod ▸ h1x)).1.2
+        have hL : GreenL (σ.σ y2 x) (σ.σ y1 x) := h_prod ▸ hL_raw
+        ext z
+        constructor
+        · intro hz; exact green_l_trans hz (green_l_symm hL)
+        · intro hz; exact green_l_trans hz hL
+
+  let R_of (x : α) : Set S :=
+    if h_max : is_max x then
+      let min_α := Finset.min' Finset.univ Finset.univ_nonempty
+      let H_min := L_of min_α
+      have h_reg_L : ∃ e ∈ H_min, e * e = e := by
+        sorry
+      let e := Classical.choose h_reg_L
+      greenRClass e
+    else
+      have h_exists : ∃ y, x < y := by
+        contrapose! h_max
+        exact h_max
+      let y := Classical.choose h_exists
+      greenRClass (σ.σ x y)
+
+  have h_R_well : ∀ x y1 y2 (h_not_max : ¬ is_max x) (hy1 : x < y1) (hy2 : x < y2),
+      greenRClass (σ.σ x y1) = greenRClass (σ.σ x y2) := by
+    intro x y1 y2 h_not_max hy1 hy2
+    wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
+    · exact (this y2 y1 hy2 hy1 (not_le.mp h_le).le).symm
+    · rcases h_le.eq_or_lt with rfl | h_lt
+      · rfl
+      · have h_prod : σ.σ x y1 * σ.σ y1 y2 = σ.σ x y2 := σ.prop x y1 y2 hy1 h_lt
+        have hx1 : σ.σ x y1 ∈ D := h_range x y1 hy1
+        have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
+        have hx2 : σ.σ x y2 ∈ D := h_range x y2 hy2
+        have hR_raw := (mul_mem_green_d_properties hD (σ.σ x y1) (σ.σ y1 y2) hx1 h12 (h_prod.symm ▸ hx2)).1.1
+        have hR : GreenR (σ.σ x y1) (σ.σ x y2) := h_prod ▸ hR_raw
+        ext z
+        constructor
+        · intro hz; exact green_r_trans hz hR
+        · intro hz; exact green_r_trans hz (green_r_symm hR)
+
   sorry
 
 end RegularDClassCase
