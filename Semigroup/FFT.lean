@@ -241,6 +241,33 @@ lemma simon_regular_d_case
         · intro hz; exact green_r_trans hz hR
         · intro hz; exact green_r_trans hz (green_r_symm hR)
 
+  let H_of (x : α) : Set S := L_of x ∩ R_of x
+
+  have h_H_idem : ∀ x, ∃ e ∈ H_of x, e * e = e := by
+    intro x
+    by_cases h_inner : ¬ is_min x ∧ ¬ is_max x
+    · obtain ⟨h_not_min, h_not_max⟩ := h_inner
+      have hy : ∃ y, y < x := by contrapose! h_not_min; exact h_not_min
+      have hz : ∃ z, x < z := by contrapose! h_not_max; exact h_not_max
+
+      have ha : σ.σ (Classical.choose hy) x ∈ D := h_range _ _ (Classical.choose_spec hy)
+      have hb : σ.σ x (Classical.choose hz) ∈ D := h_range _ _ (Classical.choose_spec hz)
+      have hab : σ.σ (Classical.choose hy) x * σ.σ x (Classical.choose hz) ∈ D := by
+        rw [σ.prop _ _ _ (Classical.choose_spec hy) (Classical.choose_spec hz)]
+        exact h_range _ _ (lt_trans (Classical.choose_spec hy) (Classical.choose_spec hz))
+
+      obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ :=
+        mul_mem_green_d_properties hD (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
+
+      use e
+      refine ⟨⟨?_, ?_⟩, he_idem⟩
+      · simp only [L_of, h_not_min, dite_false]
+        exact green_l_symm hLe
+      · simp only [R_of, h_not_max, dite_false]
+        exact green_r_symm hRe
+
+    · sorry
+
   sorry
 
 end RegularDClassCase
