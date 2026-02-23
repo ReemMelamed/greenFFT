@@ -43,7 +43,7 @@ section GroupCase
 
 variable {G α : Type*} [Group G] [Fintype G] [LinearOrder α] [Fintype α] [Nonempty α]
 
-theorem simon_group_case (σ : MultiplicativeLabeling G α) :
+lemma simon_group_case (σ : MultiplicativeLabeling G α) :
     ∃ (s : Split α (Fintype.card G)), IsNormalized s ∧ IsRamsey σ s := by
   let size_G := Fintype.card G
   let x₀ : α := Finset.min' .univ Finset.univ_nonempty
@@ -114,12 +114,61 @@ theorem simon_group_case (σ : MultiplicativeLabeling G α) :
 end GroupCase
 
 
+section HClassWrapper
+
+variable {S α : Type*} [Semigroup S] [LinearOrder α]
+
+lemma simon_hclass_case
+    (σ : MultiplicativeLabeling S α)
+    (X : Set α) [Nonempty X] [Fintype X]
+    (H : Set S) [Group H] [Fintype H]
+    (h_mul_eq : ∀ a b : H, (a * b : S) = (a * b : H))
+    (h_range : ∀ x y : α, x ∈ X → y ∈ X → x < y → σ.σ x y ∈ H) :
+    ∃ (s : Split X (Fintype.card H)),
+      IsNormalized s ∧
+      (∀ x y : X, (x : α) < (y : α) → SplitRelation s x y →
+        σ.σ (x : α) (y : α) * σ.σ (x : α) (y : α) = σ.σ (x : α) (y : α)) := by
+  let σ_H_fun : X → X → H := fun x y =>
+    if h : (x : α) < (y : α) then
+      ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property h⟩
+    else
+      1
+
+  have σ_H_prop : ∀ (x y z : X), x < y → y < z → σ_H_fun x y * σ_H_fun y z = σ_H_fun x z := by
+      intro x y z hxy hyz
+      have hxy_val : (x : α) < (y : α) := hxy
+      have hyz_val : (y : α) < (z : α) := hyz
+      have hxz_val : (x : α) < (z : α) := lt_trans hxy_val hyz_val
+      ext
+      rw [← h_mul_eq]
+      simp only [σ_H_fun, dif_pos hxy_val, dif_pos hyz_val, dif_pos hxz_val, Subtype.coe_mk]
+      exact σ.prop (x : α) (y : α) (z : α) hxy_val hyz_val
+
+  let σ_H : MultiplicativeLabeling H X := ⟨σ_H_fun, σ_H_prop⟩
+
+  obtain ⟨s_H, h_norm, h_ramsey⟩ := simon_group_case σ_H
+
+  use s_H
+  constructor
+  · exact h_norm
+  · intro x y hxy h_split
+    have h_ramsey_xy := h_ramsey x y hxy h_split
+    have h_val : σ_H.σ x y = ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property hxy⟩ := by
+      simp only [σ_H, σ_H_fun, hxy, dif_pos]
+    have h_eq_in_S := congr_arg Subtype.val h_ramsey_xy
+    simp only [h_val] at h_eq_in_S
+    rw [← h_mul_eq] at h_eq_in_S
+    exact h_eq_in_S
+
+end HClassWrapper
+
+
 section RegularDClassCase
 
 variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] [Nonempty α]
 
 -- Lemma 3.3
-theorem simon_regular_d_case
+lemma simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
     (hD : ∃ x, D = greenDClass x)
