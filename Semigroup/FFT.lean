@@ -363,7 +363,40 @@ lemma simon_regular_d_case
     else
       have h_e_in : e ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH e e' := by
         have he_idem := Classical.choose_spec (h_H_idem x) |>.right
-        have he_D : e ∈ D := sorry
+        have he_H := Classical.choose_spec (h_H_idem x) |>.left
+        have he_D : e ∈ D := by
+          have he_L : e ∈ L_of x := he_H.left
+          by_cases h_min : is_min x
+          · by_cases h_max : is_max x
+            · have h_L_def : L_of x = greenLClass x₀ := by
+                simp only [L_of, h_min, h_max, dite_true]
+              rw [h_L_def] at he_L
+              rw [hx₀]
+              exact ⟨x₀, he_L, green_r_refl x₀⟩
+            · have h_exists : ∃ y, x < y := by
+                by_contra h_contra
+                push_neg at h_contra
+                exact h_max h_contra
+              have ha_D : σ.σ x (Classical.choose h_exists) ∈ D := h_range x _ (Classical.choose_spec h_exists)
+              have h_L_def : L_of x = greenLClass (Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)) := by
+                simp only [L_of, h_min, h_max, dite_true, dite_false]
+              rw [h_L_def] at he_L
+              let e_R := Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
+              have he_R_prop := Classical.choose_spec (h_idem_R _ ha_D)
+              rw [hx₀] at ha_D ⊢
+              have hD_e_sig : GreenD e (σ.σ x (Classical.choose h_exists)) := ⟨e_R, he_L, he_R_prop.left⟩
+              exact green_d_equivalence.trans hD_e_sig ha_D
+          · have h_exists : ∃ y, y < x := by
+              by_contra h_contra
+              push_neg at h_contra
+              exact h_min h_contra
+            have h_L_def : L_of x = greenLClass (σ.σ (Classical.choose h_exists) x) := by
+              simp only [L_of, h_min, dite_false]
+            rw [h_L_def] at he_L
+            have ha_D : σ.σ (Classical.choose h_exists) x ∈ D := h_range _ x (Classical.choose_spec h_exists)
+            rw [hx₀] at ha_D ⊢
+            have hD_e_sig : GreenD e (σ.σ (Classical.choose h_exists) x) := ⟨σ.σ (Classical.choose h_exists) x, he_L, green_r_refl _⟩
+            exact green_d_equivalence.trans hD_e_sig ha_D
         exact ⟨he_D, e, he_D, he_idem, green_h_refl e⟩
       ⟨e, h_e_in⟩
 
