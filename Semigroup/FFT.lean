@@ -176,17 +176,46 @@ lemma simon_regular_d_case
     (h_range : ∀ x y, x < y → σ.σ x y ∈ D) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
 
+  obtain ⟨x₀, hx₀⟩ := hD
+
+  have h_idem_L : ∀ a ∈ D, ∃ e ∈ greenLClass a, e * e = e := by
+    intro a ha
+    obtain ⟨s, hs⟩ := hReg a ha
+    use s * a
+    constructor
+    · constructor
+      · right; use s
+      · right; use a; calc a = a * s * a := hs.symm
+                           _ = a * (s * a) := by rw [mul_assoc]
+    · calc (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
+      _ = s * a := by rw [hs]
+
+  have h_idem_R : ∀ a ∈ D, ∃ e ∈ greenRClass a, e * e = e := by
+    intro a ha
+    obtain ⟨s, hs⟩ := hReg a ha
+    use a * s
+    constructor
+    · constructor
+      · right; use s
+      · right; use a; calc a = a * s * a := hs.symm
+                           _ = (a * s) * a := by rw [mul_assoc]
+    · calc (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
+      _ = a * s := by rw [hs]
+
   let is_max (x : α) : Prop := ∀ y, y ≤ x
   let is_min (x : α) : Prop := ∀ y, x ≤ y
 
   let L_of (x : α) : Set S :=
     if h_min : is_min x then
-      let x₀ := Classical.choose hD
-      greenLClass x₀
+      if h_max : is_max x then
+        greenLClass x₀
+      else
+        have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
+        let y := Classical.choose h_exists
+        have ha_D : σ.σ x y ∈ D := h_range x y (Classical.choose_spec h_exists)
+        greenLClass (Classical.choose (h_idem_R (σ.σ x y) ha_D))
     else
-      have h_exists : ∃ y, y < x := by
-        contrapose! h_min
-        exact h_min
+      have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
       let y := Classical.choose h_exists
       greenLClass (σ.σ y x)
 
@@ -201,7 +230,7 @@ lemma simon_regular_d_case
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have h2x : σ.σ y2 x ∈ D := h_range y2 x hy2
         have h1x : σ.σ y1 x ∈ D := h_range y1 x hy1
-        have hL_raw := (mul_mem_green_d_properties hD (σ.σ y1 y2) (σ.σ y2 x) h12 h2x (h_prod ▸ h1x)).1.2
+        have hL_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ y1 y2) (σ.σ y2 x) h12 h2x (h_prod ▸ h1x)).1.2
         have hL : GreenL (σ.σ y2 x) (σ.σ y1 x) := h_prod ▸ hL_raw
         ext z
         constructor
@@ -210,16 +239,18 @@ lemma simon_regular_d_case
 
   let R_of (x : α) : Set S :=
     if h_max : is_max x then
-      let min_α := Finset.min' Finset.univ Finset.univ_nonempty
-      let H_min := L_of min_α
-      have h_reg_L : ∃ e ∈ H_min, e * e = e := by
-        sorry
-      let e := Classical.choose h_reg_L
-      greenRClass e
+      if h_min : is_min x then
+        have ha_D : x₀ ∈ D := by
+          rw [hx₀]
+          exact green_d_equivalence.refl x₀
+        greenRClass (Classical.choose (h_idem_L x₀ ha_D))
+      else
+        have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
+        let y := Classical.choose h_exists
+        have ha_D : σ.σ y x ∈ D := h_range y x (Classical.choose_spec h_exists)
+        greenRClass (Classical.choose (h_idem_L (σ.σ y x) ha_D))
     else
-      have h_exists : ∃ y, x < y := by
-        contrapose! h_max
-        exact h_max
+      have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
       let y := Classical.choose h_exists
       greenRClass (σ.σ x y)
 
@@ -234,7 +265,7 @@ lemma simon_regular_d_case
         have hx1 : σ.σ x y1 ∈ D := h_range x y1 hy1
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have hx2 : σ.σ x y2 ∈ D := h_range x y2 hy2
-        have hR_raw := (mul_mem_green_d_properties hD (σ.σ x y1) (σ.σ y1 y2) hx1 h12 (h_prod.symm ▸ hx2)).1.1
+        have hR_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ x y1) (σ.σ y1 y2) hx1 h12 (h_prod.symm ▸ hx2)).1.1
         have hR : GreenR (σ.σ x y1) (σ.σ x y2) := h_prod ▸ hR_raw
         ext z
         constructor
@@ -245,28 +276,56 @@ lemma simon_regular_d_case
 
   have h_H_idem : ∀ x, ∃ e ∈ H_of x, e * e = e := by
     intro x
-    by_cases h_inner : ¬ is_min x ∧ ¬ is_max x
-    · obtain ⟨h_not_min, h_not_max⟩ := h_inner
-      have hy : ∃ y, y < x := by contrapose! h_not_min; exact h_not_min
-      have hz : ∃ z, x < z := by contrapose! h_not_max; exact h_not_max
-
-      have ha : σ.σ (Classical.choose hy) x ∈ D := h_range _ _ (Classical.choose_spec hy)
-      have hb : σ.σ x (Classical.choose hz) ∈ D := h_range _ _ (Classical.choose_spec hz)
-      have hab : σ.σ (Classical.choose hy) x * σ.σ x (Classical.choose hz) ∈ D := by
-        rw [σ.prop _ _ _ (Classical.choose_spec hy) (Classical.choose_spec hz)]
-        exact h_range _ _ (lt_trans (Classical.choose_spec hy) (Classical.choose_spec hz))
-
-      obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ :=
-        mul_mem_green_d_properties hD (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
-
-      use e
-      refine ⟨⟨?_, ?_⟩, he_idem⟩
-      · simp only [L_of, h_not_min, dite_false]
-        exact green_l_symm hLe
-      · simp only [R_of, h_not_max, dite_false]
-        exact green_r_symm hRe
-
-    · sorry
+    dsimp [H_of]
+    by_cases h_min : is_min x
+    · by_cases h_max : is_max x
+      · have ha_D : x₀ ∈ D := by
+          rw [hx₀]
+          exact green_d_equivalence.refl x₀
+        let e := Classical.choose (h_idem_L x₀ ha_D)
+        have he_prop := Classical.choose_spec (h_idem_L x₀ ha_D)
+        use e
+        refine ⟨⟨?_, ?_⟩, he_prop.right⟩
+        · simp only [L_of, h_min, h_max, dite_true]
+          exact he_prop.left
+        · simp only [R_of, h_max, h_min, dite_true]
+          exact green_r_refl e
+      · have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
+        have ha_D : σ.σ x (Classical.choose h_exists) ∈ D := h_range x _ (Classical.choose_spec h_exists)
+        let e := Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
+        have he_prop := Classical.choose_spec (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
+        use e
+        refine ⟨⟨?_, ?_⟩, he_prop.right⟩
+        · simp only [L_of, h_min, h_max, dite_true, dite_false]
+          exact green_l_refl e
+        · simp only [R_of, h_max, dite_false]
+          exact he_prop.left
+    · by_cases h_max : is_max x
+      · have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
+        have ha_D : σ.σ (Classical.choose h_exists) x ∈ D := h_range _ x (Classical.choose_spec h_exists)
+        let e := Classical.choose (h_idem_L (σ.σ (Classical.choose h_exists) x) ha_D)
+        have he_prop := Classical.choose_spec (h_idem_L (σ.σ (Classical.choose h_exists) x) ha_D)
+        use e
+        refine ⟨⟨?_, ?_⟩, he_prop.right⟩
+        · simp only [L_of, h_min, dite_false]
+          exact he_prop.left
+        · simp only [R_of, h_max, h_min, dite_true, dite_false]
+          exact green_r_refl e
+      · have hy : ∃ y, y < x := by contrapose! h_min; exact h_min
+        have hz : ∃ z, x < z := by contrapose! h_max; exact h_max
+        have ha : σ.σ (Classical.choose hy) x ∈ D := h_range _ _ (Classical.choose_spec hy)
+        have hb : σ.σ x (Classical.choose hz) ∈ D := h_range _ _ (Classical.choose_spec hz)
+        have hab : σ.σ (Classical.choose hy) x * σ.σ x (Classical.choose hz) ∈ D := by
+          rw [σ.prop _ _ _ (Classical.choose_spec hy) (Classical.choose_spec hz)]
+          exact h_range _ _ (lt_trans (Classical.choose_spec hy) (Classical.choose_spec hz))
+        obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ :=
+          mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
+        use e
+        refine ⟨⟨?_, ?_⟩, he_idem⟩
+        · simp only [L_of, h_min, dite_false]
+          exact green_l_symm hLe
+        · simp only [R_of, h_max, dite_false]
+          exact green_r_symm hRe
 
   sorry
 
