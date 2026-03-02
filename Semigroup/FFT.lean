@@ -327,6 +327,85 @@ lemma simon_regular_d_case
         · simp only [R_of, h_max, dite_false]
           exact green_r_symm hRe
 
-  sorry
+  let G_D := { y : S // y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH y e }
+
+  have h_card_G_D : Fintype.card G_D = nD D := by
+    dsimp [nD]
+    rw [if_pos hReg]
+    exact Fintype.card_subtype (fun y => y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH y e)
+
+  have h_card_pos : 0 < Fintype.card G_D := by
+    rw [h_card_G_D]
+    exact Fin.pos_iff_nonempty.mpr h_ne
+
+  haveI h_nonempty_GD : Nonempty G_D := Fintype.card_pos_iff.mp h_card_pos
+
+  have h_size_cast : Fintype.card G_D - 1 + 1 = Fintype.card G_D :=
+    Nat.sub_add_cancel h_card_pos
+
+  let max_rank : Fin (nD D) := 
+    Fin.cast h_card_G_D (Fin.cast h_size_cast (Fin.last (Fintype.card G_D - 1)))
+
+  let equiv_G_D_Fin : G_D ≃ Fin (nD D) :=
+    (Fintype.equivFin G_D).trans (Equiv.cast (congrArg Fin h_card_G_D))
+
+  let alpha_min : α := Finset.min' Finset.univ Finset.univ_nonempty
+
+  let f (x : α) : G_D :=
+    let e := Classical.choose (h_H_idem x)
+    let m_class := Finset.univ.filter (fun y => H_of y = H_of x)
+    have hm_nonempty : m_class.Nonempty := ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩⟩
+    let m := Finset.min' m_class hm_nonempty
+    if h_mx : m < x then
+      let val := e * σ.σ m x * e
+      have h_val_in : val ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH val e' := sorry
+      ⟨val, h_val_in⟩
+    else
+      have h_e_in : e ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH e e' := by
+        have he_idem := Classical.choose_spec (h_H_idem x) |>.right
+        have he_D : e ∈ D := sorry
+        exact ⟨he_D, e, he_D, he_idem, green_h_refl e⟩
+      ⟨e, h_e_in⟩
+
+  let index_map := equiv_G_D_Fin.trans (Equiv.swap (equiv_G_D_Fin (f alpha_min)) max_rank)
+  let s : Split α (nD D) := fun y => index_map (f y)
+
+  use s
+  constructor
+  · change s alpha_min = Finset.max' Finset.univ Finset.univ_nonempty
+    have h_min_eval : s alpha_min = max_rank := by
+      dsimp only [s, index_map]
+      rw [Equiv.trans_apply, Equiv.swap_apply_left]
+    rw [h_min_eval]
+    symm
+    rw [Finset.max'_eq_iff]
+    constructor
+    · exact Finset.mem_univ _
+    · intro y _
+      apply Fin.le_iff_val_le_val.mpr
+      
+      have h_max_val : (max_rank : ℕ) = nD D - 1 := by
+        have h_val : (max_rank : ℕ) = Fintype.card G_D - 1 := by simp [max_rank]
+        rw [h_val, h_card_G_D]
+        
+      rw [h_max_val]
+      exact Nat.le_pred_of_lt y.is_lt
+
+  · intros x y hlt hsr
+    unfold SplitRelation at hsr
+    have h_s_eq := hsr.left
+    
+    have h_f_eq : f x = f y := by
+      dsimp only [s] at h_s_eq
+      exact Equiv.injective index_map h_s_eq
+      
+    have h_val_eq : (f x).val = (f y).val := congrArg Subtype.val h_f_eq
+
+    have h_sigma_eq_idem : ∃ e ∈ D, e * e = e ∧ σ.σ x y = e := by
+      sorry
+
+    obtain ⟨e, _, he_idem, he_eq⟩ := h_sigma_eq_idem
+    rw [he_eq]
+    exact he_idem
 
 end RegularDClassCase
