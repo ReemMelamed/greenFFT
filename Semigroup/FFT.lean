@@ -358,7 +358,65 @@ lemma simon_regular_d_case
     let m := Finset.min' m_class hm_nonempty
     if h_mx : m < x then
       let val := e * σ.σ m x * e
-      have h_val_in : val ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH val e' := sorry
+      have h_val_in : val ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH val e' := by
+        have he_prop := Classical.choose_spec (h_H_idem x)
+        have he_H : e ∈ H_of x := he_prop.1
+        have he_idem : e * e = e := he_prop.2
+        have he_L : e ∈ L_of x := he_H.1
+        have hm_H : H_of m = H_of x := by
+          have h_mem := Finset.mem_filter.mp (Finset.min'_mem m_class hm_nonempty)
+          exact h_mem.2
+        have he_Hm : e ∈ H_of m := hm_H.symm ▸ he_H
+        have he_Rm : e ∈ R_of m := he_Hm.2
+        have h_not_min_x : ¬ is_min x := fun h => not_le.mpr h_mx (h m)
+        have h_not_max_m : ¬ is_max m := fun h => not_le.mpr h_mx (h x)
+        have h_L_eq : L_of x = greenLClass (σ.σ m x) := by
+          dsimp only [L_of]
+          rw [dif_neg h_not_min_x]
+          apply h_L_well x _ m h_not_min_x
+          · exact @Classical.choose_spec α (fun y => y < x) _
+          · exact h_mx
+        have h_R_eq : R_of m = greenRClass (σ.σ m x) := by
+          dsimp only [R_of]
+          rw [dif_neg h_not_max_m]
+          apply h_R_well m _ x h_not_max_m
+          · exact @Classical.choose_spec α (fun y => m < y) _
+          · exact h_mx
+        have he_L_sig : GreenL e (σ.σ m x) := by
+          have h1 : e ∈ L_of x := he_L
+          rw [h_L_eq] at h1
+          exact h1
+        have he_R_sig : GreenR e (σ.σ m x) := by
+          have h1 : e ∈ R_of m := he_Rm
+          rw [h_R_eq] at h1
+          exact h1
+        have he_H_sig : GreenH e (σ.σ m x) := ⟨he_L_sig, he_R_sig⟩
+        have h_sig_H_e : GreenH (σ.σ m x) e := green_h_equivalence.symm he_H_sig
+        have h_class_eq : ∃ a, greenHClass e = greenHClass a := ⟨e, rfl⟩
+        have h_group_or := is_group_green_h_iff_idempotent (greenHClass e) h_class_eq
+        have h_group : ∀ u v, u ∈ greenHClass e → v ∈ greenHClass e → u * v ∈ greenHClass e := by
+          rcases h_group_or with h_empty | ⟨e', he'H, he'idem, h_mul⟩
+          · have h_ee_not := h_empty e e (green_h_refl e) (green_h_refl e)
+            rw [he_idem] at h_ee_not
+            exact False.elim (h_ee_not (green_h_refl e))
+          · exact h_mul
+        have h_sig_He : σ.σ m x ∈ greenHClass e := h_sig_H_e
+        have he_He : e ∈ greenHClass e := green_h_refl e
+        have h_val_He : val ∈ greenHClass e := by
+          dsimp only [val]
+          have h1 := h_group e (σ.σ m x) he_He h_sig_He
+          exact h_group (e * σ.σ m x) e h1 he_He
+        have h_val_H_e : GreenH val e := h_val_He
+        have h_sig_D : σ.σ m x ∈ D := h_range m x h_mx
+        have he_D_sig : GreenD e (σ.σ m x) := ⟨e, green_l_refl e, he_H_sig.right⟩
+        have he_D : e ∈ D := by
+          rw [hx₀] at h_sig_D ⊢
+          exact green_d_equivalence.trans he_D_sig h_sig_D
+        have hval_D_e : GreenD val e := ⟨val, green_l_refl val, h_val_H_e.right⟩
+        have h_val_D : val ∈ D := by
+          rw [hx₀] at he_D ⊢
+          exact green_d_equivalence.trans hval_D_e he_D
+        exact ⟨h_val_D, e, he_D, he_idem, h_val_H_e⟩
       ⟨val, h_val_in⟩
     else
       have h_e_in : e ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH e e' := by
