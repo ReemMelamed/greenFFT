@@ -163,6 +163,35 @@ lemma simon_hclass_case
 end HClassWrapper
 
 
+section nD
+
+variable [Fintype S]
+
+noncomputable def nD (D : Set S) : ℕ :=
+  if IsRegularDClass D then
+    (Finset.univ.filter (fun x =>
+      x ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH x e
+    )).card
+  else
+    1
+
+theorem nD_pos (D : Set S) (hD : ∃ x, D = greenDClass x) : 0 < nD D := by
+  dsimp [nD]
+  split_ifs with hReg
+  · apply Finset.card_pos.mpr
+    obtain ⟨e, heD, he_idem⟩ := (is_regular_d_class_iff_exists_idempotent D hD).mp hReg
+    use e
+    simp only [Finset.mem_univ, Finset.mem_filter, true_and]
+    refine ⟨heD, e, heD, he_idem, ?_⟩
+    exact green_h_refl e
+  · exact Nat.zero_lt_one
+
+instance (D : Set S) (hD : ∃ x, D = greenDClass x) : Nonempty (Fin (nD D)) :=
+  Fin.pos_iff_nonempty.mp (nD_pos D hD)
+
+end nD
+
+
 section RegularDClassCase
 
 variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] [Nonempty α]
@@ -343,7 +372,7 @@ lemma simon_regular_d_case
   have h_size_cast : Fintype.card G_D - 1 + 1 = Fintype.card G_D :=
     Nat.sub_add_cancel h_card_pos
 
-  let max_rank : Fin (nD D) := 
+  let max_rank : Fin (nD D) :=
     Fin.cast h_card_G_D (Fin.cast h_size_cast (Fin.last (Fintype.card G_D - 1)))
 
   let equiv_G_D_Fin : G_D ≃ Fin (nD D) :=
@@ -474,22 +503,22 @@ lemma simon_regular_d_case
     · exact Finset.mem_univ _
     · intro y _
       apply Fin.le_iff_val_le_val.mpr
-      
+
       have h_max_val : (max_rank : ℕ) = nD D - 1 := by
         have h_val : (max_rank : ℕ) = Fintype.card G_D - 1 := by simp [max_rank]
         rw [h_val, h_card_G_D]
-        
+
       rw [h_max_val]
       exact Nat.le_pred_of_lt y.is_lt
 
   · intros x y hlt hsr
     unfold SplitRelation at hsr
     have h_s_eq := hsr.left
-    
+
     have h_f_eq : f x = f y := by
       dsimp only [s] at h_s_eq
       exact Equiv.injective index_map h_s_eq
-      
+
     have h_val_eq : (f x).val = (f y).val := congrArg Subtype.val h_f_eq
 
     have h_sigma_eq_idem : ∃ e ∈ D, e * e = e ∧ σ.σ x y = e := by

@@ -390,33 +390,3 @@ theorem is_group_green_h_iff_idempotent [Fintype S] (H : Set S) (hH : ∃ a, H =
     exact ⟨hLuv_a, hRuv_a⟩
 
 end GreensFacts
-
-
-
-section nD
-
-variable [Fintype S]
-
-noncomputable def nD (D : Set S) : ℕ :=
-  if IsRegularDClass D then
-    (Finset.univ.filter (fun x =>
-      x ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH x e
-    )).card
-  else
-    1
-
-theorem nD_pos (D : Set S) (hD : ∃ x, D = greenDClass x) : 0 < nD D := by
-  dsimp [nD]
-  split_ifs with hReg
-  · apply Finset.card_pos.mpr
-    obtain ⟨e, heD, he_idem⟩ := (is_regular_d_class_iff_exists_idempotent D hD).mp hReg
-    use e
-    simp only [Finset.mem_univ, Finset.mem_filter, true_and]
-    refine ⟨heD, e, heD, he_idem, ?_⟩
-    exact green_h_refl e
-  · exact Nat.zero_lt_one
-
-instance (D : Set S) (hD : ∃ x, D = greenDClass x) : Nonempty (Fin (nD D)) :=
-  Fin.pos_iff_nonempty.mp (nD_pos D hD)
-
-end nD
