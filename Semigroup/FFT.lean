@@ -9,8 +9,6 @@ import Semigroup.Green
 # The Factorisation Forest Theorem
 -/
 
-open Classical
-
 section SplitDefinitions
 
 variable {S α : Type*} [Semigroup S] [LinearOrder α]
@@ -18,7 +16,7 @@ variable {S α : Type*} [Semigroup S] [LinearOrder α]
 variable {h : ℕ}
 
 structure MultiplicativeLabeling (S α : Type*) [Semigroup S] [LinearOrder α] where
-  σ: α → α → S
+  σ : α → α → S
   prop : ∀ x y z : α, x < y → y < z → σ x y * σ y z = σ x z
 
 abbrev Split (α : Type*) (h : ℕ) := α → Fin h
@@ -31,7 +29,7 @@ def IsNormalized [Fintype α] [Nonempty α] [Nonempty (Fin h)] (s : Split α h) 
   s min_α = Finset.max' Finset.univ Finset.univ_nonempty
 
 def IsRamsey (L : MultiplicativeLabeling S α) (s : Split α h) : Prop :=
-  ∀ x y : α, x<y → SplitRelation s x y → L.σ x y * L.σ x y = L.σ x y
+  ∀ x y : α, x < y → SplitRelation s x y → L.σ x y * L.σ x y = L.σ x y
 
 theorem split_relation_equiv (s : Split α h) : Equivalence (SplitRelation s) := by
   constructor <;> grind [SplitRelation]
@@ -43,73 +41,59 @@ section GroupCase
 
 variable {G α : Type*} [Group G] [Fintype G] [LinearOrder α] [Fintype α] [Nonempty α]
 
+open Classical in
 lemma simon_group_case (σ : MultiplicativeLabeling G α) :
     ∃ (s : Split α (Fintype.card G)), IsNormalized s ∧ IsRamsey σ s := by
   let size_G := Fintype.card G
   let x₀ : α := Finset.min' .univ Finset.univ_nonempty
-
   have h_size_cast : size_G - 1 + 1 = size_G := by grind [Fintype.card_pos]
   haveI : Nonempty (Fin size_G) := by grind [Fintype.card_pos, Fin.pos_iff_nonempty]
-
   let max_rank : Fin size_G := Fin.cast h_size_cast (Fin.last (size_G - 1))
-
   let raw_equiv := Fintype.equivFin G
   let index_in_enum := raw_equiv.trans (Equiv.swap (raw_equiv 1) max_rank)
-
   let s : Split α size_G := fun y =>
     if y = x₀ then max_rank else index_in_enum (σ.σ x₀ y)
   use s
-
   constructor
   · unfold IsNormalized
-    simp [s, x₀]
+    simp only [s, x₀]
     symm
     rw [Finset.max'_eq_iff]
     constructor
     · apply Finset.mem_univ
     · intro hy _
       apply Fin.le_iff_val_le_val.mpr
-      simp only [max_rank, Fin.val_cast, Fin.val_last]
+      simp only [max_rank]
       exact Nat.le_pred_of_lt hy.is_lt
-
   · intros x y hlt hsr
     unfold SplitRelation at hsr
-
     by_cases hx : x = x₀
     · subst hx
       have h_eq : s x₀ = s y := hsr.left
-      have h_sx0 : s x₀ = max_rank := by simp [s]
+      have h_sx0 : s x₀ = max_rank := by simp only [s, ite_true]
       have h_y_ne : y ≠ x₀ := ne_of_gt hlt
-      have h_sy : s y = index_in_enum (σ.σ x₀ y) := by simp [s, h_y_ne]
-
+      have h_sy : s y = index_in_enum (σ.σ x₀ y) := by simp only [s, h_y_ne, ite_false]
       rw [h_sx0, h_sy] at h_eq
       have h_map_1 : index_in_enum 1 = max_rank := by
-        simp [index_in_enum]
-
+        simp only [index_in_enum, Equiv.trans_apply, Equiv.swap_apply_left]
       rw [← h_map_1] at h_eq
       have h_val_1 : σ.σ x₀ y = 1 := Equiv.injective index_in_enum h_eq.symm
-      simp [h_val_1]
-
+      simp only [h_val_1, mul_one]
     · have h_x0_lt_x : x₀ < x :=
         lt_of_le_of_ne (Finset.min'_le (.univ) x (Finset.mem_univ x)) (ne_comm.mp hx)
-
-      have h_sx : s x = index_in_enum (σ.σ x₀ x) := by simp [s, ne_of_gt h_x0_lt_x]
+      have h_sx : s x = index_in_enum (σ.σ x₀ x) := by simp only [s, ne_of_gt h_x0_lt_x, ite_false]
       have h_x0_lt_y : x₀ < y := lt_trans h_x0_lt_x hlt
-      have h_sy : s y = index_in_enum (σ.σ x₀ y) := by simp [s, ne_of_gt h_x0_lt_y]
-
+      have h_sy : s y = index_in_enum (σ.σ x₀ y) := by simp only [s, ne_of_gt h_x0_lt_y, ite_false]
       have h_s_eq : s x = s y := hsr.left
       rw [h_sx, h_sy] at h_s_eq
-
       have h_vals_eq : σ.σ x₀ x = σ.σ x₀ y := Equiv.injective index_in_enum h_s_eq
       have h_mult := σ.prop x₀ x y h_x0_lt_x hlt
-
       rw [← h_vals_eq] at h_mult
       have h_res : σ.σ x y = 1 := by
         have h_temp := congr_arg (fun g => (σ.σ x₀ x)⁻¹ * g) h_mult
         simp only [inv_mul_cancel_left, inv_mul_cancel] at h_temp
         exact h_temp
-
-      simp [h_res]
+      simp only [h_res, mul_one]
 
 end GroupCase
 
@@ -128,32 +112,30 @@ lemma simon_hclass_case
       IsNormalized s ∧
       (∀ x y : X, (x : α) < (y : α) → SplitRelation s x y →
         σ.σ (x : α) (y : α) * σ.σ (x : α) (y : α) = σ.σ (x : α) (y : α)) := by
+  classical
   let σ_H_fun : X → X → H := fun x y =>
     if h : (x : α) < (y : α) then
       ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property h⟩
     else
       1
-
   have σ_H_prop : ∀ (x y z : X), x < y → y < z → σ_H_fun x y * σ_H_fun y z = σ_H_fun x z := by
-      intro x y z hxy hyz
-      have hxy_val : (x : α) < (y : α) := hxy
-      have hyz_val : (y : α) < (z : α) := hyz
-      have hxz_val : (x : α) < (z : α) := lt_trans hxy_val hyz_val
-      ext
-      rw [← h_mul_eq]
-      simp only [σ_H_fun, dif_pos hxy_val, dif_pos hyz_val, dif_pos hxz_val, Subtype.coe_mk]
-      exact σ.prop (x : α) (y : α) (z : α) hxy_val hyz_val
-
+    intro x y z hxy hyz
+    have hxy_val : (x : α) < (y : α) := hxy
+    have hyz_val : (y : α) < (z : α) := hyz
+    have hxz_val : (x : α) < (z : α) := lt_trans hxy_val hyz_val
+    ext
+    rw [← h_mul_eq]
+    simp only [σ_H_fun, dif_pos hxy_val, dif_pos hyz_val, dif_pos hxz_val, Subtype.coe_mk]
+    exact σ.prop (x : α) (y : α) (z : α) hxy_val hyz_val
   let σ_H : MultiplicativeLabeling H X := ⟨σ_H_fun, σ_H_prop⟩
-
   obtain ⟨s_H, h_norm, h_ramsey⟩ := simon_group_case σ_H
-
   use s_H
   constructor
   · exact h_norm
   · intro x y hxy h_split
     have h_ramsey_xy := h_ramsey x y hxy h_split
-    have h_val : σ_H.σ x y = ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property hxy⟩ := by
+    have h_val : σ_H.σ x y =
+        ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property hxy⟩ := by
       simp only [σ_H, σ_H_fun, hxy, dif_pos]
     have h_eq_in_S := congr_arg Subtype.val h_ramsey_xy
     simp only [h_val] at h_eq_in_S
@@ -163,19 +145,21 @@ lemma simon_hclass_case
 end HClassWrapper
 
 
+
 section nD
 
-variable [Fintype S]
+variable {S : Type*} [Semigroup S] [Fintype S]
 
+open Classical in
 noncomputable def nD (D : Set S) : ℕ :=
   if IsRegularDClass D then
     (Finset.univ.filter (fun x =>
-      x ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH x e
+      x ∈ D ∧ ∃ e ∈ D, e * e = e ∧ IsGreenH x e
     )).card
   else
     1
 
-theorem nD_pos (D : Set S) (hD : ∃ x, D = greenDClass x) : 0 < nD D := by
+theorem nD_pos (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) : 0 < nD D := by
   dsimp [nD]
   split_ifs with hReg
   · apply Finset.card_pos.mpr
@@ -183,31 +167,32 @@ theorem nD_pos (D : Set S) (hD : ∃ x, D = greenDClass x) : 0 < nD D := by
     use e
     simp only [Finset.mem_univ, Finset.mem_filter, true_and]
     refine ⟨heD, e, heD, he_idem, ?_⟩
-    exact green_h_refl e
+    exact IsGreenH.refl e
   · exact Nat.zero_lt_one
 
-instance (D : Set S) (hD : ∃ x, D = greenDClass x) : Nonempty (Fin (nD D)) :=
+instance (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) : Nonempty (Fin (nD D)) :=
   Fin.pos_iff_nonempty.mp (nD_pos D hD)
 
 end nD
+
 
 
 section RegularDClassCase
 
 variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] [Nonempty α]
 
+open Classical in
 lemma simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
-    (hD : ∃ x, D = greenDClass x)
+    (hD : ∃ x, D = IsGreenD.eqvClass x)
     (h_ne : Nonempty (Fin (nD D)) := Fin.pos_iff_nonempty.mp (nD_pos D hD))
     (hReg : IsRegularDClass D)
     (h_range : ∀ x y, x < y → σ.σ x y ∈ D) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
-
   obtain ⟨x₀, hx₀⟩ := hD
 
-  have h_idem_L : ∀ a ∈ D, ∃ e ∈ greenLClass a, e * e = e := by
+  have h_idem_L : ∀ a ∈ D, ∃ e ∈ IsGreenL.eqvClass a, e * e = e := by
     intro a ha
     obtain ⟨s, hs⟩ := hReg a ha
     use s * a
@@ -216,10 +201,10 @@ lemma simon_regular_d_case
       · right; use s
       · right; use a; calc a = a * s * a := hs.symm
                            _ = a * (s * a) := by rw [mul_assoc]
-    · calc (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
+    · calc (s * a) * (s * a) = s * (a * s * a) := by simp only [mul_assoc]
       _ = s * a := by rw [hs]
 
-  have h_idem_R : ∀ a ∈ D, ∃ e ∈ greenRClass a, e * e = e := by
+  have h_idem_R : ∀ a ∈ D, ∃ e ∈ IsGreenR.eqvClass a, e * e = e := by
     intro a ha
     obtain ⟨s, hs⟩ := hReg a ha
     use a * s
@@ -228,7 +213,7 @@ lemma simon_regular_d_case
       · right; use s
       · right; use a; calc a = a * s * a := hs.symm
                            _ = (a * s) * a := by rw [mul_assoc]
-    · calc (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
+    · calc (a * s) * (a * s) = (a * s * a) * s := by simp only [mul_assoc]
       _ = a * s := by rw [hs]
 
   let is_max (x : α) : Prop := ∀ y, y ≤ x
@@ -237,19 +222,19 @@ lemma simon_regular_d_case
   let L_of (x : α) : Set S :=
     if h_min : is_min x then
       if h_max : is_max x then
-        greenLClass x₀
+        IsGreenL.eqvClass x₀
       else
         have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
         let y := Classical.choose h_exists
         have ha_D : σ.σ x y ∈ D := h_range x y (Classical.choose_spec h_exists)
-        greenLClass (Classical.choose (h_idem_R (σ.σ x y) ha_D))
+        IsGreenL.eqvClass (Classical.choose (h_idem_R (σ.σ x y) ha_D))
     else
       have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
       let y := Classical.choose h_exists
-      greenLClass (σ.σ y x)
+      IsGreenL.eqvClass (σ.σ y x)
 
   have h_L_well : ∀ x y1 y2 (h_not_min : ¬ is_min x) (hy1 : y1 < x) (hy2 : y2 < x),
-      greenLClass (σ.σ y1 x) = greenLClass (σ.σ y2 x) := by
+      IsGreenL.eqvClass (σ.σ y1 x) = IsGreenL.eqvClass (σ.σ y2 x) := by
     intro x y1 y2 h_not_min hy1 hy2
     wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
     · exact (this y2 y1 hy2 hy1 (not_le.mp h_le).le).symm
@@ -259,32 +244,33 @@ lemma simon_regular_d_case
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have h2x : σ.σ y2 x ∈ D := h_range y2 x hy2
         have h1x : σ.σ y1 x ∈ D := h_range y1 x hy1
-        have hL_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ y1 y2) (σ.σ y2 x) h12 h2x (h_prod ▸ h1x)).1.2
-        have hL : GreenL (σ.σ y2 x) (σ.σ y1 x) := h_prod ▸ hL_raw
+        have hL_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ y1 y2) (σ.σ y2 x) h12 h2x
+          (h_prod ▸ h1x)).1.2
+        have hL : IsGreenL (σ.σ y2 x) (σ.σ y1 x) := h_prod ▸ hL_raw
         ext z
         constructor
-        · intro hz; exact green_l_trans hz (green_l_symm hL)
-        · intro hz; exact green_l_trans hz hL
+        · intro hz; exact IsGreenL.trans hz (IsGreenL.symm hL)
+        · intro hz; exact IsGreenL.trans hz hL
 
   let R_of (x : α) : Set S :=
     if h_max : is_max x then
       if h_min : is_min x then
         have ha_D : x₀ ∈ D := by
           rw [hx₀]
-          exact green_d_equivalence.refl x₀
-        greenRClass (Classical.choose (h_idem_L x₀ ha_D))
+          exact IsGreenD.refl x₀
+        IsGreenR.eqvClass (Classical.choose (h_idem_L x₀ ha_D))
       else
         have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
         let y := Classical.choose h_exists
         have ha_D : σ.σ y x ∈ D := h_range y x (Classical.choose_spec h_exists)
-        greenRClass (Classical.choose (h_idem_L (σ.σ y x) ha_D))
+        IsGreenR.eqvClass (Classical.choose (h_idem_L (σ.σ y x) ha_D))
     else
       have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
       let y := Classical.choose h_exists
-      greenRClass (σ.σ x y)
+      IsGreenR.eqvClass (σ.σ x y)
 
   have h_R_well : ∀ x y1 y2 (h_not_max : ¬ is_max x) (hy1 : x < y1) (hy2 : x < y2),
-      greenRClass (σ.σ x y1) = greenRClass (σ.σ x y2) := by
+      IsGreenR.eqvClass (σ.σ x y1) = IsGreenR.eqvClass (σ.σ x y2) := by
     intro x y1 y2 h_not_max hy1 hy2
     wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
     · exact (this y2 y1 hy2 hy1 (not_le.mp h_le).le).symm
@@ -294,12 +280,13 @@ lemma simon_regular_d_case
         have hx1 : σ.σ x y1 ∈ D := h_range x y1 hy1
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have hx2 : σ.σ x y2 ∈ D := h_range x y2 hy2
-        have hR_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ x y1) (σ.σ y1 y2) hx1 h12 (h_prod.symm ▸ hx2)).1.1
-        have hR : GreenR (σ.σ x y1) (σ.σ x y2) := h_prod ▸ hR_raw
+        have hR_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ x y1) (σ.σ y1 y2) hx1 h12
+          (h_prod.symm ▸ hx2)).1.1
+        have hR : IsGreenR (σ.σ x y1) (σ.σ x y2) := h_prod ▸ hR_raw
         ext z
         constructor
-        · intro hz; exact green_r_trans hz hR
-        · intro hz; exact green_r_trans hz (green_r_symm hR)
+        · intro hz; exact IsGreenR.trans hz hR
+        · intro hz; exact IsGreenR.trans hz (IsGreenR.symm hR)
 
   let H_of (x : α) : Set S := L_of x ∩ R_of x
 
@@ -310,7 +297,7 @@ lemma simon_regular_d_case
     · by_cases h_max : is_max x
       · have ha_D : x₀ ∈ D := by
           rw [hx₀]
-          exact green_d_equivalence.refl x₀
+          exact IsGreenD.refl x₀
         let e := Classical.choose (h_idem_L x₀ ha_D)
         have he_prop := Classical.choose_spec (h_idem_L x₀ ha_D)
         use e
@@ -318,20 +305,22 @@ lemma simon_regular_d_case
         · simp only [L_of, h_min, h_max, dite_true]
           exact he_prop.left
         · simp only [R_of, h_max, h_min, dite_true]
-          exact green_r_refl e
+          exact IsGreenR.refl e
       · have h_exists : ∃ y, x < y := by contrapose! h_max; exact h_max
-        have ha_D : σ.σ x (Classical.choose h_exists) ∈ D := h_range x _ (Classical.choose_spec h_exists)
+        have ha_D : σ.σ x (Classical.choose h_exists) ∈ D :=
+          h_range x _ (Classical.choose_spec h_exists)
         let e := Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
         have he_prop := Classical.choose_spec (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
         use e
         refine ⟨⟨?_, ?_⟩, he_prop.right⟩
         · simp only [L_of, h_min, h_max, dite_true, dite_false]
-          exact green_l_refl e
+          exact IsGreenL.refl e
         · simp only [R_of, h_max, dite_false]
           exact he_prop.left
     · by_cases h_max : is_max x
       · have h_exists : ∃ y, y < x := by contrapose! h_min; exact h_min
-        have ha_D : σ.σ (Classical.choose h_exists) x ∈ D := h_range _ x (Classical.choose_spec h_exists)
+        have ha_D : σ.σ (Classical.choose h_exists) x ∈ D :=
+          h_range _ x (Classical.choose_spec h_exists)
         let e := Classical.choose (h_idem_L (σ.σ (Classical.choose h_exists) x) ha_D)
         have he_prop := Classical.choose_spec (h_idem_L (σ.σ (Classical.choose h_exists) x) ha_D)
         use e
@@ -339,7 +328,7 @@ lemma simon_regular_d_case
         · simp only [L_of, h_min, dite_false]
           exact he_prop.left
         · simp only [R_of, h_max, h_min, dite_true, dite_false]
-          exact green_r_refl e
+          exact IsGreenR.refl e
       · have hy : ∃ y, y < x := by contrapose! h_min; exact h_min
         have hz : ∃ z, x < z := by contrapose! h_max; exact h_max
         have ha : σ.σ (Classical.choose hy) x ∈ D := h_range _ _ (Classical.choose_spec hy)
@@ -347,21 +336,21 @@ lemma simon_regular_d_case
         have hab : σ.σ (Classical.choose hy) x * σ.σ x (Classical.choose hz) ∈ D := by
           rw [σ.prop _ _ _ (Classical.choose_spec hy) (Classical.choose_spec hz)]
           exact h_range _ _ (lt_trans (Classical.choose_spec hy) (Classical.choose_spec hz))
-        obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ :=
-          mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
+        obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ := mul_mem_green_d_properties ⟨x₀, hx₀⟩
+          (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
         use e
         refine ⟨⟨?_, ?_⟩, he_idem⟩
         · simp only [L_of, h_min, dite_false]
-          exact green_l_symm hLe
+          exact IsGreenL.symm hLe
         · simp only [R_of, h_max, dite_false]
-          exact green_r_symm hRe
+          exact IsGreenR.symm hRe
 
-  let G_D := { y : S // y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH y e }
+  let G_D := { y : S // y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ IsGreenH y e }
 
   have h_card_G_D : Fintype.card G_D = nD D := by
     dsimp [nD]
     rw [if_pos hReg]
-    exact Fintype.card_subtype (fun y => y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ GreenH y e)
+    exact Fintype.card_subtype (fun y => y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ IsGreenH y e)
 
   have h_card_pos : 0 < Fintype.card G_D := by
     rw [h_card_G_D]
@@ -369,8 +358,7 @@ lemma simon_regular_d_case
 
   haveI h_nonempty_GD : Nonempty G_D := Fintype.card_pos_iff.mp h_card_pos
 
-  have h_size_cast : Fintype.card G_D - 1 + 1 = Fintype.card G_D :=
-    Nat.sub_add_cancel h_card_pos
+  have h_size_cast : Fintype.card G_D - 1 + 1 = Fintype.card G_D := Nat.sub_add_cancel h_card_pos
 
   let max_rank : Fin (nD D) :=
     Fin.cast h_card_G_D (Fin.cast h_size_cast (Fin.last (Fintype.card G_D - 1)))
@@ -387,7 +375,7 @@ lemma simon_regular_d_case
     let m := Finset.min' m_class hm_nonempty
     if h_mx : m < x then
       let val := e * σ.σ m x * e
-      have h_val_in : val ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH val e' := by
+      have h_val_in : val ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ IsGreenH val e' := by
         have he_prop := Classical.choose_spec (h_H_idem x)
         have he_H : e ∈ H_of x := he_prop.1
         have he_idem : e * e = e := he_prop.2
@@ -399,92 +387,99 @@ lemma simon_regular_d_case
         have he_Rm : e ∈ R_of m := he_Hm.2
         have h_not_min_x : ¬ is_min x := fun h => not_le.mpr h_mx (h m)
         have h_not_max_m : ¬ is_max m := fun h => not_le.mpr h_mx (h x)
-        have h_L_eq : L_of x = greenLClass (σ.σ m x) := by
+        have h_L_eq : L_of x = IsGreenL.eqvClass (σ.σ m x) := by
           dsimp only [L_of]
           rw [dif_neg h_not_min_x]
           apply h_L_well x _ m h_not_min_x
           · exact @Classical.choose_spec α (fun y => y < x) _
           · exact h_mx
-        have h_R_eq : R_of m = greenRClass (σ.σ m x) := by
+        have h_R_eq : R_of m = IsGreenR.eqvClass (σ.σ m x) := by
           dsimp only [R_of]
           rw [dif_neg h_not_max_m]
           apply h_R_well m _ x h_not_max_m
           · exact @Classical.choose_spec α (fun y => m < y) _
           · exact h_mx
-        have he_L_sig : GreenL e (σ.σ m x) := by
+        have he_L_sig : IsGreenL e (σ.σ m x) := by
           have h1 : e ∈ L_of x := he_L
           rw [h_L_eq] at h1
           exact h1
-        have he_R_sig : GreenR e (σ.σ m x) := by
+        have he_R_sig : IsGreenR e (σ.σ m x) := by
           have h1 : e ∈ R_of m := he_Rm
           rw [h_R_eq] at h1
           exact h1
-        have he_H_sig : GreenH e (σ.σ m x) := ⟨he_L_sig, he_R_sig⟩
-        have h_sig_H_e : GreenH (σ.σ m x) e := green_h_equivalence.symm he_H_sig
-        have h_class_eq : ∃ a, greenHClass e = greenHClass a := ⟨e, rfl⟩
-        have h_group_or := is_group_green_h_iff_idempotent (greenHClass e) h_class_eq
-        have h_group : ∀ u v, u ∈ greenHClass e → v ∈ greenHClass e → u * v ∈ greenHClass e := by
+        have he_H_sig : IsGreenH e (σ.σ m x) := ⟨he_L_sig, he_R_sig⟩
+        have h_sig_H_e : IsGreenH (σ.σ m x) e := IsGreenH.symm he_H_sig
+        have h_class_eq : ∃ a, IsGreenH.eqvClass e = IsGreenH.eqvClass a := ⟨e, rfl⟩
+        have h_group_or := is_group_green_h_iff_idempotent (IsGreenH.eqvClass e) h_class_eq
+        have h_group : ∀ u v, u ∈ IsGreenH.eqvClass e → v ∈ IsGreenH.eqvClass e →
+          u * v ∈ IsGreenH.eqvClass e := by
           rcases h_group_or with h_empty | ⟨e', he'H, he'idem, h_mul⟩
-          · have h_ee_not := h_empty e e (green_h_refl e) (green_h_refl e)
+          · have h_ee_not := h_empty e e (IsGreenH.refl e) (IsGreenH.refl e)
             rw [he_idem] at h_ee_not
-            exact False.elim (h_ee_not (green_h_refl e))
+            exact False.elim (h_ee_not (IsGreenH.refl e))
           · exact h_mul
-        have h_sig_He : σ.σ m x ∈ greenHClass e := h_sig_H_e
-        have he_He : e ∈ greenHClass e := green_h_refl e
-        have h_val_He : val ∈ greenHClass e := by
+        have h_sig_He : σ.σ m x ∈ IsGreenH.eqvClass e := h_sig_H_e
+        have he_He : e ∈ IsGreenH.eqvClass e := IsGreenH.refl e
+        have h_val_He : val ∈ IsGreenH.eqvClass e := by
           dsimp only [val]
           have h1 := h_group e (σ.σ m x) he_He h_sig_He
           exact h_group (e * σ.σ m x) e h1 he_He
-        have h_val_H_e : GreenH val e := h_val_He
+        have h_val_H_e : IsGreenH val e := h_val_He
         have h_sig_D : σ.σ m x ∈ D := h_range m x h_mx
-        have he_D_sig : GreenD e (σ.σ m x) := ⟨e, green_l_refl e, he_H_sig.right⟩
+        have he_D_sig : IsGreenD e (σ.σ m x) := ⟨e, IsGreenL.refl e, he_H_sig.right⟩
         have he_D : e ∈ D := by
           rw [hx₀] at h_sig_D ⊢
-          exact green_d_equivalence.trans he_D_sig h_sig_D
-        have hval_D_e : GreenD val e := ⟨val, green_l_refl val, h_val_H_e.right⟩
+          exact IsGreenD.trans he_D_sig h_sig_D
+        have hval_D_e : IsGreenD val e := ⟨val, IsGreenL.refl val, h_val_H_e.right⟩
         have h_val_D : val ∈ D := by
           rw [hx₀] at he_D ⊢
-          exact green_d_equivalence.trans hval_D_e he_D
+          exact IsGreenD.trans hval_D_e he_D
         exact ⟨h_val_D, e, he_D, he_idem, h_val_H_e⟩
       ⟨val, h_val_in⟩
     else
-      have h_e_in : e ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ GreenH e e' := by
+      have h_e_in : e ∈ D ∧ ∃ e' ∈ D, e' * e' = e' ∧ IsGreenH e e' := by
         have he_idem := Classical.choose_spec (h_H_idem x) |>.right
         have he_H := Classical.choose_spec (h_H_idem x) |>.left
         have he_D : e ∈ D := by
           have he_L : e ∈ L_of x := he_H.left
           by_cases h_min : is_min x
           · by_cases h_max : is_max x
-            · have h_L_def : L_of x = greenLClass x₀ := by
+            · have h_L_def : L_of x = IsGreenL.eqvClass x₀ := by
                 simp only [L_of, h_min, h_max, dite_true]
               rw [h_L_def] at he_L
               rw [hx₀]
-              exact ⟨x₀, he_L, green_r_refl x₀⟩
+              exact ⟨x₀, he_L, IsGreenR.refl x₀⟩
             · have h_exists : ∃ y, x < y := by
                 by_contra h_contra
                 push_neg at h_contra
                 exact h_max h_contra
-              have ha_D : σ.σ x (Classical.choose h_exists) ∈ D := h_range x _ (Classical.choose_spec h_exists)
-              have h_L_def : L_of x = greenLClass (Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)) := by
+              have ha_D : σ.σ x (Classical.choose h_exists) ∈ D :=
+                h_range x _ (Classical.choose_spec h_exists)
+              have h_L_def : L_of x = IsGreenL.eqvClass
+                (Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)) := by
                 simp only [L_of, h_min, h_max, dite_true, dite_false]
               rw [h_L_def] at he_L
-              let e_R := Classical.choose (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
+              let e_R := Classical.choose
+                (h_idem_R (σ.σ x (Classical.choose h_exists)) ha_D)
               have he_R_prop := Classical.choose_spec (h_idem_R _ ha_D)
               rw [hx₀] at ha_D ⊢
-              have hD_e_sig : GreenD e (σ.σ x (Classical.choose h_exists)) := ⟨e_R, he_L, he_R_prop.left⟩
-              exact green_d_equivalence.trans hD_e_sig ha_D
+              have hD_e_sig : IsGreenD e (σ.σ x (Classical.choose h_exists)) :=
+                ⟨e_R, he_L, he_R_prop.left⟩
+              exact IsGreenD.trans hD_e_sig ha_D
           · have h_exists : ∃ y, y < x := by
               by_contra h_contra
               push_neg at h_contra
               exact h_min h_contra
-            have h_L_def : L_of x = greenLClass (σ.σ (Classical.choose h_exists) x) := by
+            have h_L_def : L_of x = IsGreenL.eqvClass (σ.σ (Classical.choose h_exists) x) := by
               simp only [L_of, h_min, dite_false]
             rw [h_L_def] at he_L
-            have ha_D : σ.σ (Classical.choose h_exists) x ∈ D := h_range _ x (Classical.choose_spec h_exists)
+            have ha_D : σ.σ (Classical.choose h_exists) x ∈ D :=
+              h_range _ x (Classical.choose_spec h_exists)
             rw [hx₀] at ha_D ⊢
-            have hD_e_sig : GreenD e (σ.σ (Classical.choose h_exists) x) := ⟨σ.σ (Classical.choose h_exists) x, he_L, green_r_refl _⟩
-            exact green_d_equivalence.trans hD_e_sig ha_D
-        exact ⟨he_D, e, he_D, he_idem, green_h_refl e⟩
+            have hD_e_sig : IsGreenD e (σ.σ (Classical.choose h_exists) x) :=
+              ⟨σ.σ (Classical.choose h_exists) x, he_L, IsGreenR.refl _⟩
+            exact IsGreenD.trans hD_e_sig ha_D
+        exact ⟨he_D, e, he_D, he_idem, IsGreenH.refl e⟩
       ⟨e, h_e_in⟩
 
   let index_map := equiv_G_D_Fin.trans (Equiv.swap (equiv_G_D_Fin (f alpha_min)) max_rank)
@@ -503,11 +498,9 @@ lemma simon_regular_d_case
     · exact Finset.mem_univ _
     · intro y _
       apply Fin.le_iff_val_le_val.mpr
-
       have h_max_val : (max_rank : ℕ) = nD D - 1 := by
-        have h_val : (max_rank : ℕ) = Fintype.card G_D - 1 := by simp [max_rank]
-        rw [h_val, h_card_G_D]
-
+        simp only [max_rank, Fin.val_cast, Fin.val_last]
+        rw [h_card_G_D]
       rw [h_max_val]
       exact Nat.le_pred_of_lt y.is_lt
 
