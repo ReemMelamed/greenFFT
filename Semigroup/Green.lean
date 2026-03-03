@@ -358,7 +358,7 @@ theorem green_d_eq_j_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGr
 
 
 -- Fact 2.3
-theorem is_regular_d_class_iff_exists_idempotent [Fintype S]
+theorem is_regular_d_class_iff_exists_idempotent [Finite S]
   (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
   obtain ⟨x₀, rfl⟩ := hD
