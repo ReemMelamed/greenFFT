@@ -478,10 +478,6 @@ theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b)
 
 
 
-lemma green_j_aux [Finite S] {a b u v x y: S} (h1 : a = u * b * v) (h2 : b = x * a * y) :
-    IsGreenR a (u * b) := by
-  sorry
-
 lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
   sorry
 
