@@ -306,7 +306,6 @@ section GreensFacts
 
 namespace IsGreenL
 
--- החלק הראשון של Fact 2.1
 theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
   rcases h with ⟨h1, h2⟩
   constructor
@@ -328,7 +327,6 @@ end IsGreenL
 
 namespace IsGreenR
 
--- החלק השני של Fact 2.1
 theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b) := by
   rcases h with ⟨h1, h2⟩
   constructor
