@@ -110,6 +110,22 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     trans := trans
   }
 
+theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
+  rcases h with ⟨h1, h2⟩
+  constructor
+  · rcases h1 with rfl | ⟨z, hz⟩
+    · exact Or.inl rfl
+    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
+  · rcases h2 with rfl | ⟨z, hz⟩
+    · exact Or.inl rfl
+    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
+
+theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
+    x * u * v = x := by
+  rcases hx.left with rfl | ⟨k, rfl⟩
+  · exact h_cancel
+  · simp only [mul_assoc, h_cancel]
+
 end IsGreenL
 
 
@@ -131,6 +147,22 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     symm := symm
     trans := trans
   }
+
+theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b) := by
+  rcases h with ⟨h1, h2⟩
+  constructor
+  · rcases h1 with rfl | ⟨z, hz⟩
+    · exact Or.inl rfl
+    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
+  · rcases h2 with rfl | ⟨z, hz⟩
+    · exact Or.inl rfl
+    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
+
+theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
+    v * u * x = x := by
+  rcases hx.left with rfl | ⟨k, rfl⟩
+  · exact h_cancel
+  · simp only [← mul_assoc, h_cancel]
 
 end IsGreenR
 
@@ -304,48 +336,6 @@ end GreenClasses
 
 section GreensFacts
 
-namespace IsGreenL
-
-theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
-  rcases h with ⟨h1, h2⟩
-  constructor
-  · rcases h1 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
-  · rcases h2 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
-
-theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
-    x * u * v = x := by
-  rcases hx.left with rfl | ⟨k, rfl⟩
-  · exact h_cancel
-  · simp only [mul_assoc, h_cancel]
-
-end IsGreenL
-
-
-namespace IsGreenR
-
-theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b) := by
-  rcases h with ⟨h1, h2⟩
-  constructor
-  · rcases h1 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
-  · rcases h2 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
-
-theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
-    v * u * x = x := by
-  rcases hx.left with rfl | ⟨k, rfl⟩
-  · exact h_cancel
-  · simp only [← mul_assoc, h_cancel]
-
-end IsGreenR
-
-
 -- Fact 2.3
 theorem isRegularDClass_iff_exists_idempotent [Finite S]
   (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
@@ -477,44 +467,6 @@ theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b)
   · exact Fintype.card_congr equiv_zb
 
 
-
-lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
-  sorry
-
-lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
-  rcases h with ⟨z, hL, hR⟩
-  rcases hL.left with rfl | ⟨u, hu⟩
-  · rcases hR.left with rfl | ⟨v, hv⟩
-    · exact IsGreenJRel.eq rfl
-    · exact IsGreenJRel.mul_right v hv
-  · rcases hR.left with rfl | ⟨v, hv⟩
-    · exact IsGreenJRel.mul_left u hu
-    · exact IsGreenJRel.mul_both u v (by rw [hu, hv, mul_assoc])
-
-
-lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b := by
-  constructor
-  · exact isGreenJRel_of_isGreenD h
-  · have h_symm : IsGreenD b a := IsGreenD.symm h
-    exact isGreenJRel_of_isGreenD h_symm
-
--- Fact 2.2
-theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
-  ext a b
-  constructor
-  · exact isGreenJ_of_isGreenD
-  · exact isGreenD_of_isGreenJ
-
-
--- Fact 2.4
-theorem mul_mem_isGreenD_eqvClass_properties
-  [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
-    (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
-    (IsGreenR a (a * b) ∧ IsGreenL b (a * b)) ∧
-    (∃ e ∈ D, e * e = e ∧ IsGreenL a e ∧ IsGreenR b e) := by
-  sorry
-
-
 -- Fact 2.6
 theorem is_group_isGreenH_eqvClass_iff_idempotent
   [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
@@ -567,5 +519,115 @@ theorem is_group_isGreenH_eqvClass_iff_idempotent
     have hLuv_a : IsGreenL (u * v) a := IsGreenL.trans hLuv_v hvH.left
     have hRuv_a : IsGreenR (u * v) a := IsGreenR.trans hRuv_u huH.right
     exact ⟨hLuv_a, hRuv_a⟩
+
+
+lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
+  sorry
+
+lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
+  rcases h with ⟨z, hL, hR⟩
+  rcases hL.left with rfl | ⟨u, hu⟩
+  · rcases hR.left with rfl | ⟨v, hv⟩
+    · exact IsGreenJRel.eq rfl
+    · exact IsGreenJRel.mul_right v hv
+  · rcases hR.left with rfl | ⟨v, hv⟩
+    · exact IsGreenJRel.mul_left u hu
+    · exact IsGreenJRel.mul_both u v (by rw [hu, hv, mul_assoc])
+
+
+lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b := by
+  constructor
+  · exact isGreenJRel_of_isGreenD h
+  · have h_symm : IsGreenD b a := IsGreenD.symm h
+    exact isGreenJRel_of_isGreenD h_symm
+
+-- Fact 2.2
+theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
+  ext a b
+  constructor
+  · exact isGreenJ_of_isGreenD
+  · exact isGreenD_of_isGreenJ
+
+
+lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
+    IsGreenR a (a * b) := by
+  sorry
+
+lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
+    IsGreenL b (a * b) := by
+  sorry
+
+theorem mul_mem_isGreenD_eqvClass_properties
+  [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
+    (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
+    (IsGreenR a (a * b) ∧ IsGreenL b (a * b)) ∧
+    (∃ e ∈ D, e * e = e ∧ IsGreenL a e ∧ IsGreenR b e) := by
+  obtain ⟨x0, hx0⟩ := hD
+  have hDa : IsGreenD a x0 := by have h := ha; rw [hx0] at h; exact h
+  have hDb : IsGreenD b x0 := by have h := hb; rw [hx0] at h; exact h
+  have hDab : IsGreenD (a * b) x0 := by have h := hab; rw [hx0] at h; exact h
+  have h_a_D_ab : IsGreenD a (a * b) := IsGreenD.trans hDa (IsGreenD.symm hDab)
+  have h_b_D_ab : IsGreenD b (a * b) := IsGreenD.trans hDb (IsGreenD.symm hDab)
+  have hR_a_ab : IsGreenR a (a * b) := isGreenR_sr_of_isGreenD_sr h_a_D_ab
+  have hL_b_ab : IsGreenL b (a * b) := isGreenL_sl_of_isGreenD_sl h_b_D_ab
+  refine ⟨⟨hR_a_ab, hL_b_ab⟩, ?_⟩
+  have h_a_dvd : IsGreenRightDvd a (a * b) := hR_a_ab.left
+  have h_b_dvd : IsGreenLeftDvd b (a * b) := hL_b_ab.left
+  rcases h_a_dvd with h_a_eq | ⟨u, hu⟩
+  · rcases h_b_dvd with h_b_eq | ⟨v, hv⟩
+    · use a
+      have hab_eq : a = b := h_a_eq.trans h_b_eq.symm
+      have idem : a * a = a := by
+        calc a * a = a * b := congrArg (fun x => a * x) hab_eq
+             _     = a     := h_a_eq.symm
+      refine ⟨ha, idem, IsGreenL.refl a, ?_⟩
+      rw [hab_eq]
+    · use b
+      have h1 : v * a = b := by
+        calc v * a = v * (a * b) := congrArg (fun x => v * x) h_a_eq
+             _     = b           := hv.symm
+      have idem : b * b = b := by
+        calc b * b = (v * a) * b := congrArg (fun x => x * b) h1.symm
+             _     = v * (a * b) := mul_assoc v a b
+             _     = b           := hv.symm
+      have hLab : IsGreenL a b := ⟨Or.inr ⟨a, h_a_eq⟩, Or.inr ⟨v, h1.symm⟩⟩
+      exact ⟨hb, idem, hLab, IsGreenR.refl b⟩
+  · rcases h_b_dvd with h_b_eq | ⟨v, hv⟩
+    · use a
+      have h2 : b * u = a := by
+        calc b * u = (a * b) * u := congrArg (fun x => x * u) h_b_eq
+             _     = a           := hu.symm
+      have idem : a * a = a := by
+        calc a * a = a * (b * u) := congrArg (fun x => a * x) h2.symm
+             _     = (a * b) * u := (mul_assoc a b u).symm
+             _     = a           := hu.symm
+      have hRba : IsGreenR b a := ⟨Or.inr ⟨b, h_b_eq⟩, Or.inr ⟨u, h2.symm⟩⟩
+      exact ⟨ha, idem, IsGreenL.refl a, hRba⟩
+    · use v * a
+      have he_eq : v * a = b * u := by
+        calc v * a = v * (a * b * u)   := congrArg (fun x => v * x) hu
+             _     = (v * (a * b)) * u := (mul_assoc v (a * b) u).symm
+             _     = b * u             := congrArg (fun x => x * u) hv.symm
+      have idem : (v * a) * (v * a) = v * a := by
+        calc (v * a) * (v * a) = (v * a) * (b * u) := congrArg (fun x => (v * a) * x) he_eq
+             _ = v * (a * (b * u))                 := mul_assoc v a (b * u)
+             _ = v * (a * b * u)                   :=
+              congrArg (fun x => v * x) (mul_assoc a b u).symm
+             _ = v * a                             := congrArg (fun x => v * x) hu.symm
+      have hLae1 : a = a * (v * a) := by
+        calc a = a * b * u   := hu
+             _ = a * (b * u) := mul_assoc a b u
+             _ = a * (v * a) := congrArg (fun x => a * x) he_eq.symm
+      have hLae : IsGreenL a (v * a) := ⟨Or.inr ⟨a, hLae1⟩, Or.inr ⟨v, rfl⟩⟩
+      have hRbe1 : b = (v * a) * b := by
+        calc b = v * (a * b) := hv
+             _ = (v * a) * b := (mul_assoc v a b).symm
+      have hRbe : IsGreenR b (v * a) := ⟨Or.inr ⟨b, hRbe1⟩, Or.inr ⟨u, he_eq⟩⟩
+      have heD : v * a ∈ D := by
+        have hDea : IsGreenD (v * a) a := ⟨a, IsGreenL.symm hLae, IsGreenR.refl a⟩
+        have he_D : IsGreenD (v * a) x0 := IsGreenD.trans hDea hDa
+        rw [hx0]
+        exact he_D
+      exact ⟨heD, idem, hLae, hRbe⟩
 
 end GreensFacts
