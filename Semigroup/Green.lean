@@ -507,7 +507,8 @@ theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop
 
 
 -- Fact 2.4
-theorem mul_mem_isGreenD_eqvClass_properties [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
+theorem mul_mem_isGreenD_eqvClass_properties
+  [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
     (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
     (IsGreenR a (a * b) ∧ IsGreenL b (a * b)) ∧
     (∃ e ∈ D, e * e = e ∧ IsGreenL a e ∧ IsGreenR b e) := by
@@ -515,7 +516,8 @@ theorem mul_mem_isGreenD_eqvClass_properties [Finite S] {D : Set S} (hD : ∃ x,
 
 
 -- Fact 2.6
-theorem is_group_isGreenH_eqvClass_iff_idempotent [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
+theorem is_group_isGreenH_eqvClass_iff_idempotent
+  [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
   (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
   (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by
   obtain ⟨a, rfl⟩ := hH
