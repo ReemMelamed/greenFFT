@@ -163,7 +163,7 @@ theorem nD_pos (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) : 0 < nD D := b
   dsimp [nD]
   split_ifs with hReg
   · apply Finset.card_pos.mpr
-    obtain ⟨e, heD, he_idem⟩ := (is_regular_d_class_iff_exists_idempotent D hD).mp hReg
+    obtain ⟨e, heD, he_idem⟩ := (isRegularDClass_iff_exists_idempotent D hD).mp hReg
     use e
     simp only [Finset.mem_univ, Finset.mem_filter, true_and]
     refine ⟨heD, e, heD, he_idem, ?_⟩
@@ -199,10 +199,11 @@ lemma simon_regular_d_case
     constructor
     · constructor
       · right; use s
-      · right; use a; calc a = a * s * a := hs.symm
-                           _ = a * (s * a) := by rw [mul_assoc]
-    · calc (s * a) * (s * a) = s * (a * s * a) := by simp only [mul_assoc]
-      _ = s * a := by rw [hs]
+      · right; use a
+        rw [← mul_assoc]
+        exact hs.symm
+    · have h_assoc : (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
+      rw [h_assoc, hs]
 
   have h_idem_R : ∀ a ∈ D, ∃ e ∈ IsGreenR.eqvClass a, e * e = e := by
     intro a ha
@@ -211,10 +212,10 @@ lemma simon_regular_d_case
     constructor
     · constructor
       · right; use s
-      · right; use a; calc a = a * s * a := hs.symm
-                           _ = (a * s) * a := by rw [mul_assoc]
-    · calc (a * s) * (a * s) = (a * s * a) * s := by simp only [mul_assoc]
-      _ = a * s := by rw [hs]
+      · right; use a
+        exact hs.symm
+    · have h_assoc : (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
+      rw [h_assoc, hs]
 
   let is_max (x : α) : Prop := ∀ y, y ≤ x
   let is_min (x : α) : Prop := ∀ y, x ≤ y
@@ -244,7 +245,7 @@ lemma simon_regular_d_case
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have h2x : σ.σ y2 x ∈ D := h_range y2 x hy2
         have h1x : σ.σ y1 x ∈ D := h_range y1 x hy1
-        have hL_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ y1 y2) (σ.σ y2 x) h12 h2x
+        have hL_raw := (mul_mem_isGreenD_eqvClass_properties ⟨x₀, hx₀⟩ (σ.σ y1 y2) (σ.σ y2 x) h12 h2x
           (h_prod ▸ h1x)).1.2
         have hL : IsGreenL (σ.σ y2 x) (σ.σ y1 x) := h_prod ▸ hL_raw
         ext z
@@ -280,7 +281,7 @@ lemma simon_regular_d_case
         have hx1 : σ.σ x y1 ∈ D := h_range x y1 hy1
         have h12 : σ.σ y1 y2 ∈ D := h_range y1 y2 h_lt
         have hx2 : σ.σ x y2 ∈ D := h_range x y2 hy2
-        have hR_raw := (mul_mem_green_d_properties ⟨x₀, hx₀⟩ (σ.σ x y1) (σ.σ y1 y2) hx1 h12
+        have hR_raw := (mul_mem_isGreenD_eqvClass_properties ⟨x₀, hx₀⟩ (σ.σ x y1) (σ.σ y1 y2) hx1 h12
           (h_prod.symm ▸ hx2)).1.1
         have hR : IsGreenR (σ.σ x y1) (σ.σ x y2) := h_prod ▸ hR_raw
         ext z
@@ -336,7 +337,7 @@ lemma simon_regular_d_case
         have hab : σ.σ (Classical.choose hy) x * σ.σ x (Classical.choose hz) ∈ D := by
           rw [σ.prop _ _ _ (Classical.choose_spec hy) (Classical.choose_spec hz)]
           exact h_range _ _ (lt_trans (Classical.choose_spec hy) (Classical.choose_spec hz))
-        obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ := mul_mem_green_d_properties ⟨x₀, hx₀⟩
+        obtain ⟨_, ⟨e, _, he_idem, hLe, hRe⟩⟩ := mul_mem_isGreenD_eqvClass_properties ⟨x₀, hx₀⟩
           (σ.σ (Classical.choose hy) x) (σ.σ x (Classical.choose hz)) ha hb hab
         use e
         refine ⟨⟨?_, ?_⟩, he_idem⟩
@@ -410,7 +411,7 @@ lemma simon_regular_d_case
         have he_H_sig : IsGreenH e (σ.σ m x) := ⟨he_L_sig, he_R_sig⟩
         have h_sig_H_e : IsGreenH (σ.σ m x) e := IsGreenH.symm he_H_sig
         have h_class_eq : ∃ a, IsGreenH.eqvClass e = IsGreenH.eqvClass a := ⟨e, rfl⟩
-        have h_group_or := is_group_green_h_iff_idempotent (IsGreenH.eqvClass e) h_class_eq
+        have h_group_or := is_group_isGreenH_eqvClass_iff_idempotent (IsGreenH.eqvClass e) h_class_eq
         have h_group : ∀ u v, u ∈ IsGreenH.eqvClass e → v ∈ IsGreenH.eqvClass e →
           u * v ∈ IsGreenH.eqvClass e := by
           rcases h_group_or with h_empty | ⟨e', he'H, he'idem, h_mul⟩
