@@ -502,15 +502,12 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
   have h_ab_dvd_a : IsGreenRightDvd (a * b) a := Or.inr ⟨b, rfl⟩
   have h_a_dvd_ab : IsGreenRightDvd a (a * b) := by
     rcases h with ⟨z, hL_az, hR_zab⟩
-
     have h_exists_c : ∃ c, z = a * c ∧ IsGreenRightDvd c b := by
       rcases hR_zab.left with rfl | ⟨w, hw⟩
       · exact ⟨b, rfl, Or.inl rfl⟩
       · exact ⟨b * w, by rw [hw, mul_assoc], Or.inr ⟨w, rfl⟩⟩
     rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-
     let R : ℕ → S → S := fun n x => Nat.recOn (motive := fun _ => S) n x (fun _ acc => acc * c)
-
     have h_mul_pull : ∀ m x u, R m (u * x) = u * R m x := by
       intro m x u
       induction m with
@@ -520,25 +517,20 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
           _ = (u * R m x) * c := by rw [ih]
           _ = u * (R m x * c) := mul_assoc u (R m x) c
           _ = u * R (m + 1) x := rfl
-
     let f : ℕ → S := fun n => R n a
-
     have h_pigeonhole : ∃ i j : ℕ, i < j ∧ f i = f j := by
       obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite f
       rcases lt_trichotomy i j with h_lt | h_eq | h_gt
       · exact ⟨i, j, h_lt, heq⟩
       · exact False.elim (h_neq h_eq)
       · exact ⟨j, i, h_gt, heq.symm⟩
-
     rcases h_pigeonhole with ⟨i, j, hij, heq⟩
-
     have hL_all : ∀ n, IsGreenL a (f n) := by
       intro n
       induction n with
       | zero => exact IsGreenL.refl a
       | succ n ih => exact IsGreenL.trans hL_az (IsGreenL.mul_right c ih)
     have hL_aci : IsGreenL a (f i) := hL_all i
-
     have h_a_eq_ack : ∃ k > 0, a = R k a := by
       let k := j - i
       have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
@@ -565,11 +557,8 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
           _ = u * R k (f i) := by rw [h_fi_k]
           _ = R k (u * f i) := (h_mul_pull k (f i) u).symm
           _ = R k a := by rw [← hu]
-
     rcases h_a_eq_ack with ⟨k, hk_pos, hk_eq⟩
-
     obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-
     have h_pull_c : ∀ n x, R (n + 1) x = R n (x * c) := by
       intro n x
       induction n with
@@ -578,7 +567,6 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
         calc R (n + 1 + 1) x = R (n + 1) x * c := rfl
           _ = R n (x * c) * c := by rw [ih]
           _ = R (n + 1) (x * c) := rfl
-
     rcases hc_dvd with hc_eq_b | ⟨w, hw⟩
     · rcases m with _ | m_pred
       · have h_final : a = a * b := by
@@ -601,7 +589,6 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
           _ = R m ((a * b) * w) := congrArg (R m) (mul_assoc a b w).symm
           _ = (a * b) * R m w := h_mul_pull m w (a * b)
       exact Or.inr ⟨R m w, h_final⟩
-
   exact ⟨h_a_dvd_ab, h_ab_dvd_a⟩
 
 lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
@@ -610,15 +597,12 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
   have h_b_dvd_ab : IsGreenLeftDvd b (a * b) := by
     rcases h with ⟨z', hL_bz', hR_z'ab⟩
     obtain ⟨z, hR_bz, hL_zab⟩ := isGreenL_commutes_isGreenR hL_bz' hR_z'ab
-
     have h_exists_c : ∃ c, z = c * b ∧ IsGreenLeftDvd c a := by
       rcases hL_zab.left with rfl | ⟨w, hw⟩
       · exact ⟨a, rfl, Or.inl rfl⟩
       · exact ⟨w * a, by rw [hw, ← mul_assoc], Or.inr ⟨w, rfl⟩⟩
     rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-
     let L : ℕ → S → S := fun n x => Nat.recOn (motive := fun _ => S) n x (fun _ acc => c * acc)
-
     have h_mul_pull : ∀ m x v, L m (x * v) = L m x * v := by
       intro m x v
       induction m with
@@ -628,25 +612,20 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
           _ = c * (L m x * v) := by rw [ih]
           _ = (c * L m x) * v := (mul_assoc c (L m x) v).symm
           _ = L (m + 1) x * v := rfl
-
     let g : ℕ → S := fun n => L n b
-
     have h_pigeonhole : ∃ i j : ℕ, i < j ∧ g i = g j := by
       obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite g
       rcases lt_trichotomy i j with h_lt | h_eq | h_gt
       · exact ⟨i, j, h_lt, heq⟩
       · exact False.elim (h_neq h_eq)
       · exact ⟨j, i, h_gt, heq.symm⟩
-
     rcases h_pigeonhole with ⟨i, j, hij, heq⟩
-
     have hR_all : ∀ n, IsGreenR b (g n) := by
       intro n
       induction n with
       | zero => exact IsGreenR.refl b
       | succ n ih => exact IsGreenR.trans hR_bz (IsGreenR.mul_left c ih)
     have hR_cib : IsGreenR b (g i) := hR_all i
-
     have h_b_eq_ckb : ∃ k > 0, b = L k b := by
       let k := j - i
       have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
@@ -673,11 +652,8 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
           _ = L k (g i) * v_outer := by rw [h_gi_k]
           _ = L k (g i * v_outer) := (h_mul_pull k (g i) v_outer).symm
           _ = L k b := by rw [← hv]
-
     rcases h_b_eq_ckb with ⟨k, hk_pos, hk_eq⟩
-
     obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-
     have h_pull_c : ∀ n x, L (n + 1) x = L n (c * x) := by
       intro n x
       induction n with
@@ -686,7 +662,6 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
         calc L (n + 1 + 1) x = c * L (n + 1) x := rfl
           _ = c * L n (c * x) := by rw [ih]
           _ = L (n + 1) (c * x) := rfl
-
     rcases hc_dvd with hc_eq_a | ⟨w, hw⟩
     · rcases m with _ | m_pred
       · have h_final : b = a * b := by
@@ -709,7 +684,6 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
           _ = L m (w * (a * b)) := congrArg (L m) (mul_assoc w a b)
           _ = L m w * (a * b) := h_mul_pull m w (a * b)
       exact Or.inr ⟨L m w, h_final⟩
-
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
 
 theorem mul_mem_isGreenD_eqvClass_properties
