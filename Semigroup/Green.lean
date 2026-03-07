@@ -335,6 +335,74 @@ end GreenClasses
 
 
 
+section FinitePowers
+
+def rightMulSeq (a c : S) : ℕ → S
+  | 0 => a
+  | n + 1 => rightMulSeq a c n * c
+
+lemma rightMulSeq_mul_pull (c : S) (m : ℕ) (x u : S) :
+    rightMulSeq (u * x) c m = u * rightMulSeq x c m := by
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    calc rightMulSeq (u * x) c (m + 1) = rightMulSeq (u * x) c m * c := rfl
+      _ = (u * rightMulSeq x c m) * c := by rw [ih]
+      _ = u * (rightMulSeq x c m * c) := mul_assoc u (rightMulSeq x c m) c
+      _ = u * rightMulSeq x c (m + 1) := rfl
+
+lemma rightMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
+    rightMulSeq x c (n + 1) = rightMulSeq (x * c) c n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    calc rightMulSeq x c (n + 1 + 1) = rightMulSeq x c (n + 1) * c := rfl
+      _ = rightMulSeq (x * c) c n * c := by rw [ih]
+      _ = rightMulSeq (x * c) c (n + 1) := rfl
+
+lemma rightMulSeq_pigeonhole [Finite S] (a c : S) :
+    ∃ i j : ℕ, i < j ∧ rightMulSeq a c i = rightMulSeq a c j := by
+  obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite (rightMulSeq a c)
+  rcases lt_trichotomy i j with h_lt | h_eq | h_gt
+  · exact ⟨i, j, h_lt, heq⟩
+  · exact False.elim (h_neq h_eq)
+  · exact ⟨j, i, h_gt, heq.symm⟩
+
+def leftMulSeq (c a : S) : ℕ → S
+  | 0 => a
+  | n + 1 => c * leftMulSeq c a n
+
+lemma leftMulSeq_mul_pull (c : S) (m : ℕ) (x v : S) :
+    leftMulSeq c (x * v) m = leftMulSeq c x m * v := by
+  induction m with
+  | zero => rfl
+  | succ m ih =>
+    calc leftMulSeq c (x * v) (m + 1) = c * leftMulSeq c (x * v) m := rfl
+      _ = c * (leftMulSeq c x m * v) := by rw [ih]
+      _ = (c * leftMulSeq c x m) * v := (mul_assoc c (leftMulSeq c x m) v).symm
+      _ = leftMulSeq c x (m + 1) * v := rfl
+
+lemma leftMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
+    leftMulSeq c x (n + 1) = leftMulSeq c (c * x) n := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    calc leftMulSeq c x (n + 1 + 1) = c * leftMulSeq c x (n + 1) := rfl
+      _ = c * leftMulSeq c (c * x) n := by rw [ih]
+      _ = leftMulSeq c (c * x) (n + 1) := rfl
+
+lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :
+    ∃ i j : ℕ, i < j ∧ leftMulSeq c a i = leftMulSeq c a j := by
+  obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite (leftMulSeq c a)
+  rcases lt_trichotomy i j with h_lt | h_eq | h_gt
+  · exact ⟨i, j, h_lt, heq⟩
+  · exact False.elim (h_neq h_eq)
+  · exact ⟨j, i, h_gt, heq.symm⟩
+
+end FinitePowers
+
+
+
 section GreensFacts
 
 -- Fact 2.3
@@ -507,88 +575,63 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
       · exact ⟨b, rfl, Or.inl rfl⟩
       · exact ⟨b * w, by rw [hw, mul_assoc], Or.inr ⟨w, rfl⟩⟩
     rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-    let R : ℕ → S → S := fun n x => Nat.recOn (motive := fun _ => S) n x (fun _ acc => acc * c)
-    have h_mul_pull : ∀ m x u, R m (u * x) = u * R m x := by
-      intro m x u
-      induction m with
-      | zero => rfl
-      | succ m ih =>
-        calc R (m + 1) (u * x) = R m (u * x) * c := rfl
-          _ = (u * R m x) * c := by rw [ih]
-          _ = u * (R m x * c) := mul_assoc u (R m x) c
-          _ = u * R (m + 1) x := rfl
-    let f : ℕ → S := fun n => R n a
-    have h_pigeonhole : ∃ i j : ℕ, i < j ∧ f i = f j := by
-      obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite f
-      rcases lt_trichotomy i j with h_lt | h_eq | h_gt
-      · exact ⟨i, j, h_lt, heq⟩
-      · exact False.elim (h_neq h_eq)
-      · exact ⟨j, i, h_gt, heq.symm⟩
-    rcases h_pigeonhole with ⟨i, j, hij, heq⟩
-    have hL_all : ∀ n, IsGreenL a (f n) := by
+    rcases rightMulSeq_pigeonhole a c with ⟨i, j, hij, heq⟩
+    have hL_all : ∀ n, IsGreenL a (rightMulSeq a c n) := by
       intro n
       induction n with
       | zero => exact IsGreenL.refl a
       | succ n ih => exact IsGreenL.trans hL_az (IsGreenL.mul_right c ih)
-    have hL_aci : IsGreenL a (f i) := hL_all i
-    have h_a_eq_ack : ∃ k > 0, a = R k a := by
+    have hL_aci : IsGreenL a (rightMulSeq a c i) := hL_all i
+    have h_a_eq_ack : ∃ k > 0, a = rightMulSeq a c k := by
       let k := j - i
       have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
       have hk_eq_j : i + k = j := Nat.add_sub_of_le (le_of_lt hij)
-      have h_shift : ∀ m, f (i + m) = R m (f i) := by
+      have h_shift : ∀ m, rightMulSeq a c (i + m) = rightMulSeq (rightMulSeq a c i) c m := by
         intro m
         induction m with
         | zero => rfl
         | succ m ih =>
-          calc f (i + (m + 1)) = f (i + m + 1) := rfl
-            _ = f (i + m) * c := rfl
-            _ = R m (f i) * c := by rw [ih]
-            _ = R (m + 1) (f i) := rfl
-      have h_fi_k : R k (f i) = f i := by
-        calc R k (f i) = f (i + k) := (h_shift k).symm
-          _ = f j := by rw [hk_eq_j]
-          _ = f i := heq.symm
+          calc rightMulSeq a c (i + (m + 1)) = rightMulSeq a c (i + m + 1) := rfl
+            _ = rightMulSeq a c (i + m) * c := rfl
+            _ = rightMulSeq (rightMulSeq a c i) c m * c := by rw [ih]
+            _ = rightMulSeq (rightMulSeq a c i) c (m + 1) := rfl
+      have h_fi_k : rightMulSeq (rightMulSeq a c i) c k = rightMulSeq a c i := by
+        calc rightMulSeq (rightMulSeq a c i) c k = rightMulSeq a c (i + k) := (h_shift k).symm
+          _ = rightMulSeq a c j := by rw [hk_eq_j]
+          _ = rightMulSeq a c i := heq.symm
       use k, hk_pos
       rcases hL_aci.left with heq_a | ⟨u, hu⟩
-      · calc a = f i := heq_a
-          _ = R k (f i) := h_fi_k.symm
-          _ = R k a := by rw [heq_a]
-      · calc a = u * f i := hu
-          _ = u * R k (f i) := by rw [h_fi_k]
-          _ = R k (u * f i) := (h_mul_pull k (f i) u).symm
-          _ = R k a := by rw [← hu]
+      · calc a = rightMulSeq a c i := heq_a
+          _ = rightMulSeq (rightMulSeq a c i) c k := h_fi_k.symm
+          _ = rightMulSeq a c k := by rw [← heq_a]
+      · calc a = u * rightMulSeq a c i := hu
+          _ = u * rightMulSeq (rightMulSeq a c i) c k := by rw [h_fi_k]
+          _ = rightMulSeq (u * rightMulSeq a c i) c k := (rightMulSeq_mul_pull c k _ u).symm
+          _ = rightMulSeq a c k := by rw [← hu]
     rcases h_a_eq_ack with ⟨k, hk_pos, hk_eq⟩
     obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-    have h_pull_c : ∀ n x, R (n + 1) x = R n (x * c) := by
-      intro n x
-      induction n with
-      | zero => rfl
-      | succ n ih =>
-        calc R (n + 1 + 1) x = R (n + 1) x * c := rfl
-          _ = R n (x * c) * c := by rw [ih]
-          _ = R (n + 1) (x * c) := rfl
     rcases hc_dvd with hc_eq_b | ⟨w, hw⟩
     · rcases m with _ | m_pred
       · have h_final : a = a * b := by
-          calc a = R (0 + 1) a := hk_eq
-            _ = R 0 (a * c) := h_pull_c 0 a
-            _ = R 0 (a * b) := congrArg (fun x => R 0 (a * x)) hc_eq_b
+          calc a = rightMulSeq a c (0 + 1) := hk_eq
+            _ = rightMulSeq (a * c) c 0 := rightMulSeq_pull_c c 0 a
+            _ = rightMulSeq (a * b) c 0 := congrArg (fun x => rightMulSeq (a * x) c 0) hc_eq_b
             _ = a * b := rfl
         exact Or.inl h_final
-      · have h_final : a = (a * b) * R m_pred c := by
-          calc a = R (m_pred + 1 + 1) a := hk_eq
-            _ = R (m_pred + 1) (a * c) := h_pull_c (m_pred + 1) a
-            _ = R (m_pred + 1) (a * b) := congrArg (fun x => R (m_pred + 1) (a * x)) hc_eq_b
-            _ = R m_pred ((a * b) * c) := h_pull_c m_pred (a * b)
-            _ = (a * b) * R m_pred c := h_mul_pull m_pred c (a * b)
-        exact Or.inr ⟨R m_pred c, h_final⟩
-    · have h_final : a = (a * b) * R m w := by
-        calc a = R (m + 1) a := hk_eq
-          _ = R m (a * c) := h_pull_c m a
-          _ = R m (a * (b * w)) := congrArg (fun x => R m (a * x)) hw
-          _ = R m ((a * b) * w) := congrArg (R m) (mul_assoc a b w).symm
-          _ = (a * b) * R m w := h_mul_pull m w (a * b)
-      exact Or.inr ⟨R m w, h_final⟩
+      · have h_final : a = (a * b) * rightMulSeq c c m_pred := by
+          calc a = rightMulSeq a c (m_pred + 1 + 1) := hk_eq
+            _ = rightMulSeq (a * c) c (m_pred + 1) := rightMulSeq_pull_c c (m_pred + 1) a
+            _ = rightMulSeq (a * b) c (m_pred + 1) := congrArg (fun x => rightMulSeq (a * x) c (m_pred + 1)) hc_eq_b
+            _ = rightMulSeq ((a * b) * c) c m_pred := rightMulSeq_pull_c c m_pred (a * b)
+            _ = (a * b) * rightMulSeq c c m_pred := rightMulSeq_mul_pull c m_pred c (a * b)
+        exact Or.inr ⟨rightMulSeq c c m_pred, h_final⟩
+    · have h_final : a = (a * b) * rightMulSeq w c m := by
+        calc a = rightMulSeq a c (m + 1) := hk_eq
+          _ = rightMulSeq (a * c) c m := rightMulSeq_pull_c c m a
+          _ = rightMulSeq (a * (b * w)) c m := congrArg (fun x => rightMulSeq (a * x) c m) hw
+          _ = rightMulSeq ((a * b) * w) c m := congrArg (fun x => rightMulSeq x c m) (mul_assoc a b w).symm
+          _ = (a * b) * rightMulSeq w c m := rightMulSeq_mul_pull c m w (a * b)
+      exact Or.inr ⟨rightMulSeq w c m, h_final⟩
   exact ⟨h_a_dvd_ab, h_ab_dvd_a⟩
 
 lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
@@ -602,88 +645,63 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
       · exact ⟨a, rfl, Or.inl rfl⟩
       · exact ⟨w * a, by rw [hw, ← mul_assoc], Or.inr ⟨w, rfl⟩⟩
     rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-    let L : ℕ → S → S := fun n x => Nat.recOn (motive := fun _ => S) n x (fun _ acc => c * acc)
-    have h_mul_pull : ∀ m x v, L m (x * v) = L m x * v := by
-      intro m x v
-      induction m with
-      | zero => rfl
-      | succ m ih =>
-        calc L (m + 1) (x * v) = c * L m (x * v) := rfl
-          _ = c * (L m x * v) := by rw [ih]
-          _ = (c * L m x) * v := (mul_assoc c (L m x) v).symm
-          _ = L (m + 1) x * v := rfl
-    let g : ℕ → S := fun n => L n b
-    have h_pigeonhole : ∃ i j : ℕ, i < j ∧ g i = g j := by
-      obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite g
-      rcases lt_trichotomy i j with h_lt | h_eq | h_gt
-      · exact ⟨i, j, h_lt, heq⟩
-      · exact False.elim (h_neq h_eq)
-      · exact ⟨j, i, h_gt, heq.symm⟩
-    rcases h_pigeonhole with ⟨i, j, hij, heq⟩
-    have hR_all : ∀ n, IsGreenR b (g n) := by
+    rcases leftMulSeq_pigeonhole c b with ⟨i, j, hij, heq⟩
+    have hR_all : ∀ n, IsGreenR b (leftMulSeq c b n) := by
       intro n
       induction n with
       | zero => exact IsGreenR.refl b
       | succ n ih => exact IsGreenR.trans hR_bz (IsGreenR.mul_left c ih)
-    have hR_cib : IsGreenR b (g i) := hR_all i
-    have h_b_eq_ckb : ∃ k > 0, b = L k b := by
+    have hR_cib : IsGreenR b (leftMulSeq c b i) := hR_all i
+    have h_b_eq_ckb : ∃ k > 0, b = leftMulSeq c b k := by
       let k := j - i
       have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
       have hk_eq_j : i + k = j := Nat.add_sub_of_le (le_of_lt hij)
-      have h_shift : ∀ m, g (i + m) = L m (g i) := by
+      have h_shift : ∀ m, leftMulSeq c b (i + m) = leftMulSeq c (leftMulSeq c b i) m := by
         intro m
         induction m with
         | zero => rfl
         | succ m ih =>
-          calc g (i + (m + 1)) = g (i + m + 1) := rfl
-            _ = c * g (i + m) := rfl
-            _ = c * L m (g i) := by rw [ih]
-            _ = L (m + 1) (g i) := rfl
-      have h_gi_k : L k (g i) = g i := by
-        calc L k (g i) = g (i + k) := (h_shift k).symm
-          _ = g j := by rw [hk_eq_j]
-          _ = g i := heq.symm
+          calc leftMulSeq c b (i + (m + 1)) = leftMulSeq c b (i + m + 1) := rfl
+            _ = c * leftMulSeq c b (i + m) := rfl
+            _ = c * leftMulSeq c (leftMulSeq c b i) m := by rw [ih]
+            _ = leftMulSeq c (leftMulSeq c b i) (m + 1) := rfl
+      have h_gi_k : leftMulSeq c (leftMulSeq c b i) k = leftMulSeq c b i := by
+        calc leftMulSeq c (leftMulSeq c b i) k = leftMulSeq c b (i + k) := (h_shift k).symm
+          _ = leftMulSeq c b j := by rw [hk_eq_j]
+          _ = leftMulSeq c b i := heq.symm
       use k, hk_pos
       rcases hR_cib.left with heq_b | ⟨v_outer, hv⟩
-      · calc b = g i := heq_b
-          _ = L k (g i) := h_gi_k.symm
-          _ = L k b := by rw [heq_b]
-      · calc b = g i * v_outer := hv
-          _ = L k (g i) * v_outer := by rw [h_gi_k]
-          _ = L k (g i * v_outer) := (h_mul_pull k (g i) v_outer).symm
-          _ = L k b := by rw [← hv]
+      · calc b = leftMulSeq c b i := heq_b
+          _ = leftMulSeq c (leftMulSeq c b i) k := h_gi_k.symm
+          _ = leftMulSeq c b k := by rw [← heq_b]
+      · calc b = leftMulSeq c b i * v_outer := hv
+          _ = leftMulSeq c (leftMulSeq c b i) k * v_outer := by rw [h_gi_k]
+          _ = leftMulSeq c (leftMulSeq c b i * v_outer) k := (leftMulSeq_mul_pull c k _ v_outer).symm
+          _ = leftMulSeq c b k := by rw [← hv]
     rcases h_b_eq_ckb with ⟨k, hk_pos, hk_eq⟩
     obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-    have h_pull_c : ∀ n x, L (n + 1) x = L n (c * x) := by
-      intro n x
-      induction n with
-      | zero => rfl
-      | succ n ih =>
-        calc L (n + 1 + 1) x = c * L (n + 1) x := rfl
-          _ = c * L n (c * x) := by rw [ih]
-          _ = L (n + 1) (c * x) := rfl
     rcases hc_dvd with hc_eq_a | ⟨w, hw⟩
     · rcases m with _ | m_pred
       · have h_final : b = a * b := by
-          calc b = L (0 + 1) b := hk_eq
-            _ = L 0 (c * b) := h_pull_c 0 b
-            _ = L 0 (a * b) := congrArg (fun x => L 0 (x * b)) hc_eq_a
+          calc b = leftMulSeq c b (0 + 1) := hk_eq
+            _ = leftMulSeq c (c * b) 0 := leftMulSeq_pull_c c 0 b
+            _ = leftMulSeq c (a * b) 0 := congrArg (fun x => leftMulSeq c (x * b) 0) hc_eq_a
             _ = a * b := rfl
         exact Or.inl h_final
-      · have h_final : b = L m_pred c * (a * b) := by
-          calc b = L (m_pred + 1 + 1) b := hk_eq
-            _ = L (m_pred + 1) (c * b) := h_pull_c (m_pred + 1) b
-            _ = L (m_pred + 1) (a * b) := congrArg (fun x => L (m_pred + 1) (x * b)) hc_eq_a
-            _ = L m_pred (c * (a * b)) := h_pull_c m_pred (a * b)
-            _ = L m_pred c * (a * b) := h_mul_pull m_pred c (a * b)
-        exact Or.inr ⟨L m_pred c, h_final⟩
-    · have h_final : b = L m w * (a * b) := by
-        calc b = L (m + 1) b := hk_eq
-          _ = L m (c * b) := h_pull_c m b
-          _ = L m ((w * a) * b) := congrArg (fun x => L m (x * b)) hw
-          _ = L m (w * (a * b)) := congrArg (L m) (mul_assoc w a b)
-          _ = L m w * (a * b) := h_mul_pull m w (a * b)
-      exact Or.inr ⟨L m w, h_final⟩
+      · have h_final : b = leftMulSeq c c m_pred * (a * b) := by
+          calc b = leftMulSeq c b (m_pred + 1 + 1) := hk_eq
+            _ = leftMulSeq c (c * b) (m_pred + 1) := leftMulSeq_pull_c c (m_pred + 1) b
+            _ = leftMulSeq c (a * b) (m_pred + 1) := congrArg (fun x => leftMulSeq c (x * b) (m_pred + 1)) hc_eq_a
+            _ = leftMulSeq c (c * (a * b)) m_pred := leftMulSeq_pull_c c m_pred (a * b)
+            _ = leftMulSeq c c m_pred * (a * b) := leftMulSeq_mul_pull c m_pred c (a * b)
+        exact Or.inr ⟨leftMulSeq c c m_pred, h_final⟩
+    · have h_final : b = leftMulSeq c w m * (a * b) := by
+        calc b = leftMulSeq c b (m + 1) := hk_eq
+          _ = leftMulSeq c (c * b) m := leftMulSeq_pull_c c m b
+          _ = leftMulSeq c ((w * a) * b) m := congrArg (fun x => leftMulSeq c (x * b) m) hw
+          _ = leftMulSeq c (w * (a * b)) m := congrArg (leftMulSeq c · m) (mul_assoc w a b)
+          _ = leftMulSeq c w m * (a * b) := leftMulSeq_mul_pull c m w (a * b)
+      exact Or.inr ⟨leftMulSeq c w m, h_final⟩
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
 
 theorem mul_mem_isGreenD_eqvClass_properties
@@ -740,8 +758,7 @@ theorem mul_mem_isGreenD_eqvClass_properties
       have idem : (v * a) * (v * a) = v * a := by
         calc (v * a) * (v * a) = (v * a) * (b * u) := congrArg (fun x => (v * a) * x) he_eq
              _ = v * (a * (b * u))                 := mul_assoc v a (b * u)
-             _ = v * (a * b * u)                   :=
-              congrArg (fun x => v * x) (mul_assoc a b u).symm
+             _ = v * (a * b * u)                   := congrArg (fun x => v * x) (mul_assoc a b u).symm
              _ = v * a                             := congrArg (fun x => v * x) hu.symm
       have hLae1 : a = a * (v * a) := by
         calc a = a * b * u   := hu
@@ -758,7 +775,6 @@ theorem mul_mem_isGreenD_eqvClass_properties
         rw [hx0]
         exact he_D
       exact ⟨heD, idem, hLae, hRbe⟩
-
 
 -- Fact 2.6
 theorem is_group_isGreenH_eqvClass_iff_idempotent
