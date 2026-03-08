@@ -335,7 +335,7 @@ end GreenClasses
 
 
 
-section FinitePowers
+section Helpers
 
 def rightMulSeq (a c : S) : ℕ → S
   | 0 => a
@@ -666,11 +666,71 @@ lemma isGreenD_of_right_right [Finite S] {a b v y : S} (h1 : a = b * v) (h2 : b 
   IsGreenD a b := by
   exact ⟨a, IsGreenL.refl a, ⟨Or.inr ⟨v, h1⟩, Or.inr ⟨y, h2⟩⟩⟩
 
-end FinitePowers
+lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}
+    (hReg : IsGreenRegular a) : ∃ e ∈ IsGreenL.eqvClass a, e * e = e := by
+  obtain ⟨s, hs⟩ := hReg
+  use s * a
+  constructor
+  · constructor
+    · right; use s
+    · right; use a
+      rw [← mul_assoc]
+      exact hs.symm
+  · have h_assoc : (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
+    rw [h_assoc, hs]
 
-section GreensFacts
+lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
+    (hReg : IsGreenRegular a) : ∃ e ∈ IsGreenR.eqvClass a, e * e = e := by
+  obtain ⟨s, hs⟩ := hReg
+  use a * s
+  constructor
+  · constructor
+    · right; use s
+    · right; use a
+      exact hs.symm
+  · have h_assoc : (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
+    rw [h_assoc, hs]
 
--- Fact 2.3
+lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
+    (hab : IsGreenH a b) (ha : a * a = a) (hb : b * b = b) : a = b := by
+  have h_ab_eq_b : a * b = b := by
+    rcases hab.right.right with rfl | ⟨x, hx⟩
+    · exact hb
+    · calc a * b = a * (a * x) := by rw [hx]
+        _ = (a * a) * x := (mul_assoc a a x).symm
+        _ = a * x := by rw [ha]
+        _ = b := hx.symm
+  have h_ab_eq_a : a * b = a := by
+    rcases hab.left.left with rfl | ⟨y, hy⟩
+    · exact ha
+    · calc a * b = (y * b) * b := by rw [hy]
+        _ = y * (b * b) := mul_assoc y b b
+        _ = y * b := by rw [hb]
+        _ = a := hy.symm
+  rw [← h_ab_eq_a, h_ab_eq_b]
+
+lemma mul_eq_self_of_isGreenH_idempotent {S : Type*} [Semigroup S] {a e : S}
+    (hae : IsGreenH a e) (he : e * e = e) : a * e = a ∧ e * a = a := by
+  constructor
+  · rcases hae.left.left with rfl | ⟨w, hw⟩
+    · exact he
+    · calc a * e = (w * e) * e := by rw [hw]
+        _ = w * (e * e) := mul_assoc w e e
+        _ = w * e := by rw [he]
+        _ = a := hw.symm
+  · rcases hae.right.left with rfl | ⟨w, hw⟩
+    · exact he
+    · calc e * a = e * (e * w) := by rw [hw]
+        _ = (e * e) * w := (mul_assoc e e w).symm
+        _ = e * w := by rw [he]
+        _ = a := hw.symm
+
+end Helpers
+
+
+
+section GreensTheorems
+
 theorem isRegularDClass_iff_exists_idempotent [Finite S]
   (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
@@ -711,7 +771,6 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
     · exact ⟨u, hy_uz⟩
     · use u * q
       rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
-
 
 noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
     IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
@@ -789,7 +848,6 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
       have hL : IsGreenL (w * y) a := IsGreenL.trans hL1 (IsGreenL.trans hy.left (IsGreenL.symm h))
       exact ⟨hL, hR⟩
 
--- Fact 2.5
 open Classical in
 theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b) :
     Fintype.card (IsGreenH.eqvClass a) = Fintype.card (IsGreenH.eqvClass b) := by
@@ -839,7 +897,6 @@ lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b := by
   · have h_symm : IsGreenD b a := IsGreenD.symm h
     exact isGreenJRel_of_isGreenD h_symm
 
--- Fact 2.2
 theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
   ext a b
   constructor
@@ -1062,7 +1119,6 @@ theorem mul_mem_isGreenD_eqvClass_properties
         exact he_D
       exact ⟨heD, idem, hLae, hRbe⟩
 
--- Fact 2.6
 theorem is_group_isGreenH_eqvClass_iff_idempotent
   [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
   (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
@@ -1115,4 +1171,4 @@ theorem is_group_isGreenH_eqvClass_iff_idempotent
     have hRuv_a : IsGreenR (u * v) a := IsGreenR.trans hRuv_u huH.right
     exact ⟨hLuv_a, hRuv_a⟩
 
-end GreensFacts
+end GreensTheorems
