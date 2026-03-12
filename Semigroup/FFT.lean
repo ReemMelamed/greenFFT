@@ -4,6 +4,7 @@ import Mathlib.Data.Finset.Max
 import Mathlib.Tactic
 
 import Semigroup.Green
+set_option linter.style.longLine false
 
 /-!
 # The Factorisation Forest Theorem
