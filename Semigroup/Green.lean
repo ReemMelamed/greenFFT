@@ -12,8 +12,8 @@ variable {S : Type*} [Semigroup S]
 
 section GreenDefinitions
 
-def IsGreenLeftDvd (a b : S) : Prop := a = b ∨ ∃ z, a = z * b
-def IsGreenRightDvd (a b : S) : Prop := a = b ∨ ∃ z, a = b * z
+def IsGreenLeftDvd (a b : S) := a = b ∨ ∃ z, a = z * b
+def IsGreenRightDvd (a b : S) := a = b ∨ ∃ z, a = b * z
 
 inductive IsGreenJRel (a b : S) : Prop
   | eq (h : a = b)
@@ -21,11 +21,11 @@ inductive IsGreenJRel (a b : S) : Prop
   | mul_right (v : S) (h : a = b * v)
   | mul_both (u v : S) (h : a = u * b * v)
 
-def IsGreenL (a b : S) : Prop := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
-def IsGreenR (a b : S) : Prop := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
-def IsGreenH (a b : S) : Prop := IsGreenL a b ∧ IsGreenR a b
-def IsGreenD (a b : S) : Prop := ∃ z, IsGreenL a z ∧ IsGreenR z b
-def IsGreenJ (a b : S) : Prop := IsGreenJRel a b ∧ IsGreenJRel b a
+def IsGreenL (a b : S) := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
+def IsGreenR (a b : S) := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
+def IsGreenH (a b : S) := IsGreenL a b ∧ IsGreenR a b
+def IsGreenD (a b : S) := ∃ z, IsGreenL a z ∧ IsGreenR z b
+def IsGreenJ (a b : S) := IsGreenJRel a b ∧ IsGreenJRel b a
 
 end GreenDefinitions
 
