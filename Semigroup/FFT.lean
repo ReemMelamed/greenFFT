@@ -1,3 +1,5 @@
+import Mathlib.Algebra.Group.Basic
+import Mathlib.Data.Fintype.Card
 import Mathlib.Order.Basic
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Finset.Max
@@ -180,7 +182,7 @@ end nD
 
 section RegularDClassCase
 
-variable {S α : Type*} [Semigroup S] [Fintype S] [LinearOrder α] [Fintype α] [Nonempty α]
+variable {S α : Type*} [Semigroup S] [LinearOrder α]
 
 structure SimonContext (S α : Type*) [Semigroup S] [Fintype S] [LinearOrder α] where
   σ : MultiplicativeLabeling S α
@@ -190,39 +192,34 @@ structure SimonContext (S α : Type*) [Semigroup S] [Fintype S] [LinearOrder α]
   hReg : IsRegularDClass D
   h_range : ∀ x y, x < y → σ.σ x y ∈ D
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 def is_max (x : α) : Prop := ∀ y, y ≤ x
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 def is_min (x : α) : Prop := ∀ y, x ≤ y
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 lemma exists_lt_of_not_min {x : α} (h : ¬ is_min x) : ∃ y, y < x := by
   by_contra hc; push_neg at hc; exact h hc
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 lemma exists_gt_of_not_max {x : α} (h : ¬ is_max x) : ∃ y, x < y := by
   by_contra hc; push_neg at hc; exact h hc
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 open Classical in
 noncomputable def get_lt (x : α) (h : ¬ is_min x) : α :=
   Classical.choose (exists_lt_of_not_min h)
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 lemma get_lt_prop (x : α) (h : ¬ is_min x) : get_lt x h < x :=
   Classical.choose_spec (exists_lt_of_not_min h)
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 open Classical in
 noncomputable def get_gt (x : α) (h : ¬ is_max x) : α :=
   Classical.choose (exists_gt_of_not_max h)
 
-omit [Fintype S] [Fintype α] [Nonempty α] in
 lemma get_gt_prop (x : α) (h : ¬ is_max x) : x < get_gt x h :=
   Classical.choose_spec (exists_gt_of_not_max h)
 
-omit [Fintype α] [Nonempty α] in
+
+section WithFintypeS
+variable [Fintype S]
+
 open Classical in
 noncomputable def L_of (ctx : SimonContext S α) (x : α) : Set S :=
   if h_min : is_min x then
@@ -234,7 +231,6 @@ noncomputable def L_of (ctx : SimonContext S α) (x : α) : Set S :=
   else
     IsGreenL.eqvClass (ctx.σ.σ (get_lt x h_min) x)
 
-omit [Fintype α] [Nonempty α] in
 open Classical in
 noncomputable def R_of (ctx : SimonContext S α) (x : α) : Set S :=
   if h_max : is_max x then
@@ -247,11 +243,9 @@ noncomputable def R_of (ctx : SimonContext S α) (x : α) : Set S :=
   else
     IsGreenR.eqvClass (ctx.σ.σ x (get_gt x h_max))
 
-omit [Fintype α] [Nonempty α] in
 noncomputable def H_of (ctx : SimonContext S α) (x : α) : Set S :=
   L_of ctx x ∩ R_of ctx x
 
-omit [Fintype α] [Nonempty α] in
 lemma L_of_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_min : ¬ is_min x) (hy1 : y1 < x) (hy2 : y2 < x) :
     IsGreenL.eqvClass (ctx.σ.σ y1 x) = IsGreenL.eqvClass (ctx.σ.σ y2 x) := by
   wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
@@ -269,7 +263,6 @@ lemma L_of_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_min : �
       · intro hz; exact IsGreenL.trans hz (IsGreenL.symm hL)
       · intro hz; exact IsGreenL.trans hz hL
 
-omit [Fintype α] [Nonempty α] in
 lemma R_of_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_max : ¬ is_max x) (hy1 : x < y1) (hy2 : x < y2) :
     IsGreenR.eqvClass (ctx.σ.σ x y1) = IsGreenR.eqvClass (ctx.σ.σ x y2) := by
   wlog h_le : y1 ≤ y2 generalizing y1 y2 hy1 hy2
@@ -287,7 +280,6 @@ lemma R_of_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_max : �
       · intro hz; exact IsGreenR.trans hz hR
       · intro hz; exact IsGreenR.trans hz (IsGreenR.symm hR)
 
-omit [Fintype α] [Nonempty α] in
 lemma H_of_has_idempotent (ctx : SimonContext S α) (x : α) :
     ∃ e_id : S, e_id ∈ H_of ctx x ∧ e_id * e_id = e_id := by
   dsimp [H_of]
@@ -335,20 +327,16 @@ lemma H_of_has_idempotent (ctx : SimonContext S α) (x : α) :
       · simp only [R_of, h_max, dite_false]
         exact IsGreenR.symm hRe
 
-omit [Fintype α] [Nonempty α] in
 open Classical in
 noncomputable def e_id (ctx : SimonContext S α) (x : α) : S :=
   Classical.choose (H_of_has_idempotent ctx x)
 
-omit [Fintype α] [Nonempty α] in
 lemma e_id_mem (ctx : SimonContext S α) (x : α) : e_id ctx x ∈ H_of ctx x :=
   (Classical.choose_spec (H_of_has_idempotent ctx x)).1
 
-omit [Fintype α] [Nonempty α] in
 lemma e_id_idem (ctx : SimonContext S α) (x : α) : e_id ctx x * e_id ctx x = e_id ctx x :=
   (Classical.choose_spec (H_of_has_idempotent ctx x)).2
 
-omit [Fintype α] [Nonempty α] in
 lemma H_of_eq_class (ctx : SimonContext S α) (z : α) : H_of ctx z = IsGreenH.eqvClass (e_id ctx z) := by
   ext w
   constructor
@@ -373,7 +361,6 @@ lemma H_of_eq_class (ctx : SimonContext S α) (z : α) : H_of ctx z = IsGreenH.e
       split_ifs at h2 ⊢ <;> exact IsGreenR.trans hwR h2
     exact ⟨hw_L_mem, hw_R_mem⟩
 
-omit [Fintype α] [Nonempty α] in
 lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z) (hm_H : H_of ctx mz = H_of ctx z) :
     e_id ctx z * ctx.σ.σ mz z * e_id ctx z = ctx.σ.σ mz z ∧ IsGreenH (ctx.σ.σ mz z) (e_id ctx z) := by
   have he_z_idem : e_id ctx z * e_id ctx z = e_id ctx z := e_id_idem ctx z
@@ -402,6 +389,10 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z) (hm_H : 
       _ = ctx.σ.σ mz z * e_id ctx z := by rw [hid.2]
       _ = ctx.σ.σ mz z := hid.1
   exact ⟨h_simp, h_sig_H_e⟩
+
+
+section WithFintypeAlpha
+variable [Fintype α]
 
 abbrev G_D_type (D : Set S) :=
   { y : S // y ∈ D ∧ ∃ e ∈ D, e * e = e ∧ IsGreenH y e }
@@ -492,8 +483,8 @@ noncomputable def f_coloring (ctx : SimonContext S α) (x : α) : G_D_type ctx.D
         exact ⟨he_D, e_id ctx x, he_D, he_idem_x, IsGreenH.refl (e_id ctx x)⟩
       ⟨e_id ctx x, h_e_in⟩
 
-omit [Nonempty α] in
 lemma f_coloring_H (ctx : SimonContext S α) (z : α) : IsGreenH (f_coloring ctx z).val (e_id ctx z) := by
+  classical
   let m_class := Finset.univ.filter (fun w => H_of ctx w = H_of ctx z)
   have hm_nonempty : m_class.Nonempty := ⟨z, Finset.mem_filter.mpr ⟨Finset.mem_univ z, rfl⟩⟩
   let mz := Finset.min' m_class hm_nonempty
@@ -507,6 +498,10 @@ lemma f_coloring_H (ctx : SimonContext S α) (z : α) : IsGreenH (f_coloring ctx
     rw [h_props.1]
     exact h_props.2
   · exact IsGreenH.refl (e_id ctx z)
+
+
+section WithNonemptyAlpha
+variable [Nonempty α]
 
 open Classical in
 lemma simon_regular_d_case
@@ -545,7 +540,8 @@ lemma simon_regular_d_case
     · exact Finset.mem_univ _
     · intro y _
       apply Fin.le_iff_val_le_val.mpr
-      have h_max_val : (max_rank : ℕ) = nD D - 1 := by simp [max_rank]; rw [h_card_G_D]
+      have h_max_val : (max_rank : ℕ) = nD D - 1 := by simp only [Fin.cast_cast,
+        Nat.succ_eq_add_one, Nat.reduceAdd, Fin.val_cast, Fin.val_last, max_rank]; rw [h_card_G_D]
       rw [h_max_val]
       exact Nat.le_pred_of_lt y.is_lt
   · intros x y hlt hsr
@@ -661,4 +657,7 @@ lemma simon_regular_d_case
     rw [h_final_sigma]
     exact e_id_idem ctx x
 
+end WithNonemptyAlpha
+end WithFintypeAlpha
+end WithFintypeS
 end RegularDClassCase
