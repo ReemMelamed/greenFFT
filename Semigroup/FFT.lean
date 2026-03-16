@@ -50,7 +50,8 @@ and any element bounded between them has a rank at most that of `x` and `y`. -/
 def SplitRelation (s : Split α h) (x y : α) : Prop :=
   s x = s y ∧ ∀ z, min x y ≤ z → z ≤ max x y → s z ≤ s (min x y)
 
-/-- A split function is normalized if the minimal element of `α` receives the maximal possible rank. -/
+/-- A split function is normalized if
+  the minimal element of `α` receives the maximal possible rank. -/
 def IsNormalized [Fintype α] [Nonempty α] [Nonempty (Fin h)] (s : Split α h) : Prop :=
   let min_α := Finset.min' Finset.univ Finset.univ_nonempty
   s min_α = Finset.max' Finset.univ Finset.univ_nonempty
@@ -282,7 +283,8 @@ of its assigned L-class and R-class. -/
 noncomputable def hOf (ctx : SimonContext S α) (x : α) : Set S :=
   lOf ctx x ∩ rOf ctx x
 
-/-- The chosen L-class is well-defined and depends only on the elements strictly smaller than `x`. -/
+/-- The chosen L-class is well-defined and depends
+  only on the elements strictly smaller than `x`. -/
 lemma lOf_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_min : ¬ IsMin x)
     (hy1 : y1 < x) (hy2 : y2 < x) :
     IsGreenL.eqvClass (ctx.σ.σ y1 x) = IsGreenL.eqvClass (ctx.σ.σ y2 x) := by
@@ -304,7 +306,8 @@ lemma lOf_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_min : ¬
       · intro hz; exact IsGreenL.trans hz (IsGreenL.symm hL)
       · intro hz; exact IsGreenL.trans hz hL
 
-/-- The chosen R-class is well-defined and depends only on the elements strictly greater than `x`. -/
+/-- The chosen R-class is well-defined and depends
+  only on the elements strictly greater than `x`. -/
 lemma rOf_well_defined (ctx : SimonContext S α) (x y1 y2 : α) (_h_not_max : ¬ IsMax x)
     (hy1 : x < y1) (hy2 : x < y2) :
     IsGreenR.eqvClass (ctx.σ.σ x y1) = IsGreenR.eqvClass (ctx.σ.σ x y2) := by
@@ -390,7 +393,8 @@ lemma eId_idem (ctx : SimonContext S α) (x : α) : eId ctx x * eId ctx x = eId 
   (Classical.choose_spec (hOf_has_idempotent ctx x)).2
 
 /-- The H-class of `z` is exactly the H-class of its chosen idempotent. -/
-lemma hOf_eq_class (ctx : SimonContext S α) (z : α) : hOf ctx z = IsGreenH.eqvClass (eId ctx z) := by
+lemma hOf_eq_class (ctx : SimonContext S α) (z : α) :
+  hOf ctx z = IsGreenH.eqvClass (eId ctx z) := by
   ext w
   constructor
   · rintro ⟨hwL, hwR⟩
@@ -470,7 +474,8 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         have he_idem_x : eId ctx x * eId ctx x = eId ctx x := eId_idem ctx x
         have hm_in := Finset.min'_mem m_class hm_nonempty
         have hm_H : hOf ctx m = hOf ctx x := (Finset.mem_filter.mp hm_in).2
-        have h_not_min_x : ¬ IsMin x := fun h => lt_irrefl m (lt_of_lt_of_le h_mx (h (le_of_lt h_mx)))
+        have h_not_min_x : ¬ IsMin x :=
+          fun h => lt_irrefl m (lt_of_lt_of_le h_mx (h (le_of_lt h_mx)))
         have h_L_mx : lOf ctx x = IsGreenL.eqvClass (ctx.σ.σ m x) := by
           dsimp only [lOf]
           rw [dif_neg h_not_min_x]
@@ -479,7 +484,8 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         have he_L_sig : IsGreenL (eId ctx x) (ctx.σ.σ m x) := by
           have h1 : eId ctx x ∈ lOf ctx x := (eId_mem ctx x).1
           rwa [h_L_mx] at h1
-        have h_not_max_m : ¬ IsMax m := fun h => lt_irrefl x (lt_of_le_of_lt (h (le_of_lt h_mx)) h_mx)
+        have h_not_max_m : ¬ IsMax m :=
+          fun h => lt_irrefl x (lt_of_le_of_lt (h (le_of_lt h_mx)) h_mx)
         have h_R_m : rOf ctx m = IsGreenR.eqvClass (ctx.σ.σ m x) := by
           dsimp only [rOf]
           rw [dif_neg h_not_max_m]
@@ -554,6 +560,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         exact ⟨he_D, eId ctx x, he_D, he_idem_x, IsGreenH.refl (eId ctx x)⟩
       ⟨eId ctx x, h_e_in⟩
 
+open Classical in
 /-- The element returned by `fColoring` belongs to the correct Green's H-class. -/
 lemma fColoring_isGreenH (ctx : SimonContext S α) (z : α) :
     IsGreenH (fColoring ctx z).val (eId ctx z) := by
