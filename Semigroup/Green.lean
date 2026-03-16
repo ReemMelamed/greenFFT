@@ -1,3 +1,7 @@
+/- Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Re'em Melamed-Katz -/
+
 import Mathlib.Algebra.Group.Basic
 import Mathlib.Data.Set.Basic
 import Mathlib.Data.Setoid.Basic
@@ -6,36 +10,74 @@ import Mathlib.Data.Fintype.Pigeonhole
 
 /-!
 # Green's Relations
+
+This file defines Green's relations (L, R, H, D, and J) on a general semigroup `S` and proves
+their fundamental properties. It also explores regular D-classes, idempotents,
+and the coincidence of the D and J relations in finite semigroups.
+
+## Main definitions
+* `IsGreenL`, `IsGreenR`, `IsGreenH`, `IsGreenD`, `IsGreenJ`: Green's relations.
+* `GreenLClass`, `GreenRClass`, `GreenHClass`,
+  `GreenDClass`, `GreenJClass`: The equivalence classes.
+* `IsGreenRegular`: An element `a` is regular if `a * s * a = a` for some `s`.
+* `IsRegularDClass`: A D-class where every element is regular.
+
+## Main statements
+* `isGreenL_commutes_isGreenR`: Green's L and R relations commute.
+* `equivHClassOfIsGreenR`, `equivHClassOfIsGreenL`: Bijections between H-classes.
+* `isGreenD_eq_isGreenJ_of_finite`: In a finite semigroup, Green's D and J relations coincide.
+* `is_group_isGreenH_eqvClass_iff_idempotent`:
+  An H-class is a group if and only if it contains an idempotent.
 -/
 
 variable {S : Type*} [Semigroup S]
 
 section GreenDefinitions
 
+/-- `IsGreenLeftDvd a b` means that `a` is a left multiple of `b`,
+  i.e., `a = b` or `a = z * b`. -/
 def IsGreenLeftDvd (a b : S) := a = b ∨ ∃ z, a = z * b
+
+/-- `IsGreenRightDvd a b` means that `a` is a right multiple of `b`,
+  i.e., `a = b` or `a = b * z`. -/
 def IsGreenRightDvd (a b : S) := a = b ∨ ∃ z, a = b * z
 
+/-- `IsGreenJRel a b` represents the basic step of being a two-sided multiple.
+`a` is related to `b` if `a = b`, `a = u * b`, `a = b * v`, or `a = u * b * v`. -/
 inductive IsGreenJRel (a b : S) : Prop
   | eq (h : a = b)
   | mul_left (u : S) (h : a = u * b)
   | mul_right (v : S) (h : a = b * v)
   | mul_both (u v : S) (h : a = u * b * v)
 
+/-- Green's L relation: `a` and `b` generate the same principal left ideal. -/
 def IsGreenL (a b : S) := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
+
+/-- Green's R relation: `a` and `b` generate the same principal right ideal. -/
 def IsGreenR (a b : S) := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
+
+/-- Green's H relation: the intersection of Green's L and Green's R relations. -/
 def IsGreenH (a b : S) := IsGreenL a b ∧ IsGreenR a b
+
+/-- Green's D relation: the join of Green's L and Green's R relations.
+Here defined explicitly as the existence of an intermediate element `z`. -/
 def IsGreenD (a b : S) := ∃ z, IsGreenL a z ∧ IsGreenR z b
+
+/-- Green's J relation: `a` and `b` generate the same principal two-sided ideal. -/
 def IsGreenJ (a b : S) := IsGreenJRel a b ∧ IsGreenJRel b a
 
 end GreenDefinitions
+
 
 
 section GreenEquivalences
 
 namespace IsGreenLeftDvd
 
+/-- Left divisibility is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenLeftDvd a a := Or.inl rfl
 
+/-- Left divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenLeftDvd a b)
   (hbc : IsGreenLeftDvd b c) : IsGreenLeftDvd a c := by
   rcases hab with rfl | ⟨x, hx⟩
@@ -49,8 +91,10 @@ end IsGreenLeftDvd
 
 namespace IsGreenRightDvd
 
+/-- Right divisibility is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenRightDvd a a := Or.inl rfl
 
+/-- Right divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenRightDvd a b)
   (hbc : IsGreenRightDvd b c) : IsGreenRightDvd a c := by
   rcases hab with rfl | ⟨x, hx⟩
@@ -64,8 +108,10 @@ end IsGreenRightDvd
 
 namespace IsGreenJRel
 
+/-- The basic J-relation step is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenJRel a a := eq rfl
 
+/-- The basic J-relation step is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJRel a b)
   (hbc : IsGreenJRel b c) : IsGreenJRel a c := by
   cases hab
@@ -94,15 +140,19 @@ end IsGreenJRel
 
 namespace IsGreenL
 
+/-- Green's L relation is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenL a a :=
   ⟨IsGreenLeftDvd.refl a, IsGreenLeftDvd.refl a⟩
 
+/-- Green's L relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenL a b) : IsGreenL b a :=
   ⟨h.right, h.left⟩
 
+/-- Green's L relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenL a b) (hbc : IsGreenL b c) : IsGreenL a c :=
   ⟨IsGreenLeftDvd.trans hab.left hbc.left, IsGreenLeftDvd.trans hbc.right hab.right⟩
 
+/-- Green's L relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
   r := IsGreenL
   iseqv := {
@@ -111,6 +161,7 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     trans := trans
   }
 
+/-- Green's L relation is preserved by right multiplication. -/
 theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
   rcases h with ⟨h1, h2⟩
   constructor
@@ -121,6 +172,7 @@ theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c
     · exact Or.inl rfl
     · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
 
+/-- Right cancellation property for elements related by Green's L relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
     x * u * v = x := by
   rcases hx.left with rfl | ⟨k, rfl⟩
@@ -132,15 +184,19 @@ end IsGreenL
 
 namespace IsGreenR
 
+/-- Green's R relation is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenR a a :=
   ⟨IsGreenRightDvd.refl a, IsGreenRightDvd.refl a⟩
 
+/-- Green's R relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenR a b) : IsGreenR b a :=
   ⟨h.right, h.left⟩
 
+/-- Green's R relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenR a b) (hbc : IsGreenR b c) : IsGreenR a c :=
   ⟨IsGreenRightDvd.trans hab.left hbc.left, IsGreenRightDvd.trans hbc.right hab.right⟩
 
+/-- Green's R relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
   r := IsGreenR
   iseqv := {
@@ -149,6 +205,7 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     trans := trans
   }
 
+/-- Green's R relation is preserved by left multiplication. -/
 theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b) := by
   rcases h with ⟨h1, h2⟩
   constructor
@@ -159,6 +216,7 @@ theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b)
     · exact Or.inl rfl
     · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
 
+/-- Left cancellation property for elements related by Green's R relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
     v * u * x = x := by
   rcases hx.left with rfl | ⟨k, rfl⟩
@@ -170,15 +228,19 @@ end IsGreenR
 
 namespace IsGreenH
 
+/-- Green's H relation is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenH a a :=
   ⟨IsGreenL.refl a, IsGreenR.refl a⟩
 
+/-- Green's H relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenH a b) : IsGreenH b a :=
   ⟨IsGreenL.symm h.left, IsGreenR.symm h.right⟩
 
+/-- Green's H relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenH a b) (hbc : IsGreenH b c) : IsGreenH a c :=
   ⟨IsGreenL.trans hab.left hbc.left, IsGreenR.trans hab.right hbc.right⟩
 
+/-- Green's H relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
   r := IsGreenH
   iseqv := {
@@ -189,7 +251,7 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 
 end IsGreenH
 
-
+/-- Green's L and R relations commute: `L ∘ R = R ∘ L`. -/
 lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR z b) :
     ∃ z', IsGreenR a z' ∧ IsGreenL z' b := by
   have h_az : IsGreenLeftDvd a z := hL.left
@@ -218,14 +280,17 @@ lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR 
 
 namespace IsGreenD
 
+/-- Green's D relation is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenD a a :=
   ⟨a, IsGreenL.refl a, IsGreenR.refl a⟩
 
+/-- Green's D relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenD a b) : IsGreenD b a := by
   obtain ⟨z, hL, hR⟩ := h
   obtain ⟨z', h_x_R_z', h_z'_L_y⟩ := isGreenL_commutes_isGreenR hL hR
   exact ⟨z', IsGreenL.symm h_z'_L_y, IsGreenR.symm h_x_R_z'⟩
 
+/-- Green's D relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenD a b)
   (hbc : IsGreenD b c) : IsGreenD a c := by
   obtain ⟨z1, h_x_L_z1, h_z1_R_y⟩ := hab
@@ -239,6 +304,7 @@ namespace IsGreenD
   have h_z3_R_z : IsGreenR z3 c := IsGreenR.trans h_z3_R_z2 h_z2_R_z
   exact ⟨z3, h_x_L_z3, h_z3_R_z⟩
 
+/-- Green's D relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
   r := IsGreenD
   iseqv := {
@@ -252,15 +318,19 @@ end IsGreenD
 
 namespace IsGreenJ
 
+/-- Green's J relation is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenJ a a :=
   ⟨IsGreenJRel.refl a, IsGreenJRel.refl a⟩
 
+/-- Green's J relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenJ a b) : IsGreenJ b a :=
   ⟨h.right, h.left⟩
 
+/-- Green's J relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJ a b) (hbc : IsGreenJ b c) : IsGreenJ a c :=
   ⟨IsGreenJRel.trans hab.left hbc.left, IsGreenJRel.trans hbc.right hab.right⟩
 
+/-- Green's J relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
   r := IsGreenJ
   iseqv := {
@@ -278,57 +348,74 @@ end GreenEquivalences
 section GreenClasses
 
 namespace IsGreenL
+/-- The equivalence class of `x` under Green's L relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenL · x)
 end IsGreenL
 
 namespace IsGreenR
+/-- The equivalence class of `x` under Green's R relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenR · x)
 end IsGreenR
 
 namespace IsGreenH
+/-- The equivalence class of `x` under Green's H relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenH · x)
 end IsGreenH
 
 namespace IsGreenD
+/-- The equivalence class of `x` under Green's D relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenD · x)
 end IsGreenD
 
 namespace IsGreenJ
+/-- The equivalence class of `x` under Green's J relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenJ · x)
 end IsGreenJ
 
+/-- The quotient type of `S` by Green's L relation. -/
 def GreenLClass (S : Type*) [Semigroup S] := Quotient (IsGreenL.setoid S)
 
 namespace GreenLClass
+/-- Constructs the Green's L-class of an element `x`. -/
 def mk (x : S) : GreenLClass S := Quotient.mk (IsGreenL.setoid S) x
 end GreenLClass
 
+/-- The quotient type of `S` by Green's R relation. -/
 def GreenRClass (S : Type*) [Semigroup S] := Quotient (IsGreenR.setoid S)
 
 namespace GreenRClass
+/-- Constructs the Green's R-class of an element `x`. -/
 def mk (x : S) : GreenRClass S := Quotient.mk (IsGreenR.setoid S) x
 end GreenRClass
 
+/-- The quotient type of `S` by Green's H relation. -/
 def GreenHClass (S : Type*) [Semigroup S] := Quotient (IsGreenH.setoid S)
 
 namespace GreenHClass
+/-- Constructs the Green's H-class of an element `x`. -/
 def mk (x : S) : GreenHClass S := Quotient.mk (IsGreenH.setoid S) x
 end GreenHClass
 
+/-- The quotient type of `S` by Green's D relation. -/
 def GreenDClass (S : Type*) [Semigroup S] := Quotient (IsGreenD.setoid S)
 
 namespace GreenDClass
+/-- Constructs the Green's D-class of an element `x`. -/
 def mk (x : S) : GreenDClass S := Quotient.mk (IsGreenD.setoid S) x
 end GreenDClass
 
+/-- The quotient type of `S` by Green's J relation. -/
 def GreenJClass (S : Type*) [Semigroup S] := Quotient (IsGreenJ.setoid S)
 
 namespace GreenJClass
+/-- Constructs the Green's J-class of an element `x`. -/
 def mk (x : S) : GreenJClass S := Quotient.mk (IsGreenJ.setoid S) x
 end GreenJClass
 
+/-- An element `a` is regular if there exists `s` such that `a * s * a = a`. -/
 def IsGreenRegular (a : S) := ∃ s, a * s * a = a
 
+/-- A D-class is regular if all its elements are regular. -/
 def IsRegularDClass (D : Set S) := ∀ x ∈ D, IsGreenRegular x
 
 end GreenClasses
@@ -337,10 +424,12 @@ end GreenClasses
 
 section Helpers
 
+/-- The sequence defined by repeatedly multiplying `a` by `c` on the right. -/
 def rightMulSeq (a c : S) : ℕ → S
   | 0 => a
   | n + 1 => rightMulSeq a c n * c
 
+/-- Left multiplication can be pulled out of a `rightMulSeq`. -/
 lemma rightMulSeq_mul_pull (c : S) (m : ℕ) (x u : S) :
     rightMulSeq (u * x) c m = u * rightMulSeq x c m := by
   induction m with
@@ -351,6 +440,7 @@ lemma rightMulSeq_mul_pull (c : S) (m : ℕ) (x u : S) :
       _ = u * (rightMulSeq x c m * c) := mul_assoc u (rightMulSeq x c m) c
       _ = u * rightMulSeq x c (m + 1) := rfl
 
+/-- Extracting a right multiplication from the base of a `rightMulSeq`. -/
 lemma rightMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
     rightMulSeq x c (n + 1) = rightMulSeq (x * c) c n := by
   induction n with
@@ -360,6 +450,7 @@ lemma rightMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
       _ = rightMulSeq (x * c) c n * c := by rw [ih]
       _ = rightMulSeq (x * c) c (n + 1) := rfl
 
+/-- In a finite semigroup, a `rightMulSeq` eventually repeats. -/
 lemma rightMulSeq_pigeonhole [Finite S] (a c : S) :
     ∃ i j : ℕ, i < j ∧ rightMulSeq a c i = rightMulSeq a c j := by
   obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite (rightMulSeq a c)
@@ -368,10 +459,12 @@ lemma rightMulSeq_pigeonhole [Finite S] (a c : S) :
   · exact False.elim (h_neq h_eq)
   · exact ⟨j, i, h_gt, heq.symm⟩
 
+/-- The sequence defined by repeatedly multiplying `a` by `c` on the left. -/
 def leftMulSeq (c a : S) : ℕ → S
   | 0 => a
   | n + 1 => c * leftMulSeq c a n
 
+/-- Right multiplication can be pulled out of a `leftMulSeq`. -/
 lemma leftMulSeq_mul_pull (c : S) (m : ℕ) (x v : S) :
     leftMulSeq c (x * v) m = leftMulSeq c x m * v := by
   induction m with
@@ -382,6 +475,7 @@ lemma leftMulSeq_mul_pull (c : S) (m : ℕ) (x v : S) :
       _ = (c * leftMulSeq c x m) * v := (mul_assoc c (leftMulSeq c x m) v).symm
       _ = leftMulSeq c x (m + 1) * v := rfl
 
+/-- Extracting a left multiplication from the base of a `leftMulSeq`. -/
 lemma leftMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
     leftMulSeq c x (n + 1) = leftMulSeq c (c * x) n := by
   induction n with
@@ -391,6 +485,7 @@ lemma leftMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
       _ = c * leftMulSeq c (c * x) n := by rw [ih]
       _ = leftMulSeq c (c * x) (n + 1) := rfl
 
+/-- In a finite semigroup, a `leftMulSeq` eventually repeats. -/
 lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :
     ∃ i j : ℕ, i < j ∧ leftMulSeq c a i = leftMulSeq c a j := by
   obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite (leftMulSeq c a)
@@ -399,6 +494,7 @@ lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :
   · exact False.elim (h_neq h_eq)
   · exact ⟨j, i, h_gt, heq.symm⟩
 
+/-- Any element in a `rightMulSeq` starting from `a` is a right multiple of `a`. -/
 lemma rightMulSeq_isGreenRightDvd (a c : S) (m : ℕ) :
     IsGreenRightDvd (rightMulSeq a c m) a := by
   cases m with
@@ -411,12 +507,14 @@ lemma rightMulSeq_isGreenRightDvd (a c : S) (m : ℕ) :
       · exact Or.inr ⟨c, by rw [rightMulSeq, h_eq]⟩
       · exact Or.inr ⟨w * c, by rw [rightMulSeq, hw, mul_assoc]⟩
 
+/-- Right divisibility is preserved by right multiplication. -/
 lemma isGreenRightDvd_mul_right (a b y : S) (h : IsGreenRightDvd a b) :
     IsGreenRightDvd (a * y) b := by
   rcases h with rfl | ⟨w, hw⟩
   · exact Or.inr ⟨y, rfl⟩
   · exact Or.inr ⟨w * y, by rw [hw, mul_assoc]⟩
 
+/-- Any element in a `leftMulSeq` starting from `a` is a left multiple of `a`. -/
 lemma leftMulSeq_isGreenLeftDvd (c a : S) (m : ℕ) :
     IsGreenLeftDvd (leftMulSeq c a m) a := by
   cases m with
@@ -429,12 +527,14 @@ lemma leftMulSeq_isGreenLeftDvd (c a : S) (m : ℕ) :
       · exact Or.inr ⟨c, by rw [leftMulSeq, h_eq]⟩
       · exact Or.inr ⟨c * w, by rw [leftMulSeq, hw, ← mul_assoc]⟩
 
+/-- Left divisibility is preserved by left multiplication. -/
 lemma isGreenLeftDvd_mul_left (a b x : S) (h : IsGreenLeftDvd a b) :
     IsGreenLeftDvd (x * a) b := by
   rcases h with rfl | ⟨w, hw⟩
   · exact Or.inr ⟨x, rfl⟩
   · exact Or.inr ⟨x * w, by rw [hw, ← mul_assoc]⟩
 
+/-- Left and right multiplication sequences commute. -/
 lemma leftMulSeq_rightMulSeq_comm (c x d : S) (i k : ℕ) :
     leftMulSeq c (rightMulSeq x d k) i = rightMulSeq (leftMulSeq c x i) d k := by
   induction i with
@@ -446,6 +546,7 @@ lemma leftMulSeq_rightMulSeq_comm (c x d : S) (i k : ℕ) :
         (rightMulSeq_mul_pull d k (leftMulSeq c x i) c).symm
       _ = rightMulSeq (leftMulSeq c x (i + 1)) d k := rfl
 
+/-- If `b = c * b * d`, applying `n` right steps then `n` left steps yields `b`. -/
 lemma b_eq_left_right_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
     b = leftMulSeq c (rightMulSeq b d n) n := by
   induction n with
@@ -458,6 +559,7 @@ lemma b_eq_left_right_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
         (leftMulSeq_mul_pull c (n + 1) (rightMulSeq b d n) d).symm
       _ = leftMulSeq c (rightMulSeq b d (n + 1)) (n + 1) := rfl
 
+/-- If `b = c * b * d`, applying `n` left steps then `n` right steps yields `b`. -/
 lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
     b = rightMulSeq (leftMulSeq c b n) d n := by
   induction n with
@@ -472,6 +574,7 @@ lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
         (rightMulSeq_mul_pull d (n + 1) (leftMulSeq c b n) c).symm
       _ = rightMulSeq (leftMulSeq c b (n + 1)) d (n + 1) := rfl
 
+/-- If `b = c * b * d` in a finite semigroup, `b` is equivalent to some right multiple sequence. -/
 lemma eq_rightMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
     ∃ k > 0, b = rightMulSeq b d k := by
   rcases rightMulSeq_pigeonhole b d with ⟨i, j, hij, heq⟩
@@ -500,6 +603,7 @@ lemma eq_rightMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
       _ = rightMulSeq b d k := by rw [← h_b_eq]
   exact ⟨k, hk_pos, h_b_eq_k⟩
 
+/-- If `b = c * b * d` in a finite semigroup, `b` is equivalent to some left multiple sequence. -/
 lemma eq_leftMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
     ∃ k > 0, b = leftMulSeq c b k := by
   rcases leftMulSeq_pigeonhole c b with ⟨i, j, hij, heq⟩
@@ -528,6 +632,7 @@ lemma eq_leftMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
       _ = leftMulSeq c b k := by rw [← h_b_eq]
   exact ⟨k, hk_pos, h_b_eq_k⟩
 
+/-- If `b = c * b * d`, then `b` is R-related to `b * d`. -/
 lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR b (b * d) := by
   obtain ⟨k, hk_pos, hk_eq⟩ := eq_rightMulSeq_of_eq_mul_mul h
   obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
@@ -542,6 +647,7 @@ lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR
     · exact Or.inr ⟨w, h_eq_b.trans hw⟩
   exact ⟨h_b_bd, h_bd_b⟩
 
+/-- If `b = c * b * d`, then `b` is L-related to `c * b`. -/
 lemma greenL_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenL b (c * b) := by
   obtain ⟨k, hk_pos, hk_eq⟩ := eq_leftMulSeq_of_eq_mul_mul h
   obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
@@ -556,6 +662,8 @@ lemma greenL_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenL
     · exact Or.inr ⟨w, h_eq_b.trans hw⟩
   exact ⟨h_b_cb, h_cb_b⟩
 
+/-- Green's R relation holds when a right multiplier
+  is dropped from an already R-related element. -/
 lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGreenR b (b * u) := by
   have h2 : IsGreenRightDvd (b * u) b := Or.inr ⟨u, rfl⟩
   have h1 : IsGreenRightDvd b (b * u) := by
@@ -568,6 +676,7 @@ lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGr
           _ = (b * u) * (y * w) := mul_assoc (b * u) y w⟩
   exact ⟨h1, h2⟩
 
+/-- Green's L relation holds when a left multiplier is dropped from an already L-related element. -/
 lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGreenL b (z * b) := by
   have h2 : IsGreenLeftDvd (z * b) b := Or.inr ⟨z, rfl⟩
   have h1 : IsGreenLeftDvd b (z * b) := by
@@ -580,6 +689,7 @@ lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGr
           _ = (w * x) * (z * b) := (mul_assoc w x (z * b)).symm⟩
   exact ⟨h1, h2⟩
 
+/-- If `b = c * b * u * y`, then `b` is R-related to `b * u`. -/
 lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * y)) :
   IsGreenR b (b * u) := by
   have hr1 := greenR_of_eq_mul_mul h
@@ -587,6 +697,7 @@ lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * 
   have hr2 : IsGreenR b ((b * u) * y) := h_assoc ▸ hr1
   exact isGreenR_of_isGreenR_mul hr2
 
+/-- If `b = x * z * b * d`, then `b` is L-related to `z * b`. -/
 lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b * d) :
   IsGreenL b (z * b) := by
   have hl1 := greenL_of_eq_mul_mul h
@@ -594,6 +705,8 @@ lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b *
   have hl2 : IsGreenL b (x * (z * b)) := h_assoc ▸ hl1
   exact isGreenL_of_isGreenL_mul hl2
 
+/-- If `a` is a two-sided multiple of `b`, and `b` is a two-sided multiple of `a`,
+then `a` and `b` are Green's D-related. -/
 lemma isGreenD_of_JRel_both [Finite S] {a b x y z u : S}
     (h1 : a = z * b * u) (h2 : b = x * a * y) : IsGreenD a b := by
   have h_b_eq : b = (x * z) * b * (u * y) := by
@@ -610,6 +723,7 @@ lemma isGreenD_of_JRel_both [Finite S] {a b x y z u : S}
     exact h1.symm ▸ hL_bu_zbu
   exact ⟨b * u, IsGreenL.symm hL_bu_a, IsGreenR.symm hR⟩
 
+/-- If `a` is a left multiple of `b` and `b` is a two-sided multiple of `a`, they are D-related. -/
 lemma isGreenD_of_JRel_left_both [Finite S] {a b x y z : S}
     (h1 : a = z * b) (h2 : b = x * a * y) : IsGreenD a b := by
   have h_b_eq : b = (x * z) * b * y := by
@@ -624,6 +738,7 @@ lemma isGreenD_of_JRel_left_both [Finite S] {a b x y z : S}
   have hL3 : IsGreenL b a := h1.symm ▸ hL2
   exact ⟨b, IsGreenL.symm hL3, IsGreenR.refl b⟩
 
+/-- If `a` is a right multiple of `b` and `b` is a two-sided multiple of `a`, they are D-related. -/
 lemma isGreenD_of_JRel_right_both [Finite S] {a b x y u : S}
     (h1 : a = b * u) (h2 : b = x * a * y) : IsGreenD a b := by
   have h_b_eq : b = x * b * (u * y) := by
@@ -639,6 +754,7 @@ lemma isGreenD_of_JRel_right_both [Finite S] {a b x y u : S}
   have hL : IsGreenL b (x * b) := greenL_of_eq_mul_mul h_b_eq
   exact ⟨a, IsGreenL.refl a, IsGreenR.symm hR3⟩
 
+/-- If `a` is a left multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
 lemma isGreenD_of_left_right [Finite S] {a b u y : S} (h1 : a = u * b) (h2 : b = a * y) :
   IsGreenD a b := by
   have h_a : a = u * a * y := by
@@ -649,6 +765,7 @@ lemma isGreenD_of_left_right [Finite S] {a b u y : S} (h1 : a = u * b) (h2 : b =
   have hR_ab : IsGreenR a b := h2.symm ▸ hR
   exact ⟨a, IsGreenL.refl a, hR_ab⟩
 
+/-- If `a` is a right multiple of `b` and `b` is a left multiple of `a`, they are D-related. -/
 lemma isGreenD_of_right_left [Finite S] {a b v x : S} (h1 : a = b * v) (h2 : b = x * a) :
   IsGreenD a b := by
   have h_a : a = x * a * v := by
@@ -658,14 +775,17 @@ lemma isGreenD_of_right_left [Finite S] {a b v x : S} (h1 : a = b * v) (h2 : b =
   have hL_ab : IsGreenL a b := h2.symm ▸ hL
   exact ⟨b, hL_ab, IsGreenR.refl b⟩
 
+/-- If `a` is a left multiple of `b` and `b` is a left multiple of `a`, they are D-related. -/
 lemma isGreenD_of_left_left [Finite S] {a b u x : S} (h1 : a = u * b) (h2 : b = x * a) :
   IsGreenD a b := by
   exact ⟨b, ⟨Or.inr ⟨u, h1⟩, Or.inr ⟨x, h2⟩⟩, IsGreenR.refl b⟩
 
+/-- If `a` is a right multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
 lemma isGreenD_of_right_right [Finite S] {a b v y : S} (h1 : a = b * v) (h2 : b = a * y) :
   IsGreenD a b := by
   exact ⟨a, IsGreenL.refl a, ⟨Or.inr ⟨v, h1⟩, Or.inr ⟨y, h2⟩⟩⟩
 
+/-- A regular element `a` has an idempotent in its L-class. -/
 lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}
     (hReg : IsGreenRegular a) : ∃ e ∈ IsGreenL.eqvClass a, e * e = e := by
   obtain ⟨s, hs⟩ := hReg
@@ -679,6 +799,7 @@ lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}
   · have h_assoc : (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
     rw [h_assoc, hs]
 
+/-- A regular element `a` has an idempotent in its R-class. -/
 lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
     (hReg : IsGreenRegular a) : ∃ e ∈ IsGreenR.eqvClass a, e * e = e := by
   obtain ⟨s, hs⟩ := hReg
@@ -691,6 +812,7 @@ lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
   · have h_assoc : (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
     rw [h_assoc, hs]
 
+/-- Two H-related idempotents must be equal. -/
 lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
     (hab : IsGreenH a b) (ha : a * a = a) (hb : b * b = b) : a = b := by
   have h_ab_eq_b : a * b = b := by
@@ -709,6 +831,7 @@ lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
         _ = a := hy.symm
   rw [← h_ab_eq_a, h_ab_eq_b]
 
+/-- If `a` is H-related to an idempotent `e`, multiplying `a` by `e` leaves `a` unchanged. -/
 lemma mul_eq_self_of_isGreenH_idempotent {S : Type*} [Semigroup S] {a e : S}
     (hae : IsGreenH a e) (he : e * e = e) : a * e = a ∧ e * a = a := by
   constructor
@@ -731,6 +854,7 @@ end Helpers
 
 section GreensTheorems
 
+/-- A D-class is regular if and only if it contains an idempotent. -/
 theorem isRegularDClass_iff_exists_idempotent [Finite S]
   (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
@@ -772,6 +896,7 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
     · use u * q
       rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
 
+/-- A bijection between the H-classes of two R-related elements. -/
 noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
     IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
   by_cases hab_eq : a = b
@@ -810,6 +935,7 @@ noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
       have hR : IsGreenR (y * w) a := IsGreenR.trans hR1 (IsGreenR.trans hy.right (IsGreenR.symm h))
       exact ⟨hL, hR⟩
 
+/-- A bijection between the H-classes of two L-related elements. -/
 noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
     IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
   by_cases hab_eq : a = b
@@ -849,6 +975,7 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
       exact ⟨hL, hR⟩
 
 open Classical in
+/-- Any two H-classes within the same D-class have the same cardinality. -/
 theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b) :
     Fintype.card (IsGreenH.eqvClass a) = Fintype.card (IsGreenH.eqvClass b) := by
   rcases h with ⟨z, hL, hR⟩
@@ -858,6 +985,7 @@ theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b)
   · exact Fintype.card_congr equiv_az
   · exact Fintype.card_congr equiv_zb
 
+/-- If `a` and `b` are J-related in a finite semigroup, they are also D-related. -/
 lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
   rcases h with ⟨hab, hba⟩
   cases hab
@@ -881,6 +1009,7 @@ lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a 
     case mul_right y h2 => exact IsGreenD.symm (isGreenD_of_JRel_right_both h2 h1)
     case mul_both x y h2 => exact isGreenD_of_JRel_both h1 h2
 
+/-- If `a` and `b` are D-related, they satisfy the basic J-relation step. -/
 lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
   rcases h with ⟨z, hL, hR⟩
   rcases hL.left with rfl | ⟨u, hu⟩
@@ -891,18 +1020,21 @@ lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := 
     · exact IsGreenJRel.mul_left u hu
     · exact IsGreenJRel.mul_both u v (by rw [hu, hv, mul_assoc])
 
+/-- If `a` and `b` are D-related, they are also J-related. -/
 lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b := by
   constructor
   · exact isGreenJRel_of_isGreenD h
   · have h_symm : IsGreenD b a := IsGreenD.symm h
     exact isGreenJRel_of_isGreenD h_symm
 
+/-- In a finite semigroup, Green's D relation and Green's J relation are equal. -/
 theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
   ext a b
   constructor
   · exact isGreenJ_of_isGreenD
   · exact isGreenD_of_isGreenJ
 
+/-- If `a` and `a * b` are D-related in a finite semigroup, they are R-related. -/
 lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
     IsGreenR a (a * b) := by
   have h_ab_dvd_a : IsGreenRightDvd (a * b) a := Or.inr ⟨b, rfl⟩
@@ -974,6 +1106,7 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
       exact Or.inr ⟨rightMulSeq w c m, h_final⟩
   exact ⟨h_a_dvd_ab, h_ab_dvd_a⟩
 
+/-- If `b` and `a * b` are D-related in a finite semigroup, they are L-related. -/
 lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
     IsGreenL b (a * b) := by
   have h_ab_dvd_b : IsGreenLeftDvd (a * b) b := Or.inr ⟨a, rfl⟩
@@ -1046,6 +1179,8 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
       exact Or.inr ⟨leftMulSeq c w m, h_final⟩
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
 
+/-- If `a, b`, and `a * b` are all in the same regular D-class, then `a R a * b`, `b L a * b`,
+and there exists an idempotent `e` in the D-class such that `a L e` and `b R e`. -/
 theorem mul_mem_isGreenD_eqvClass_properties
   [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
     (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
@@ -1119,10 +1254,12 @@ theorem mul_mem_isGreenD_eqvClass_properties
         exact he_D
       exact ⟨heD, idem, hLae, hRbe⟩
 
-theorem is_group_isGreenH_eqvClass_iff_idempotent
-  [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
-  (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
-  (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by
+/-- An H-class is either a group or contains no idempotents
+  and is not closed under multiplication. -/
+lemma is_group_isGreenH_eqvClass_iff_idempotent
+    [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
+    (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
+    (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by
   obtain ⟨a, rfl⟩ := hH
   by_cases h : ∀ x y, x ∈ IsGreenH.eqvClass a → y ∈ IsGreenH.eqvClass a →
     x * y ∉ IsGreenH.eqvClass a
