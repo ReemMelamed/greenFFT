@@ -71,6 +71,7 @@ def IsGreenD (a b : S) := ∃ z, IsGreenL a z ∧ IsGreenR z b
 def IsGreenJ (a b : S) := IsGreenJRel a b ∧ IsGreenJRel b a
 
 open MulOpposite in
+/-- Left and right divisibility are dual under the opposite semigroup. -/
 lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
     IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) := by
   constructor
@@ -82,11 +83,13 @@ lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
     · exact Or.inr ⟨unop z, op_injective h⟩
 
 open MulOpposite in
+/-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenR_iff_isGreenL_op {a b : S} :
     IsGreenR a b ↔ IsGreenL (op a) (op b) := by
   simp only [IsGreenR, IsGreenL, isGreenRightDvd_iff_isGreenLeftDvd_op]
 
 open MulOpposite in
+/-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenL_iff_isGreenR_op {a b : S} :
     IsGreenL a b ↔ IsGreenR (op a) (op b) := by
   constructor
@@ -470,6 +473,8 @@ end GreenClasses
 
 section Helpers
 
+/-- The opposite semigroup construction gives an equivalence between `S` and `Sᵐᵒᵖ`
+  that preserves Green's relations, so finiteness of `S` implies finiteness of `Sᵐᵒᵖ`. -/
 instance instFiniteMulOpposite [Finite S] : Finite Sᵐᵒᵖ :=
   Finite.of_equiv S MulOpposite.opEquiv
 
@@ -498,15 +503,6 @@ lemma rightMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
     calc rightMulSeq x c (n + 1 + 1) = rightMulSeq x c (n + 1) * c := rfl
       _ = rightMulSeq (x * c) c n * c := by rw [ih]
       _ = rightMulSeq (x * c) c (n + 1) := rfl
-
-/-- In a finite semigroup, a `rightMulSeq` eventually repeats. -/
-lemma rightMulSeq_pigeonhole [Finite S] (a c : S) :
-    ∃ i j : ℕ, i < j ∧ rightMulSeq a c i = rightMulSeq a c j := by
-  obtain ⟨i, j, h_neq, heq⟩ := Finite.exists_ne_map_eq_of_infinite (rightMulSeq a c)
-  rcases lt_trichotomy i j with h_lt | h_eq | h_gt
-  · exact ⟨i, j, h_lt, heq⟩
-  · exact False.elim (h_neq h_eq)
-  · exact ⟨j, i, h_gt, heq.symm⟩
 
 /-- The sequence defined by repeatedly multiplying `a` by `c` on the left. -/
 def leftMulSeq (c a : S) : ℕ → S
@@ -543,26 +539,6 @@ lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :
   · exact False.elim (h_neq h_eq)
   · exact ⟨j, i, h_gt, heq.symm⟩
 
-/-- Any element in a `rightMulSeq` starting from `a` is a right multiple of `a`. -/
-lemma rightMulSeq_isGreenRightDvd (a c : S) (m : ℕ) :
-    IsGreenRightDvd (rightMulSeq a c m) a := by
-  cases m with
-  | zero => exact Or.inl rfl
-  | succ m =>
-    induction m with
-    | zero => exact Or.inr ⟨c, rfl⟩
-    | succ m ih =>
-      rcases ih with h_eq | ⟨w, hw⟩
-      · exact Or.inr ⟨c, by rw [rightMulSeq, h_eq]⟩
-      · exact Or.inr ⟨w * c, by rw [rightMulSeq, hw, mul_assoc]⟩
-
-/-- Right divisibility is preserved by right multiplication. -/
-lemma isGreenRightDvd_mul_right (a b y : S) (h : IsGreenRightDvd a b) :
-    IsGreenRightDvd (a * y) b := by
-  rcases h with rfl | ⟨w, hw⟩
-  · exact Or.inr ⟨y, rfl⟩
-  · exact Or.inr ⟨w * y, by rw [hw, mul_assoc]⟩
-
 /-- Any element in a `leftMulSeq` starting from `a` is a left multiple of `a`. -/
 lemma leftMulSeq_isGreenLeftDvd (c a : S) (m : ℕ) :
     IsGreenLeftDvd (leftMulSeq c a m) a := by
@@ -595,19 +571,6 @@ lemma leftMulSeq_rightMulSeq_comm (c x d : S) (i k : ℕ) :
         (rightMulSeq_mul_pull d k (leftMulSeq c x i) c).symm
       _ = rightMulSeq (leftMulSeq c x (i + 1)) d k := rfl
 
-/-- If `b = c * b * d`, applying `n` right steps then `n` left steps yields `b`. -/
-lemma b_eq_left_right_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
-    b = leftMulSeq c (rightMulSeq b d n) n := by
-  induction n with
-  | zero => rfl
-  | succ n ih =>
-    calc b = c * b * d := h
-      _ = c * leftMulSeq c (rightMulSeq b d n) n * d := congrArg (fun x ↦ c * x * d) ih
-      _ = leftMulSeq c (rightMulSeq b d n) (n + 1) * d := rfl
-      _ = leftMulSeq c (rightMulSeq b d n * d) (n + 1) :=
-        (leftMulSeq_mul_pull c (n + 1) (rightMulSeq b d n) d).symm
-      _ = leftMulSeq c (rightMulSeq b d (n + 1)) (n + 1) := rfl
-
 /-- If `b = c * b * d`, applying `n` left steps then `n` right steps yields `b`. -/
 lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
     b = rightMulSeq (leftMulSeq c b n) d n := by
@@ -622,35 +585,6 @@ lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
       _ = rightMulSeq (c * leftMulSeq c b n) d (n + 1) :=
         (rightMulSeq_mul_pull d (n + 1) (leftMulSeq c b n) c).symm
       _ = rightMulSeq (leftMulSeq c b (n + 1)) d (n + 1) := rfl
-
-/-- If `b = c * b * d` in a finite semigroup, `b` is equivalent to some right multiple sequence. -/
-lemma eq_rightMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
-    ∃ k > 0, b = rightMulSeq b d k := by
-  rcases rightMulSeq_pigeonhole b d with ⟨i, j, hij, heq⟩
-  let k := j - i
-  have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
-  have hk_eq_j : i + k = j := Nat.add_sub_of_le (le_of_lt hij)
-  have h_shift : rightMulSeq b d j = rightMulSeq (rightMulSeq b d i) d k := by
-    have hs : ∀ m, rightMulSeq b d (i + m) = rightMulSeq (rightMulSeq b d i) d m := by
-      intro m
-      induction m with
-      | zero => rfl
-      | succ m ih =>
-        calc rightMulSeq b d (i + m + 1) = rightMulSeq b d (i + m) * d := rfl
-          _ = rightMulSeq (rightMulSeq b d i) d m * d := by rw [ih]
-          _ = rightMulSeq (rightMulSeq b d i) d (m + 1) := rfl
-    calc rightMulSeq b d j = rightMulSeq b d (i + k) := by rw [← hk_eq_j]
-      _ = rightMulSeq (rightMulSeq b d i) d k := hs k
-  have h_fi_k : rightMulSeq (rightMulSeq b d i) d k = rightMulSeq b d i := by
-    rw [← h_shift, heq]
-  have h_b_eq : b = leftMulSeq c (rightMulSeq b d i) i := b_eq_left_right_seq c b d h i
-  have h_b_eq_k : b = rightMulSeq b d k := by
-    calc b = leftMulSeq c (rightMulSeq b d i) i := h_b_eq
-      _ = leftMulSeq c (rightMulSeq (rightMulSeq b d i) d k) i := by rw [h_fi_k]
-      _ = rightMulSeq (leftMulSeq c (rightMulSeq b d i) i) d k :=
-        leftMulSeq_rightMulSeq_comm c (rightMulSeq b d i) d i k
-      _ = rightMulSeq b d k := by rw [← h_b_eq]
-  exact ⟨k, hk_pos, h_b_eq_k⟩
 
 /-- If `b = c * b * d` in a finite semigroup, `b` is equivalent to some left multiple sequence. -/
 lemma eq_leftMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
