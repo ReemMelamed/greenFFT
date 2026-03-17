@@ -7,6 +7,7 @@ import Mathlib.Data.Set.Basic
 import Mathlib.Data.Setoid.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Fintype.Pigeonhole
+import Mathlib.Algebra.Group.Opposite
 
 /-!
 # Green's Relations
@@ -69,6 +70,43 @@ def IsGreenD (a b : S) := ∃ z, IsGreenL a z ∧ IsGreenR z b
 /-- Green's J relation: `a` and `b` generate the same principal two-sided ideal. -/
 def IsGreenJ (a b : S) := IsGreenJRel a b ∧ IsGreenJRel b a
 
+open MulOpposite in
+lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
+    IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) := by
+  constructor
+  · rintro (rfl | ⟨z, rfl⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨op z, rfl⟩
+  · rintro (h | ⟨z, h⟩)
+    · exact Or.inl (op_injective h)
+    · exact Or.inr ⟨unop z, op_injective h⟩
+
+open MulOpposite in
+lemma isGreenR_iff_isGreenL_op {a b : S} :
+    IsGreenR a b ↔ IsGreenL (op a) (op b) := by
+  simp only [IsGreenR, IsGreenL, isGreenRightDvd_iff_isGreenLeftDvd_op]
+
+open MulOpposite in
+lemma isGreenL_iff_isGreenR_op {a b : S} :
+    IsGreenL a b ↔ IsGreenR (op a) (op b) := by
+  constructor
+  · rintro ⟨h1, h2⟩
+    constructor
+    · rcases h1 with rfl | ⟨z, rfl⟩
+      · exact Or.inl rfl
+      · exact Or.inr ⟨op z, op_mul z b⟩
+    · rcases h2 with rfl | ⟨z, rfl⟩
+      · exact Or.inl rfl
+      · exact Or.inr ⟨op z, op_mul z a⟩
+  · rintro ⟨h1, h2⟩
+    constructor
+    · rcases h1 with h | ⟨z, h⟩
+      · exact Or.inl (op_injective h)
+      · exact Or.inr ⟨unop z, op_injective (by rw [h, op_mul, op_unop])⟩
+    · rcases h2 with h | ⟨z, h⟩
+      · exact Or.inl (op_injective h)
+      · exact Or.inr ⟨unop z, op_injective (by rw [h, op_mul, op_unop])⟩
+
 end GreenDefinitions
 
 
@@ -97,14 +135,12 @@ namespace IsGreenRightDvd
 /-- Right divisibility is reflexive. -/
 @[refl] theorem refl (a : S) : IsGreenRightDvd a a := Or.inl rfl
 
+open MulOpposite in
 /-- Right divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenRightDvd a b)
     (hbc : IsGreenRightDvd b c) : IsGreenRightDvd a c := by
-  rcases hab with rfl | ⟨x, hx⟩
-  · exact hbc
-  · rcases hbc with rfl | ⟨y, hy⟩
-    · exact Or.inr ⟨x, hx⟩
-    · exact Or.inr ⟨y * x, by rw [hx, hy, mul_assoc]⟩
+  rw [isGreenRightDvd_iff_isGreenLeftDvd_op] at hab hbc ⊢
+  exact IsGreenLeftDvd.trans hab hbc
 
 end IsGreenRightDvd
 
@@ -208,16 +244,11 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     trans := trans
   }
 
+open MulOpposite in
 /-- Green's R relation is preserved by left multiplication. -/
 theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b) := by
-  rcases h with ⟨h1, h2⟩
-  constructor
-  · rcases h1 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
-  · rcases h2 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, ← mul_assoc]⟩
+  rw [isGreenR_iff_isGreenL_op] at h ⊢
+  exact IsGreenL.mul_right (op c) h
 
 /-- Left cancellation property for elements related by Green's R relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
@@ -280,6 +311,18 @@ lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR 
     right; use v; rw [← mul_assoc, ← hv, hy]
   exact ⟨⟨hR1, hR2⟩, ⟨hL1, hL2⟩⟩
 
+open MulOpposite in
+lemma isGreenD_iff_isGreenD_op {a b : S} :
+    IsGreenD a b ↔ IsGreenD (op a) (op b) := by
+  constructor
+  · rintro ⟨z, hL, hR⟩
+    obtain ⟨z', hR', hL'⟩ := isGreenL_commutes_isGreenR hL hR
+    exact ⟨op z', isGreenR_iff_isGreenL_op.mp hR', isGreenL_iff_isGreenR_op.mp hL'⟩
+  · rintro ⟨z, hL, hR⟩
+    have h1 : IsGreenR a (unop z) := isGreenR_iff_isGreenL_op.mpr hL
+    have h2 : IsGreenL (unop z) b := isGreenL_iff_isGreenR_op.mpr hR
+    obtain ⟨z', hR_bz', hL_z'a⟩ := isGreenL_commutes_isGreenR (IsGreenL.symm h2) (IsGreenR.symm h1)
+    exact ⟨z', IsGreenL.symm hL_z'a, IsGreenR.symm hR_bz'⟩
 
 namespace IsGreenD
 
@@ -426,6 +469,9 @@ end GreenClasses
 
 
 section Helpers
+
+instance instFiniteMulOpposite [Finite S] : Finite Sᵐᵒᵖ :=
+  Finite.of_equiv S MulOpposite.opEquiv
 
 /-- The sequence defined by repeatedly multiplying `a` by `c` on the right. -/
 def rightMulSeq (a c : S) : ℕ → S
@@ -635,21 +681,6 @@ lemma eq_leftMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
       _ = leftMulSeq c b k := by rw [← h_b_eq]
   exact ⟨k, hk_pos, h_b_eq_k⟩
 
-/-- If `b = c * b * d`, then `b` is R-related to `b * d`. -/
-lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR b (b * d) := by
-  obtain ⟨k, hk_pos, hk_eq⟩ := eq_rightMulSeq_of_eq_mul_mul h
-  obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-  have h_bd_b : IsGreenRightDvd (b * d) b := Or.inr ⟨d, rfl⟩
-  have h_b_bd : IsGreenRightDvd b (b * d) := by
-    have h_eq_b : b = rightMulSeq (b * d) d m := by
-      calc b = rightMulSeq b d (m + 1) := hk_eq
-        _ = rightMulSeq (b * d) d m := rightMulSeq_pull_c d m b
-    have h_right := rightMulSeq_isGreenRightDvd (b * d) d m
-    rcases h_right with h_eq_r | ⟨w, hw⟩
-    · exact Or.inl (h_eq_b.trans h_eq_r)
-    · exact Or.inr ⟨w, h_eq_b.trans hw⟩
-  exact ⟨h_b_bd, h_bd_b⟩
-
 /-- If `b = c * b * d`, then `b` is L-related to `c * b`. -/
 lemma greenL_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenL b (c * b) := by
   obtain ⟨k, hk_pos, hk_eq⟩ := eq_leftMulSeq_of_eq_mul_mul h
@@ -665,19 +696,15 @@ lemma greenL_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenL
     · exact Or.inr ⟨w, h_eq_b.trans hw⟩
   exact ⟨h_b_cb, h_cb_b⟩
 
-/-- Green's R relation holds when a right multiplier
-  is dropped from an already R-related element. -/
-lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGreenR b (b * u) := by
-  have h2 : IsGreenRightDvd (b * u) b := Or.inr ⟨u, rfl⟩
-  have h1 : IsGreenRightDvd b (b * u) := by
-    cases h.left with
-    | inl h_eq => exact Or.inr ⟨y, h_eq⟩
-    | inr h_ex =>
-      rcases h_ex with ⟨w, hw⟩
-      exact Or.inr ⟨y * w, by
-        calc b = ((b * u) * y) * w := hw
-          _ = (b * u) * (y * w) := mul_assoc (b * u) y w⟩
-  exact ⟨h1, h2⟩
+open MulOpposite in
+/-- If `b = c * b * d`, then `b` is R-related to `b * d`. -/
+lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR b (b * d) := by
+  have hop : op b = op d * op b * op c := by
+    calc op b = op (c * b * d) := congrArg op h
+      _ = op d * op (c * b) := op_mul (c * b) d
+      _ = op d * (op b * op c) := by rw [op_mul]
+      _ = op d * op b * op c := (mul_assoc _ _ _).symm
+  exact isGreenR_iff_isGreenL_op.mpr (greenL_of_eq_mul_mul hop)
 
 /-- Green's L relation holds when a left multiplier is dropped from an already L-related element. -/
 lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGreenL b (z * b) := by
@@ -692,13 +719,15 @@ lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGr
           _ = (w * x) * (z * b) := (mul_assoc w x (z * b)).symm⟩
   exact ⟨h1, h2⟩
 
-/-- If `b = c * b * u * y`, then `b` is R-related to `b * u`. -/
-lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * y)) :
-  IsGreenR b (b * u) := by
-  have hr1 := greenR_of_eq_mul_mul h
-  have h_assoc : b * (u * y) = (b * u) * y := (mul_assoc b u y).symm
-  have hr2 : IsGreenR b ((b * u) * y) := h_assoc ▸ hr1
-  exact isGreenR_of_isGreenR_mul hr2
+open MulOpposite in
+/-- Green's R relation holds when a right multiplier
+  is dropped from an already R-related element. -/
+lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGreenR b (b * u) := by
+  have h2 : op ((b * u) * y) = op y * (op u * op b) := by rw [op_mul, op_mul]
+  have hop : IsGreenL (op b) (op y * (op u * op b)) := by
+    have h_L := isGreenR_iff_isGreenL_op.mp h
+    rwa [h2] at h_L
+  exact isGreenR_iff_isGreenL_op.mpr (isGreenL_of_isGreenL_mul hop)
 
 /-- If `b = x * z * b * d`, then `b` is L-related to `z * b`. -/
 lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b * d) :
@@ -707,6 +736,18 @@ lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b *
   have h_assoc : (x * z) * b = x * (z * b) := mul_assoc x z b
   have hl2 : IsGreenL b (x * (z * b)) := h_assoc ▸ hl1
   exact isGreenL_of_isGreenL_mul hl2
+
+
+open MulOpposite in
+/-- If `b = c * b * u * y`, then `b` is R-related to `b * u`. -/
+lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * y)) :
+    IsGreenR b (b * u) := by
+  have hop : op b = (op y * op u) * op b * op c := by
+    calc op b = op (c * b * (u * y)) := congrArg op h
+      _ = op (u * y) * op (c * b) := op_mul (c * b) (u * y)
+      _ = (op y * op u) * (op b * op c) := by rw [op_mul, op_mul]
+      _ = (op y * op u) * op b * op c := (mul_assoc _ _ _).symm
+  exact isGreenR_iff_isGreenL_op.mpr (isGreenL_of_eq_mul_mul_mul hop)
 
 /-- If `a` is a two-sided multiple of `b`, and `b` is a two-sided multiple of `a`,
 then `a` and `b` are Green's D-related. -/
@@ -1037,78 +1078,7 @@ theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop
   · exact isGreenJ_of_isGreenD
   · exact isGreenD_of_isGreenJ
 
-/-- If `a` and `a * b` are D-related in a finite semigroup, they are R-related. -/
-lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
-    IsGreenR a (a * b) := by
-  have h_ab_dvd_a : IsGreenRightDvd (a * b) a := Or.inr ⟨b, rfl⟩
-  have h_a_dvd_ab : IsGreenRightDvd a (a * b) := by
-    rcases h with ⟨z, hL_az, hR_zab⟩
-    have h_exists_c : ∃ c, z = a * c ∧ IsGreenRightDvd c b := by
-      rcases hR_zab.left with rfl | ⟨w, hw⟩
-      · exact ⟨b, rfl, Or.inl rfl⟩
-      · exact ⟨b * w, by rw [hw, mul_assoc], Or.inr ⟨w, rfl⟩⟩
-    rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-    rcases rightMulSeq_pigeonhole a c with ⟨i, j, hij, heq⟩
-    have hL_all : ∀ n, IsGreenL a (rightMulSeq a c n) := by
-      intro n
-      induction n with
-      | zero => exact IsGreenL.refl a
-      | succ n ih => exact IsGreenL.trans hL_az (IsGreenL.mul_right c ih)
-    have hL_aci : IsGreenL a (rightMulSeq a c i) := hL_all i
-    have h_a_eq_ack : ∃ k > 0, a = rightMulSeq a c k := by
-      let k := j - i
-      have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
-      have hk_eq_j : i + k = j := Nat.add_sub_of_le (le_of_lt hij)
-      have h_shift : rightMulSeq a c j = rightMulSeq (rightMulSeq a c i) c k := by
-        have hs : ∀ m, rightMulSeq a c (i + m) = rightMulSeq (rightMulSeq a c i) c m := by
-          intro m
-          induction m with
-          | zero => rfl
-          | succ m ih =>
-            calc rightMulSeq a c (i + m + 1) = rightMulSeq a c (i + m) * c := rfl
-              _ = rightMulSeq (rightMulSeq a c i) c m * c := by rw [ih]
-              _ = rightMulSeq (rightMulSeq a c i) c (m + 1) := rfl
-        calc rightMulSeq a c j = rightMulSeq a c (i + k) := by rw [← hk_eq_j]
-          _ = rightMulSeq (rightMulSeq a c i) c k := hs k
-      have h_fi_k : rightMulSeq (rightMulSeq a c i) c k = rightMulSeq a c i := by
-        rw [← h_shift, heq]
-      use k, hk_pos
-      rcases hL_aci.left with heq_a | ⟨u, hu⟩
-      · calc a = rightMulSeq a c i := heq_a
-          _ = rightMulSeq (rightMulSeq a c i) c k := h_fi_k.symm
-          _ = rightMulSeq a c k := by rw [← heq_a]
-      · calc a = u * rightMulSeq a c i := hu
-          _ = u * rightMulSeq (rightMulSeq a c i) c k := by rw [h_fi_k]
-          _ = rightMulSeq (u * rightMulSeq a c i) c k := (rightMulSeq_mul_pull c k _ u).symm
-          _ = rightMulSeq a c k := by rw [← hu]
-    rcases h_a_eq_ack with ⟨k, hk_pos, hk_eq⟩
-    obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
-    rcases hc_dvd with hc_eq_b | ⟨w, hw⟩
-    · rcases m with _ | m_pred
-      · have h_final : a = a * b := by
-          calc a = rightMulSeq a c (0 + 1) := hk_eq
-            _ = rightMulSeq (a * c) c 0 := rightMulSeq_pull_c c 0 a
-            _ = rightMulSeq (a * b) c 0 := congrArg (fun x ↦ rightMulSeq (a * x) c 0) hc_eq_b
-            _ = a * b := rfl
-        exact Or.inl h_final
-      · have h_final : a = (a * b) * rightMulSeq c c m_pred := by
-          calc a = rightMulSeq a c (m_pred + 1 + 1) := hk_eq
-            _ = rightMulSeq (a * c) c (m_pred + 1) := rightMulSeq_pull_c c (m_pred + 1) a
-            _ = rightMulSeq (a * b) c (m_pred + 1) :=
-              congrArg (fun x ↦ rightMulSeq (a * x) c (m_pred + 1)) hc_eq_b
-            _ = rightMulSeq ((a * b) * c) c m_pred := rightMulSeq_pull_c c m_pred (a * b)
-            _ = (a * b) * rightMulSeq c c m_pred := rightMulSeq_mul_pull c m_pred c (a * b)
-        exact Or.inr ⟨rightMulSeq c c m_pred, h_final⟩
-    · have h_final : a = (a * b) * rightMulSeq w c m := by
-        calc a = rightMulSeq a c (m + 1) := hk_eq
-          _ = rightMulSeq (a * c) c m := rightMulSeq_pull_c c m a
-          _ = rightMulSeq (a * (b * w)) c m := congrArg (fun x ↦ rightMulSeq (a * x) c m) hw
-          _ = rightMulSeq ((a * b) * w) c m :=
-            congrArg (fun x ↦ rightMulSeq x c m) (mul_assoc a b w).symm
-          _ = (a * b) * rightMulSeq w c m := rightMulSeq_mul_pull c m w (a * b)
-      exact Or.inr ⟨rightMulSeq w c m, h_final⟩
-  exact ⟨h_a_dvd_ab, h_ab_dvd_a⟩
-
+open MulOpposite in
 /-- If `b` and `a * b` are D-related in a finite semigroup, they are L-related. -/
 lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
     IsGreenL b (a * b) := by
@@ -1181,6 +1151,15 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
           _ = leftMulSeq c w m * (a * b) := leftMulSeq_mul_pull c m w (a * b)
       exact Or.inr ⟨leftMulSeq c w m, h_final⟩
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
+
+open MulOpposite in
+/-- If `a` and `a * b` are D-related in a finite semigroup, they are R-related. -/
+lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
+    IsGreenR a (a * b) := by
+  have hop : IsGreenD (op a) (op b * op a) := by
+    have hd := isGreenD_iff_isGreenD_op.mp h
+    rwa [op_mul] at hd
+  exact isGreenR_iff_isGreenL_op.mpr (isGreenL_sl_of_isGreenD_sl hop)
 
 /-- If `a, b`, and `a * b` are all in the same regular D-class, then `a R a * b`, `b L a * b`,
 and there exists an idempotent `e` in the D-class such that `a L e` and `b R e`. -/
