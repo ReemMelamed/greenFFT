@@ -28,6 +28,9 @@ and the coincidence of the D and J relations in finite semigroups.
 * `isGreenD_eq_isGreenJ_of_finite`: In a finite semigroup, Green's D and J relations coincide.
 * `is_group_isGreenH_eqvClass_iff_idempotent`:
   An H-class is a group if and only if it contains an idempotent.
+
+## References
+* Colombet, T. (2008). The Factorisation Forest Theorem.
 -/
 
 variable {S : Type*} [Semigroup S]
@@ -553,7 +556,7 @@ lemma b_eq_left_right_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
   | zero => rfl
   | succ n ih =>
     calc b = c * b * d := h
-      _ = c * leftMulSeq c (rightMulSeq b d n) n * d := congrArg (fun x => c * x * d) ih
+      _ = c * leftMulSeq c (rightMulSeq b d n) n * d := congrArg (fun x ↦ c * x * d) ih
       _ = leftMulSeq c (rightMulSeq b d n) (n + 1) * d := rfl
       _ = leftMulSeq c (rightMulSeq b d n * d) (n + 1) :=
         (leftMulSeq_mul_pull c (n + 1) (rightMulSeq b d n) d).symm
@@ -566,7 +569,7 @@ lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
   | zero => rfl
   | succ n ih =>
     calc b = c * b * d := h
-      _ = c * rightMulSeq (leftMulSeq c b n) d n * d := congrArg (fun x => c * x * d) ih
+      _ = c * rightMulSeq (leftMulSeq c b n) d n * d := congrArg (fun x ↦ c * x * d) ih
       _ = c * (rightMulSeq (leftMulSeq c b n) d n * d) :=
         mul_assoc c (rightMulSeq (leftMulSeq c b n) d n) d
       _ = c * rightMulSeq (leftMulSeq c b n) d (n + 1) := rfl
@@ -759,7 +762,7 @@ lemma isGreenD_of_left_right [Finite S] {a b u y : S} (h1 : a = u * b) (h2 : b =
   IsGreenD a b := by
   have h_a : a = u * a * y := by
     calc a = u * b := h1
-      _ = u * (a * y) := congrArg (fun x => u * x) h2
+      _ = u * (a * y) := congrArg (fun x ↦ u * x) h2
       _ = (u * a) * y := (mul_assoc u a y).symm
   have hR : IsGreenR a (a * y) := greenR_of_eq_mul_mul h_a
   have hR_ab : IsGreenR a b := h2.symm ▸ hR
@@ -770,7 +773,7 @@ lemma isGreenD_of_right_left [Finite S] {a b v x : S} (h1 : a = b * v) (h2 : b =
   IsGreenD a b := by
   have h_a : a = x * a * v := by
     calc a = b * v := h1
-      _ = (x * a) * v := congrArg (fun y => y * v) h2
+      _ = (x * a) * v := congrArg (fun y ↦ y * v) h2
   have hL : IsGreenL a (x * a) := greenL_of_eq_mul_mul h_a
   have hL_ab : IsGreenL a b := h2.symm ▸ hL
   exact ⟨b, hL_ab, IsGreenR.refl b⟩
@@ -904,18 +907,18 @@ noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
   · have hex_w : ∃ w, a = b * w := h.left.resolve_left hab_eq
     let w := Classical.choose hex_w
     have hw : a = b * w := Classical.choose_spec hex_w
-    have hba_neq : b ≠ a := fun heq => hab_eq heq.symm
+    have hba_neq : b ≠ a := fun heq ↦ hab_eq heq.symm
     have hex_z : ∃ z, b = a * z := h.right.resolve_left hba_neq
     let z := Classical.choose hex_z
     have hz : b = a * z := Classical.choose_spec hex_z
     have h_cancel_a : a * z * w = a := by rw [← hz, ← hw]
     have h_cancel_b : b * w * z = b := by rw [← hw, ← hz]
     refine {
-      toFun := fun ⟨x, hx⟩ => ⟨x * z, ?_⟩
-      invFun := fun ⟨y, hy⟩ => ⟨y * w, ?_⟩
-      left_inv := fun ⟨x, hx⟩ => Subtype.ext
+      toFun := fun ⟨x, hx⟩ ↦ ⟨x * z, ?_⟩
+      invFun := fun ⟨y, hy⟩ ↦ ⟨y * w, ?_⟩
+      left_inv := fun ⟨x, hx⟩ ↦ Subtype.ext
         (by dsimp only; exact IsGreenL.cancellation hx.left h_cancel_a)
-      right_inv := fun ⟨y, hy⟩ => Subtype.ext
+      right_inv := fun ⟨y, hy⟩ ↦ Subtype.ext
         (by dsimp only; exact IsGreenL.cancellation hy.left h_cancel_b)
     }
     · have hL1 : IsGreenL (x * z) (a * z) := IsGreenL.mul_right z hx.left
@@ -943,18 +946,18 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
   · have hex_w : ∃ w, a = w * b := h.left.resolve_left hab_eq
     let w := Classical.choose hex_w
     have hw : a = w * b := Classical.choose_spec hex_w
-    have hba_neq : b ≠ a := fun heq => hab_eq heq.symm
+    have hba_neq : b ≠ a := fun heq ↦ hab_eq heq.symm
     have hex_z : ∃ z, b = z * a := h.right.resolve_left hba_neq
     let z := Classical.choose hex_z
     have hz : b = z * a := Classical.choose_spec hex_z
     have h_cancel_a : w * z * a = a := by rw [mul_assoc, ← hz, ← hw]
     have h_cancel_b : z * w * b = b := by rw [mul_assoc, ← hw, ← hz]
     refine {
-      toFun := fun ⟨x, hx⟩ => ⟨z * x, ?_⟩
-      invFun := fun ⟨y, hy⟩ => ⟨w * y, ?_⟩
-      left_inv := fun ⟨x, hx⟩ => Subtype.ext
+      toFun := fun ⟨x, hx⟩ ↦ ⟨z * x, ?_⟩
+      invFun := fun ⟨y, hy⟩ ↦ ⟨w * y, ?_⟩
+      left_inv := fun ⟨x, hx⟩ ↦ Subtype.ext
         (by dsimp only; rw [← mul_assoc]; exact IsGreenR.cancellation hx.right h_cancel_a)
-      right_inv := fun ⟨y, hy⟩ => Subtype.ext
+      right_inv := fun ⟨y, hy⟩ ↦ Subtype.ext
         (by dsimp only; rw [← mul_assoc]; exact IsGreenR.cancellation hy.right h_cancel_b)
     }
     · have hR1 : IsGreenR (z * x) (z * a) := IsGreenR.mul_left z hx.right
@@ -1085,23 +1088,23 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
       · have h_final : a = a * b := by
           calc a = rightMulSeq a c (0 + 1) := hk_eq
             _ = rightMulSeq (a * c) c 0 := rightMulSeq_pull_c c 0 a
-            _ = rightMulSeq (a * b) c 0 := congrArg (fun x => rightMulSeq (a * x) c 0) hc_eq_b
+            _ = rightMulSeq (a * b) c 0 := congrArg (fun x ↦ rightMulSeq (a * x) c 0) hc_eq_b
             _ = a * b := rfl
         exact Or.inl h_final
       · have h_final : a = (a * b) * rightMulSeq c c m_pred := by
           calc a = rightMulSeq a c (m_pred + 1 + 1) := hk_eq
             _ = rightMulSeq (a * c) c (m_pred + 1) := rightMulSeq_pull_c c (m_pred + 1) a
             _ = rightMulSeq (a * b) c (m_pred + 1) :=
-              congrArg (fun x => rightMulSeq (a * x) c (m_pred + 1)) hc_eq_b
+              congrArg (fun x ↦ rightMulSeq (a * x) c (m_pred + 1)) hc_eq_b
             _ = rightMulSeq ((a * b) * c) c m_pred := rightMulSeq_pull_c c m_pred (a * b)
             _ = (a * b) * rightMulSeq c c m_pred := rightMulSeq_mul_pull c m_pred c (a * b)
         exact Or.inr ⟨rightMulSeq c c m_pred, h_final⟩
     · have h_final : a = (a * b) * rightMulSeq w c m := by
         calc a = rightMulSeq a c (m + 1) := hk_eq
           _ = rightMulSeq (a * c) c m := rightMulSeq_pull_c c m a
-          _ = rightMulSeq (a * (b * w)) c m := congrArg (fun x => rightMulSeq (a * x) c m) hw
+          _ = rightMulSeq (a * (b * w)) c m := congrArg (fun x ↦ rightMulSeq (a * x) c m) hw
           _ = rightMulSeq ((a * b) * w) c m :=
-            congrArg (fun x => rightMulSeq x c m) (mul_assoc a b w).symm
+            congrArg (fun x ↦ rightMulSeq x c m) (mul_assoc a b w).symm
           _ = (a * b) * rightMulSeq w c m := rightMulSeq_mul_pull c m w (a * b)
       exact Or.inr ⟨rightMulSeq w c m, h_final⟩
   exact ⟨h_a_dvd_ab, h_ab_dvd_a⟩
@@ -1159,21 +1162,21 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
       · have h_final : b = a * b := by
           calc b = leftMulSeq c b (0 + 1) := hk_eq
             _ = leftMulSeq c (c * b) 0 := leftMulSeq_pull_c c 0 b
-            _ = leftMulSeq c (a * b) 0 := congrArg (fun x => leftMulSeq c (x * b) 0) hc_eq_a
+            _ = leftMulSeq c (a * b) 0 := congrArg (fun x ↦ leftMulSeq c (x * b) 0) hc_eq_a
             _ = a * b := rfl
         exact Or.inl h_final
       · have h_final : b = leftMulSeq c c m_pred * (a * b) := by
           calc b = leftMulSeq c b (m_pred + 1 + 1) := hk_eq
             _ = leftMulSeq c (c * b) (m_pred + 1) := leftMulSeq_pull_c c (m_pred + 1) b
             _ = leftMulSeq c (a * b) (m_pred + 1) :=
-              congrArg (fun x => leftMulSeq c (x * b) (m_pred + 1)) hc_eq_a
+              congrArg (fun x ↦ leftMulSeq c (x * b) (m_pred + 1)) hc_eq_a
             _ = leftMulSeq c (c * (a * b)) m_pred := leftMulSeq_pull_c c m_pred (a * b)
             _ = leftMulSeq c c m_pred * (a * b) := leftMulSeq_mul_pull c m_pred c (a * b)
         exact Or.inr ⟨leftMulSeq c c m_pred, h_final⟩
     · have h_final : b = leftMulSeq c w m * (a * b) := by
         calc b = leftMulSeq c b (m + 1) := hk_eq
           _ = leftMulSeq c (c * b) m := leftMulSeq_pull_c c m b
-          _ = leftMulSeq c ((w * a) * b) m := congrArg (fun x => leftMulSeq c (x * b) m) hw
+          _ = leftMulSeq c ((w * a) * b) m := congrArg (fun x ↦ leftMulSeq c (x * b) m) hw
           _ = leftMulSeq c (w * (a * b)) m := congrArg (leftMulSeq c · m) (mul_assoc w a b)
           _ = leftMulSeq c w m * (a * b) := leftMulSeq_mul_pull c m w (a * b)
       exact Or.inr ⟨leftMulSeq c w m, h_final⟩
@@ -1202,16 +1205,16 @@ theorem mul_mem_isGreenD_eqvClass_properties
     · use a
       have hab_eq : a = b := h_a_eq.trans h_b_eq.symm
       have idem : a * a = a := by
-        calc a * a = a * b := congrArg (fun x => a * x) hab_eq
+        calc a * a = a * b := congrArg (fun x ↦ a * x) hab_eq
              _     = a     := h_a_eq.symm
       refine ⟨ha, idem, IsGreenL.refl a, ?_⟩
       exact hab_eq ▸ IsGreenR.refl b
     · use b
       have h1 : v * a = b := by
-        calc v * a = v * (a * b) := congrArg (fun x => v * x) h_a_eq
+        calc v * a = v * (a * b) := congrArg (fun x ↦ v * x) h_a_eq
              _     = b           := hv.symm
       have idem : b * b = b := by
-        calc b * b = (v * a) * b := congrArg (fun x => x * b) h1.symm
+        calc b * b = (v * a) * b := congrArg (fun x ↦ x * b) h1.symm
              _     = v * (a * b) := mul_assoc v a b
              _     = b           := hv.symm
       have hLab : IsGreenL a b := ⟨Or.inr ⟨a, h_a_eq⟩, Or.inr ⟨v, h1.symm⟩⟩
@@ -1219,29 +1222,29 @@ theorem mul_mem_isGreenD_eqvClass_properties
   · rcases h_b_dvd with h_b_eq | ⟨v, hv⟩
     · use a
       have h2 : b * u = a := by
-        calc b * u = (a * b) * u := congrArg (fun x => x * u) h_b_eq
+        calc b * u = (a * b) * u := congrArg (fun x ↦ x * u) h_b_eq
              _     = a           := hu.symm
       have idem : a * a = a := by
-        calc a * a = a * (b * u) := congrArg (fun x => a * x) h2.symm
+        calc a * a = a * (b * u) := congrArg (fun x ↦ a * x) h2.symm
              _     = (a * b) * u := (mul_assoc a b u).symm
              _     = a           := hu.symm
       have hRba : IsGreenR b a := ⟨Or.inr ⟨b, h_b_eq⟩, Or.inr ⟨u, h2.symm⟩⟩
       exact ⟨ha, idem, IsGreenL.refl a, hRba⟩
     · use v * a
       have he_eq : v * a = b * u := by
-        calc v * a = v * (a * b * u)   := congrArg (fun x => v * x) hu
+        calc v * a = v * (a * b * u)   := congrArg (fun x ↦ v * x) hu
              _     = (v * (a * b)) * u := (mul_assoc v (a * b) u).symm
-             _     = b * u             := congrArg (fun x => x * u) hv.symm
+             _     = b * u             := congrArg (fun x ↦ x * u) hv.symm
       have idem : (v * a) * (v * a) = v * a := by
-        calc (v * a) * (v * a) = (v * a) * (b * u) := congrArg (fun x => (v * a) * x) he_eq
+        calc (v * a) * (v * a) = (v * a) * (b * u) := congrArg (fun x ↦ (v * a) * x) he_eq
              _ = v * (a * (b * u))                 := mul_assoc v a (b * u)
              _ = v * (a * b * u)                   :=
-              congrArg (fun x => v * x) (mul_assoc a b u).symm
-             _ = v * a                             := congrArg (fun x => v * x) hu.symm
+              congrArg (fun x ↦ v * x) (mul_assoc a b u).symm
+             _ = v * a                             := congrArg (fun x ↦ v * x) hu.symm
       have hLae1 : a = a * (v * a) := by
         calc a = a * b * u   := hu
              _ = a * (b * u) := mul_assoc a b u
-             _ = a * (v * a) := congrArg (fun x => a * x) he_eq.symm
+             _ = a * (v * a) := congrArg (fun x ↦ a * x) he_eq.symm
       have hLae : IsGreenL a (v * a) := ⟨Or.inr ⟨a, hLae1⟩, Or.inr ⟨v, rfl⟩⟩
       have hRbe1 : b = (v * a) * b := by
         calc b = v * (a * b) := hv
