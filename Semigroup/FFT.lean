@@ -147,7 +147,7 @@ lemma simon_hclass_case
       (∀ x y : X, (x : α) < (y : α) → SplitRelation s x y →
         σ.σ (x : α) (y : α) * σ.σ (x : α) (y : α) = σ.σ (x : α) (y : α)) := by
   classical
-  let σ_H_fun : X → X → H := fun x y =>
+  let σ_H_fun : X → X → H := fun x y ↦
     if h : (x : α) < (y : α) then
       ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property h⟩
     else
@@ -189,7 +189,7 @@ open Classical in
 Returns 1 for non-regular D-classes as a default. -/
 noncomputable def nD (D : Set S) : ℕ :=
   if IsRegularDClass D then
-    (Finset.univ.filter (fun x =>
+    (Finset.univ.filter (fun x ↦
       x ∈ D ∧ ∃ e ∈ D, e * e = e ∧ IsGreenH x e
     )).card
   else
