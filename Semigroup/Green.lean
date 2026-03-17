@@ -26,7 +26,7 @@ and the coincidence of the D and J relations in finite semigroups.
 * `isGreenL_commutes_isGreenR`: Green's L and R relations commute.
 * `equivHClassOfIsGreenR`, `equivHClassOfIsGreenL`: Bijections between H-classes.
 * `isGreenD_eq_isGreenJ_of_finite`: In a finite semigroup, Green's D and J relations coincide.
-* `is_group_isGreenH_eqvClass_iff_idempotent`:
+* `isGroup_isGreenH_eqvClass_iff_idempotent`:
   An H-class is a group if and only if it contains an idempotent.
 
 ## References
@@ -82,7 +82,7 @@ namespace IsGreenLeftDvd
 
 /-- Left divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenLeftDvd a b)
-  (hbc : IsGreenLeftDvd b c) : IsGreenLeftDvd a c := by
+    (hbc : IsGreenLeftDvd b c) : IsGreenLeftDvd a c := by
   rcases hab with rfl | ⟨x, hx⟩
   · exact hbc
   · rcases hbc with rfl | ⟨y, hy⟩
@@ -99,7 +99,7 @@ namespace IsGreenRightDvd
 
 /-- Right divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenRightDvd a b)
-  (hbc : IsGreenRightDvd b c) : IsGreenRightDvd a c := by
+    (hbc : IsGreenRightDvd b c) : IsGreenRightDvd a c := by
   rcases hab with rfl | ⟨x, hx⟩
   · exact hbc
   · rcases hbc with rfl | ⟨y, hy⟩
@@ -116,7 +116,7 @@ namespace IsGreenJRel
 
 /-- The basic J-relation step is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJRel a b)
-  (hbc : IsGreenJRel b c) : IsGreenJRel a c := by
+    (hbc : IsGreenJRel b c) : IsGreenJRel a c := by
   cases hab
   case eq h => exact h ▸ hbc
   case mul_left u1 h1 =>
@@ -1259,7 +1259,7 @@ theorem mul_mem_isGreenD_eqvClass_properties
 
 /-- An H-class is either a group or contains no idempotents
   and is not closed under multiplication. -/
-lemma is_group_isGreenH_eqvClass_iff_idempotent
+lemma isGroup_isGreenH_eqvClass_iff_idempotent
     [Finite S] (H : Set S) (hH : ∃ a, H = IsGreenH.eqvClass a) :
     (∀ x y, x ∈ H → y ∈ H → x * y ∉ H) ∨
     (∃ e ∈ H, e * e = e ∧ ∀ x y, x ∈ H → y ∈ H → x * y ∈ H) := by

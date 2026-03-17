@@ -499,7 +499,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         have h_sig_H_e : IsGreenH (ctx.σ.σ m x) (eId ctx x) := IsGreenH.symm he_H_sig
         have h_class_eq : ∃ a, IsGreenH.eqvClass (eId ctx x) = IsGreenH.eqvClass a :=
           ⟨eId ctx x, rfl⟩
-        have h_group_or := is_group_isGreenH_eqvClass_iff_idempotent
+        have h_group_or := isGroup_isGreenH_eqvClass_iff_idempotent
           (IsGreenH.eqvClass (eId ctx x)) h_class_eq
         have h_group : ∀ u v, u ∈ IsGreenH.eqvClass (eId ctx x) →
             v ∈ IsGreenH.eqvClass (eId ctx x) → u * v ∈ IsGreenH.eqvClass (eId ctx x) := by
