@@ -793,38 +793,18 @@ lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
 /-- Two H-related idempotents must be equal. -/
 lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
     (hab : IsGreenH a b) (ha : a * a = a) (hb : b * b = b) : a = b := by
-  have h_ab_eq_b : a * b = b := by
-    rcases hab.right.right with rfl | ⟨x, hx⟩
-    · exact hb
-    · calc a * b = a * (a * x) := by rw [hx]
-        _ = (a * a) * x := (mul_assoc a a x).symm
-        _ = a * x := by rw [ha]
-        _ = b := hx.symm
-  have h_ab_eq_a : a * b = a := by
-    rcases hab.left.left with rfl | ⟨y, hy⟩
-    · exact ha
-    · calc a * b = (y * b) * b := by rw [hy]
-        _ = y * (b * b) := mul_assoc y b b
-        _ = y * b := by rw [hb]
-        _ = a := hy.symm
-  rw [← h_ab_eq_a, h_ab_eq_b]
+  have h1 : a * b = b := by
+    rcases hab.right.right with rfl | ⟨x, rfl⟩ <;> simp [← mul_assoc, ha]
+  have h2 : a * b = a := by
+    rcases hab.left.left with rfl | ⟨y, rfl⟩ <;> simp [mul_assoc, ha, hb]
+  rw [← h2, h1]
 
 /-- If `a` is H-related to an idempotent `e`, multiplying `a` by `e` leaves `a` unchanged. -/
 lemma mul_eq_self_of_isGreenH_idempotent {S : Type*} [Semigroup S] {a e : S}
     (hae : IsGreenH a e) (he : e * e = e) : a * e = a ∧ e * a = a := by
   constructor
-  · rcases hae.left.left with rfl | ⟨w, hw⟩
-    · exact he
-    · calc a * e = (w * e) * e := by rw [hw]
-        _ = w * (e * e) := mul_assoc w e e
-        _ = w * e := by rw [he]
-        _ = a := hw.symm
-  · rcases hae.right.left with rfl | ⟨w, hw⟩
-    · exact he
-    · calc e * a = e * (e * w) := by rw [hw]
-        _ = (e * e) * w := (mul_assoc e e w).symm
-        _ = e * w := by rw [he]
-        _ = a := hw.symm
+  · rcases hae.left.left with rfl | ⟨w, rfl⟩ <;> simp [mul_assoc, he]
+  · rcases hae.right.left with rfl | ⟨w, rfl⟩ <;> simp [← mul_assoc, he]
 
 end Helpers
 
