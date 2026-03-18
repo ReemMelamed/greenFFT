@@ -417,17 +417,14 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
     IsGreenH (ctx.σ.σ mz z) (eId ctx z) := by
   have hn_min : ¬ IsMin z := fun h ↦ lt_irrefl mz (lt_of_lt_of_le h_mz (h (le_of_lt h_mz)))
   have hn_max : ¬ IsMax mz := fun h ↦ lt_irrefl z (lt_of_le_of_lt (h (le_of_lt h_mz)) h_mz)
-  have hL : IsGreenL (eId ctx z) (ctx.σ.σ mz z) := by
-    have h := (eId_mem ctx z).1
-    rw [lOf, dif_neg hn_min, lOf_well_defined ctx z _ mz hn_min (getLt_prop z hn_min) h_mz] at h
-    exact h
-  have hR : IsGreenR (eId ctx z) (ctx.σ.σ mz z) := by
-    have h := (hm_H ▸ eId_mem ctx z).2
-    rw [rOf, dif_neg hn_max, rOf_well_defined ctx mz _ z hn_max (getGt_prop mz hn_max) h_mz] at h
-    exact h
+  have hl_eq : lOf ctx z = IsGreenL.eqvClass (ctx.σ.σ mz z) := by
+    rw [lOf, dif_neg hn_min, lOf_well_defined ctx z _ mz hn_min (getLt_prop z hn_min) h_mz]
+  have hr_eq : rOf ctx mz = IsGreenR.eqvClass (ctx.σ.σ mz z) := by
+    rw [rOf, dif_neg hn_max, rOf_well_defined ctx mz _ z hn_max (getGt_prop mz hn_max) h_mz]
+  have hL : eId ctx z ∈ IsGreenL.eqvClass (ctx.σ.σ mz z) := hl_eq ▸ (eId_mem ctx z).1
+  have hR : eId ctx z ∈ IsGreenR.eqvClass (ctx.σ.σ mz z) := hr_eq ▸ (hm_H ▸ eId_mem ctx z).2
   have hH : IsGreenH (ctx.σ.σ mz z) (eId ctx z) := ⟨IsGreenL.symm hL, IsGreenR.symm hR⟩
   grind [mul_eq_self_of_isGreenH_idempotent hH (eId_idem ctx z), mul_assoc]
-
 
 section WithFintypeAlpha
 variable [Fintype α]
@@ -557,9 +554,7 @@ section WithNonemptyAlpha
 variable [Nonempty α]
 
 open Classical in
-/-- The Factorization Forest Theorem applied to a regular D-class.
-Given a multiplicative labeling `σ` taking values in a regular D-class `D`,
-there exists a normalized split function into `nD D` ranks that acts as a Ramsey split for `σ`. -/
+/-- The Factorization Forest Theorem applied to a regular D-class. -/
 lemma simon_regular_d_case
     (σ : MultiplicativeLabeling S α)
     (D : Set S)
@@ -569,159 +564,100 @@ lemma simon_regular_d_case
     (h_ne : Nonempty (Fin (nD D)) := Fin.pos_iff_nonempty.mp (nD_pos D hD)) :
     ∃ (s : Split α (nD D)), IsNormalized s ∧ IsRamsey σ s := by
   obtain ⟨x₀, hx₀⟩ := hD
-  let ctx : SimonContext S α := {
-    σ := σ,
-    D := D,
-    x₀ := x₀,
-    hx₀ := hx₀,
-    hReg := hReg,
-    h_range := h_range
-  }
+  let ctx : SimonContext S α := ⟨σ, D, x₀, hx₀, hReg, h_range⟩
   have h_card_G_D : Fintype.card (GDType D) = nD D := by
     dsimp [nD]; rw [if_pos hReg]; exact Fintype.card_subtype _
   have h_card_pos : 0 < Fintype.card (GDType D) := by
-    rw [h_card_G_D]; exact Fin.pos_iff_nonempty.mpr (Fin.pos_iff_nonempty.mp (nD_pos D ⟨x₀, hx₀⟩))
-  let max_rank : Fin (nD D) := Fin.cast h_card_G_D
-    (Fin.cast (Nat.sub_add_cancel h_card_pos) (Fin.last (Fintype.card (GDType D) - 1)))
+    rw [h_card_G_D]; exact Fin.pos_iff_nonempty.mpr h_ne
+  let max_rank : Fin (nD D) :=
+      Fin.cast h_card_G_D
+          (Fin.cast (Nat.sub_add_cancel h_card_pos) (Fin.last (Fintype.card (GDType D) - 1)))
   let equiv_G_D_Fin : GDType D ≃ Fin (nD D) :=
-    (Fintype.equivFin _).trans (Equiv.cast (congrArg Fin h_card_G_D))
+      (Fintype.equivFin _).trans (Equiv.cast (congrArg Fin h_card_G_D))
   let alpha_min : α := Finset.min' Finset.univ Finset.univ_nonempty
-  let index_map := equiv_G_D_Fin.trans
-    (Equiv.swap (equiv_G_D_Fin (fColoring ctx alpha_min)) max_rank)
+  let index_map :=
+      equiv_G_D_Fin.trans (Equiv.swap (equiv_G_D_Fin (fColoring ctx alpha_min)) max_rank)
   let s : Split α (nD D) := fun y ↦ index_map (fColoring ctx y)
   use s
   constructor
-  · change s alpha_min = Finset.max' Finset.univ Finset.univ_nonempty
-    have h_min_eval : s alpha_min = max_rank := by
-      dsimp only [s, index_map]; rw [Equiv.trans_apply, Equiv.swap_apply_left]
+  · change index_map (fColoring ctx alpha_min) = Finset.max' Finset.univ Finset.univ_nonempty
+    have h_min_eval : index_map (fColoring ctx alpha_min) = max_rank := by
+      dsimp only [index_map]; rw [Equiv.trans_apply, Equiv.swap_apply_left]
     rw [h_min_eval]; symm; rw [Finset.max'_eq_iff]
-    constructor
-    · exact Finset.mem_univ _
-    · intro y _
-      apply Fin.le_iff_val_le_val.mpr
-      have h_max_val : (max_rank : ℕ) = nD D - 1 := by
-        simp only [Fin.cast_cast, Nat.succ_eq_add_one, Nat.reduceAdd,
-          Fin.val_cast, Fin.val_last, max_rank]
-        rw [h_card_G_D]
-      rw [h_max_val]
-      exact Nat.le_pred_of_lt y.is_lt
+    refine ⟨Finset.mem_univ _, fun y _ ↦ Fin.le_iff_val_le_val.mpr ?_⟩
+    have h_max_val : (max_rank : ℕ) = nD D - 1 := by simp [max_rank, h_card_G_D]
+    rw [h_max_val]
+    exact Nat.le_pred_of_lt y.is_lt
   · intros x y hlt hsr
     unfold SplitRelation at hsr
-    have h_f_eq : fColoring ctx x = fColoring ctx y := Equiv.injective index_map hsr.left
-    have h_val_eq : (fColoring ctx x).val = (fColoring ctx y).val := congrArg Subtype.val h_f_eq
-    have h_fz_H_e := fColoring_isGreenH ctx x
-    have h_fy_H_ey := fColoring_isGreenH ctx y
-    have he_H_ey : IsGreenH (eId ctx x) (eId ctx y) := by
-      have h1 : IsGreenH (eId ctx x) (fColoring ctx x).val := IsGreenH.symm h_fz_H_e
-      exact IsGreenH.trans h1 (h_val_eq ▸ h_fy_H_ey)
-    have he_eq_ey : eId ctx x = eId ctx y :=
-      eq_of_isGreenH_of_idempotent he_H_ey (eId_idem ctx x) (eId_idem ctx y)
+    have h_val_eq : (fColoring ctx x).val = (fColoring ctx y).val :=
+      congrArg Subtype.val (Equiv.injective index_map hsr.left)
+    have he_eq_ey : eId ctx x = eId ctx y := by
+      have h1 : IsGreenH (eId ctx x) (fColoring ctx x).val :=
+          IsGreenH.symm (fColoring_isGreenH ctx x)
+      have he_H_ey : IsGreenH (eId ctx x) (eId ctx y) :=
+          IsGreenH.trans h1 (h_val_eq ▸ fColoring_isGreenH ctx y)
+      exact eq_of_isGreenH_of_idempotent he_H_ey (eId_idem ctx x) (eId_idem ctx y)
     let m_class_x := Finset.univ.filter (fun z ↦ hOf ctx z = hOf ctx x)
     let m_class_y := Finset.univ.filter (fun z ↦ hOf ctx z = hOf ctx y)
-    have hm_nonempty_x : m_class_x.Nonempty := ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩⟩
-    have hm_nonempty_y : m_class_y.Nonempty := ⟨y, Finset.mem_filter.mpr ⟨Finset.mem_univ y, rfl⟩⟩
-    let mx := Finset.min' m_class_x hm_nonempty_x
-    let my := Finset.min' m_class_y hm_nonempty_y
+    have hm_ne_x : m_class_x.Nonempty := ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩⟩
+    have hm_ne_y : m_class_y.Nonempty := ⟨y, Finset.mem_filter.mpr ⟨Finset.mem_univ y, rfl⟩⟩
+    let mx := Finset.min' m_class_x hm_ne_x
+    let my := Finset.min' m_class_y hm_ne_y
     have h_same_H : hOf ctx x = hOf ctx y := by
       rw [hOf_eq_class ctx x, hOf_eq_class ctx y, he_eq_ey]
     have h_mx_eq_my : mx = my := by
       have h_class_eq : m_class_x = m_class_y := by
-        ext z
-        simp only [m_class_x, m_class_y, Finset.mem_filter, Finset.mem_univ, true_and]
-        exact ⟨fun h ↦ h.trans h_same_H, fun h ↦ h.trans h_same_H.symm⟩
+        ext z; simp [m_class_x, m_class_y, h_same_H]
       apply le_antisymm
-      · have h_my_in_x : my ∈ m_class_x := by
-          rw [h_class_eq]; exact Finset.min'_mem m_class_y hm_nonempty_y
-        exact Finset.min'_le m_class_x my h_my_in_x
-      · have h_mx_in_y : mx ∈ m_class_y := by
-          rw [← h_class_eq]; exact Finset.min'_mem m_class_x hm_nonempty_x
-        exact Finset.min'_le m_class_y mx h_mx_in_y
+      · exact Finset.min'_le m_class_x my (h_class_eq ▸ Finset.min'_mem m_class_y hm_ne_y)
+      · exact Finset.min'_le m_class_y mx
+            (h_class_eq.symm ▸ Finset.min'_mem m_class_x hm_ne_x)
     have h_ese_eq_e : eId ctx x * σ.σ x y * eId ctx x = eId ctx x := by
       by_cases h_mx : mx < x
-      · have h_mem_x := Finset.min'_mem m_class_x hm_nonempty_x
-        have hm_H : hOf ctx mx = hOf ctx x := (Finset.mem_filter.mp h_mem_x).2
-        have h_props_x := sigma_props ctx x mx h_mx hm_H
-        have h_val_x : (fColoring ctx x).val =
-            if h_lt : mx < x then eId ctx x * σ.σ mx x * eId ctx x else eId ctx x := by
-          dsimp only [fColoring]; split_ifs <;> rfl
+      · have hm_H : hOf ctx mx = hOf ctx x :=
+            (Finset.mem_filter.mp (Finset.min'_mem m_class_x hm_ne_x)).2
+        have h_px := sigma_props ctx x mx h_mx hm_H
         have h_fx : (fColoring ctx x).val = σ.σ mx x := by
-          rw [h_val_x, dif_pos h_mx]; exact h_props_x.1
-        have h_my : my < y := by rw [← h_mx_eq_my]; exact lt_trans h_mx hlt
-        have h_mem_y := Finset.min'_mem m_class_y hm_nonempty_y
-        have hm_Hy : hOf ctx my = hOf ctx y := (Finset.mem_filter.mp h_mem_y).2
-        have h_props_y := sigma_props ctx y my h_my hm_Hy
-        have h_val_y : (fColoring ctx y).val =
-            if h_lt : my < y then eId ctx y * σ.σ my y * eId ctx y else eId ctx y := by
-          dsimp only [fColoring]; split_ifs <;> rfl
+          dsimp only [fColoring]; rw [dif_pos h_mx]; exact h_px.1
+        have h_my : my < y := h_mx_eq_my ▸ lt_trans h_mx hlt
+        have hm_Hy : hOf ctx my = hOf ctx y :=
+            (Finset.mem_filter.mp (Finset.min'_mem m_class_y hm_ne_y)).2
+        have h_py := sigma_props ctx y my h_my hm_Hy
         have h_fy : (fColoring ctx y).val = σ.σ my y := by
-          rw [h_val_y, dif_pos h_my]; exact h_props_y.1
-        have hid_mx_mul := mul_eq_self_of_isGreenH_idempotent h_props_x.2 (eId_idem ctx x)
-        have hid_my_mul := mul_eq_self_of_isGreenH_idempotent h_props_y.2 (eId_idem ctx y)
+          dsimp only [fColoring]; rw [dif_pos h_my]; exact h_py.1
+        have hid_x := mul_eq_self_of_isGreenH_idempotent h_px.2 (eId_idem ctx x)
+        have hid_y := mul_eq_self_of_isGreenH_idempotent h_py.2 (eId_idem ctx y)
         have h_v_eq : σ.σ mx x * σ.σ x y * eId ctx x = σ.σ mx x := by
-          grind [hid_mx_mul.1, hid_mx_mul.2, σ.prop mx x y h_mx hlt,
-                hid_my_mul.1, hid_my_mul.2, mul_assoc]
-        have he_L_sig : IsGreenL (eId ctx x) (σ.σ mx x) := IsGreenL.symm h_props_x.2.left
-        rcases he_L_sig.left with heq | ⟨u, hu⟩
-        · calc eId ctx x * σ.σ x y * eId ctx x = σ.σ mx x * σ.σ x y * eId ctx x := by rw [heq]
-            _ = σ.σ mx x := h_v_eq
-            _ = eId ctx x := heq.symm
-        · calc eId ctx x * σ.σ x y * eId ctx x =
-                (u * σ.σ mx x) * σ.σ x y * eId ctx x := by rw [hu]
-            _ = u * (σ.σ mx x * σ.σ x y * eId ctx x) := by simp only [mul_assoc]
-            _ = u * σ.σ mx x := by rw [h_v_eq]
-            _ = eId ctx x := hu.symm
-      · have h_x_le_mx : x ≤ mx := not_lt.mp h_mx
-        have hx_in_mx : x ∈ m_class_x := Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩
-        have h_mx_le_x : mx ≤ x := Finset.min'_le m_class_x x hx_in_mx
-        have h_mx_eq : mx = x := le_antisymm h_mx_le_x h_x_le_mx
-        have h_val_x : (fColoring ctx x).val =
-            if h_lt : mx < x then eId ctx x * σ.σ mx x * eId ctx x else eId ctx x := by
-          dsimp only [fColoring]; split_ifs <;> rfl
-        have h_fx : (fColoring ctx x).val = eId ctx x := by rw [h_val_x, dif_neg h_mx]
-        have h_my : my < y := by rw [← h_mx_eq_my, h_mx_eq]; exact hlt
-        have h_mem_y := Finset.min'_mem m_class_y hm_nonempty_y
-        have hm_Hy : hOf ctx my = hOf ctx y := (Finset.mem_filter.mp h_mem_y).2
-        have h_props_y := sigma_props ctx y my h_my hm_Hy
-        have h_val_y : (fColoring ctx y).val =
-            if h_lt : my < y then eId ctx y * σ.σ my y * eId ctx y else eId ctx y := by
-          dsimp only [fColoring]; split_ifs <;> rfl
+          grind [hid_x.1, hid_x.2, σ.prop mx x y h_mx hlt, hid_y.1, hid_y.2, mul_assoc]
+        rcases (IsGreenL.symm h_px.2.left).left with heq | ⟨u, hu⟩
+        · grind
+        · grind [mul_assoc]
+      · have h_mx_eq : mx = x :=
+            le_antisymm (Finset.min'_le m_class_x x
+                (Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩)) (not_lt.mp h_mx)
+        have h_fx : (fColoring ctx x).val = eId ctx x := by
+          dsimp only [fColoring]; rw [dif_neg h_mx]
+        have h_my : my < y := h_mx_eq_my ▸ h_mx_eq ▸ hlt
+        have hm_Hy : hOf ctx my = hOf ctx y :=
+            (Finset.mem_filter.mp (Finset.min'_mem m_class_y hm_ne_y)).2
+        have h_py := sigma_props ctx y my h_my hm_Hy
         have h_fy : (fColoring ctx y).val = σ.σ my y := by
-          rw [h_val_y, dif_pos h_my]; exact h_props_y.1
-        have hid_my_mul := mul_eq_self_of_isGreenH_idempotent h_props_y.2 (eId_idem ctx y)
-        calc eId ctx x * σ.σ x y * eId ctx x =
-              eId ctx y * σ.σ my y * eId ctx y := by rw [← he_eq_ey, ← h_mx_eq_my, h_mx_eq]
-          _ = (eId ctx y * σ.σ my y) * eId ctx y := by simp only [mul_assoc]
-          _ = σ.σ my y * eId ctx y := by rw [hid_my_mul.2]
-          _ = σ.σ my y := hid_my_mul.1
-          _ = (fColoring ctx y).val := h_fy.symm
-          _ = (fColoring ctx x).val := h_val_eq.symm
-          _ = eId ctx x := h_fx
+          dsimp only [fColoring]; rw [dif_pos h_my]; exact h_py.1
+        have hid_y := mul_eq_self_of_isGreenH_idempotent h_py.2 (eId_idem ctx y)
+        grind [mul_assoc, hid_y.2, hid_y.1]
     have h_sig_H : IsGreenH (σ.σ x y) (eId ctx x) := by
-      have h_not_min_y : ¬ IsMin y := fun h ↦ lt_irrefl x (lt_of_lt_of_le hlt (h (le_of_lt hlt)))
-      have h_L_y : lOf ctx y = IsGreenL.eqvClass (σ.σ x y) := by
-        dsimp only [lOf]; rw [dif_neg h_not_min_y]
-        exact lOf_well_defined ctx y (getLt y h_not_min_y) x
-          h_not_min_y (getLt_prop y h_not_min_y) hlt
-      have hex_in_Hy : eId ctx x ∈ hOf ctx y := h_same_H ▸ eId_mem ctx x
-      have he_L : eId ctx x ∈ lOf ctx y := hex_in_Hy.1
-      have he_L_mem : IsGreenL (eId ctx x) (σ.σ x y) := by rwa [h_L_y] at he_L
-      have h_not_max_x : ¬ IsMax x := fun h ↦ lt_irrefl y (lt_of_le_of_lt (h (le_of_lt hlt)) hlt)
-      have h_R_x : rOf ctx x = IsGreenR.eqvClass (σ.σ x y) := by
-        dsimp only [rOf]; rw [dif_neg h_not_max_x]
-        exact rOf_well_defined ctx x (getGt x h_not_max_x) y
-          h_not_max_x (getGt_prop x h_not_max_x) hlt
-      have he_R : eId ctx x ∈ rOf ctx x := (eId_mem ctx x).2
-      have he_R_mem : IsGreenR (eId ctx x) (σ.σ x y) := by rwa [h_R_x] at he_R
-      exact IsGreenH.symm ⟨he_L_mem, he_R_mem⟩
-    have h_final_sigma : σ.σ x y = eId ctx x := by
-      have h_sig_id := mul_eq_self_of_isGreenH_idempotent h_sig_H (eId_idem ctx x)
-      calc σ.σ x y = eId ctx x * σ.σ x y := h_sig_id.2.symm
-        _ = eId ctx x * (σ.σ x y * eId ctx x) := congrArg (fun w ↦ eId ctx x * w) h_sig_id.1.symm
-        _ = (eId ctx x * σ.σ x y) * eId ctx x := (mul_assoc _ _ _).symm
-        _ = eId ctx x * σ.σ x y * eId ctx x := by simp only [mul_assoc]
-        _ = eId ctx x := h_ese_eq_e
-    rw [h_final_sigma]
-    exact eId_idem ctx x
+      have hn_min_y : ¬ IsMin y := fun h ↦ lt_irrefl x (lt_of_lt_of_le hlt (h (le_of_lt hlt)))
+      have hL_y : lOf ctx y = IsGreenL.eqvClass (σ.σ x y) := by
+        rw [lOf, dif_neg hn_min_y, lOf_well_defined ctx y _ x hn_min_y (getLt_prop y hn_min_y) hlt]
+      have hn_max_x : ¬ IsMax x := fun h ↦ lt_irrefl y (lt_of_le_of_lt (h (le_of_lt hlt)) hlt)
+      have hR_x : rOf ctx x = IsGreenR.eqvClass (σ.σ x y) := by
+        rw [rOf, dif_neg hn_max_x, rOf_well_defined ctx x _ y hn_max_x (getGt_prop x hn_max_x) hlt]
+      have he_L : eId ctx x ∈ IsGreenL.eqvClass (σ.σ x y) := hL_y ▸ (h_same_H ▸ eId_mem ctx x).1
+      have he_R : eId ctx x ∈ IsGreenR.eqvClass (σ.σ x y) := hR_x ▸ (eId_mem ctx x).2
+      exact IsGreenH.symm ⟨he_L, he_R⟩
+    have hid := mul_eq_self_of_isGreenH_idempotent h_sig_H (eId_idem ctx x)
+    grind [hid.1, hid.2, mul_assoc, eId_idem ctx x]
 
 end WithNonemptyAlpha
 end WithFintypeAlpha
