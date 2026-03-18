@@ -425,6 +425,25 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
   have hH : IsGreenH (ctx.σ.σ mz z) (eId ctx z) := ⟨IsGreenL.symm hL, IsGreenR.symm hR⟩
   grind [mul_eq_self_of_isGreenH_idempotent hH (eId_idem ctx z), mul_assoc]
 
+/-- The chosen idempotent `eId ctx x` belongs to the D-class `ctx.D`. -/
+lemma eId_mem_D (ctx : SimonContext S α) (x : α) : eId ctx x ∈ ctx.D := by
+  have he_L : eId ctx x ∈ lOf ctx x := (eId_mem ctx x).1
+  by_cases h_min : IsMin x
+  · by_cases h_max : IsMax x
+    · dsimp only [lOf] at he_L; rw [dif_pos h_min, dif_pos h_max] at he_L
+      rw [ctx.hx₀]; exact ⟨ctx.x₀, he_L, IsGreenR.refl ctx.x₀⟩
+    · let y' := getGt x h_max
+      have ha_D : ctx.σ.σ x y' ∈ ctx.D := ctx.h_range x y' (getGt_prop x h_max)
+      dsimp only [lOf] at he_L; rw [dif_pos h_min, dif_neg h_max] at he_L
+      have h_ex := exists_idempotent_in_greenR_of_regular (ctx.hReg _ ha_D)
+      rw [ctx.hx₀] at ha_D ⊢
+      exact IsGreenD.trans ⟨Classical.choose h_ex, he_L, (Classical.choose_spec h_ex).left⟩ ha_D
+  · let y' := getLt x h_min
+    dsimp only [lOf] at he_L; rw [dif_neg h_min] at he_L
+    have ha_D : ctx.σ.σ y' x ∈ ctx.D := ctx.h_range y' x (getLt_prop x h_min)
+    rw [ctx.hx₀] at ha_D ⊢
+    exact IsGreenD.trans ⟨ctx.σ.σ y' x, he_L, IsGreenR.refl _⟩ ha_D
+
 section WithFintypeAlpha
 variable [Fintype α]
 
@@ -489,9 +508,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         have h_sig_D : ctx.σ.σ m x ∈ ctx.D := ctx.h_range m x h_mx
         have he_D_sig : IsGreenD (eId ctx x) (ctx.σ.σ m x) :=
           ⟨eId ctx x, IsGreenL.refl (eId ctx x), he_H_sig.right⟩
-        have he_D : eId ctx x ∈ ctx.D := by
-          rw [ctx.hx₀] at h_sig_D ⊢
-          exact IsGreenD.trans he_D_sig h_sig_D
+        have he_D := eId_mem_D ctx x
         have hval_D_e : IsGreenD val (eId ctx x) := ⟨val, IsGreenL.refl val, h_val_H_e.right⟩
         have h_val_D : val ∈ ctx.D := by
           rw [ctx.hx₀] at he_D ⊢
@@ -500,32 +517,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
       ⟨val, h_val_in⟩
   else
       have h_e_in : eId ctx x ∈ ctx.D ∧ ∃ e' ∈ ctx.D, e' * e' = e' ∧ IsGreenH (eId ctx x) e' := by
-        have he_D : eId ctx x ∈ ctx.D := by
-          have he_L : eId ctx x ∈ lOf ctx x := (eId_mem ctx x).1
-          by_cases h_min : IsMin x
-          · by_cases h_max : IsMax x
-            · dsimp only [lOf] at he_L
-              rw [dif_pos h_min, dif_pos h_max] at he_L
-              rw [ctx.hx₀]
-              exact ⟨ctx.x₀, he_L, IsGreenR.refl ctx.x₀⟩
-            · let y' := getGt x h_max
-              have ha_D : ctx.σ.σ x y' ∈ ctx.D := ctx.h_range x y' (getGt_prop x h_max)
-              dsimp only [lOf] at he_L
-              rw [dif_pos h_min, dif_neg h_max] at he_L
-              have h_ex := exists_idempotent_in_greenR_of_regular (ctx.hReg _ ha_D)
-              let e_R : S := Classical.choose h_ex
-              have he_R_prop := Classical.choose_spec h_ex
-              rw [ctx.hx₀] at ha_D ⊢
-              have hD_e_sig : IsGreenD (eId ctx x) (ctx.σ.σ x y') := ⟨e_R, he_L, he_R_prop.left⟩
-              exact IsGreenD.trans hD_e_sig ha_D
-          · let y' := getLt x h_min
-            dsimp only [lOf] at he_L
-            rw [dif_neg h_min] at he_L
-            have ha_D : ctx.σ.σ y' x ∈ ctx.D := ctx.h_range y' x (getLt_prop x h_min)
-            rw [ctx.hx₀] at ha_D ⊢
-            have hD_e_sig : IsGreenD (eId ctx x) (ctx.σ.σ y' x) :=
-              ⟨ctx.σ.σ y' x, he_L, IsGreenR.refl _⟩
-            exact IsGreenD.trans hD_e_sig ha_D
+        have he_D := eId_mem_D ctx x
         exact ⟨he_D, eId ctx x, he_D, eId_idem ctx x, IsGreenH.refl (eId ctx x)⟩
       ⟨eId ctx x, h_e_in⟩
 
@@ -536,14 +528,11 @@ lemma fColoring_isGreenH (ctx : SimonContext S α) (z : α) :
   let m_class := Finset.univ.filter (fun w ↦ hOf ctx w = hOf ctx z)
   have hm_nonempty : m_class.Nonempty := ⟨z, Finset.mem_filter.mpr ⟨Finset.mem_univ z, rfl⟩⟩
   let mz := Finset.min' m_class hm_nonempty
-  have hm_in := Finset.min'_mem m_class hm_nonempty
-  have hm_H : hOf ctx mz = hOf ctx z := (Finset.mem_filter.mp hm_in).2
-  have h_val : (fColoring ctx z).val =
-      if h_lt : mz < z then eId ctx z * ctx.σ.σ mz z * eId ctx z else eId ctx z := by
-    dsimp only [fColoring]; split_ifs <;> rfl
-  rw [h_val]
+  have hm_H : hOf ctx mz = hOf ctx z := (Finset.mem_filter.mp (Finset.min'_mem _ hm_nonempty)).2
+  dsimp only [fColoring]
   split_ifs with h_mz
   · have h_props := sigma_props ctx z mz h_mz hm_H
+    change IsGreenH (eId ctx z * ctx.σ.σ mz z * eId ctx z) (eId ctx z)
     rw [h_props.1]
     exact h_props.2
   · exact IsGreenH.refl (eId ctx z)
@@ -605,13 +594,11 @@ lemma simon_regular_d_case
     let my := Finset.min' m_class_y hm_ne_y
     have h_same_H : hOf ctx x = hOf ctx y := by
       rw [hOf_eq_class ctx x, hOf_eq_class ctx y, he_eq_ey]
-    have h_mx_eq_my : mx = my := by
-      have h_class_eq : m_class_x = m_class_y := by
-        ext z; simp [m_class_x, m_class_y, h_same_H]
-      apply le_antisymm
-      · exact Finset.min'_le m_class_x my (h_class_eq ▸ Finset.min'_mem m_class_y hm_ne_y)
-      · exact Finset.min'_le m_class_y mx
-            (h_class_eq.symm ▸ Finset.min'_mem m_class_x hm_ne_x)
+    have h_class_eq : m_class_x = m_class_y := by
+      ext z; simp [m_class_x, m_class_y, h_same_H]
+    have h_mx_eq_my : mx = my := le_antisymm
+      (Finset.min'_le _ _ (h_class_eq ▸ Finset.min'_mem _ hm_ne_y))
+      (Finset.min'_le _ _ (h_class_eq.symm ▸ Finset.min'_mem _ hm_ne_x))
     have h_ese_eq_e : eId ctx x * σ.σ x y * eId ctx x = eId ctx x := by
       by_cases h_mx : mx < x
       · have hm_H : hOf ctx mx = hOf ctx x :=
