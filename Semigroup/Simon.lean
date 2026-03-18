@@ -13,21 +13,24 @@ import Mathlib.Order.Max
 import Semigroup.Green
 
 /-!
-# The Factorisation Forest Theorem
+# The Factorization Forest Theorem
 
-This file defines the basic structures for the Factorisation Forest Theorem
-and proves specific cases (e.g., the group case and regular D-class case).
+This file defines the basic structures for the Factorization Forest Theorem
+and proves specific cases (e.g., the group H-class case and regular D-class case).
 
 ## Main definitions
 * `MultiplicativeLabeling`: A labeling function obeying multiplicative properties.
 * `Split`: A function assigning a bounded rank to elements.
 
 ## Main statements
-* `simon_group_case`: The Factorisation Forest Theorem restricted to a group.
+* `simon_group_case`: The Factorization Forest Theorem restricted to a group.
 * `simon_regular_d_case`: The theorem applied to a regular D-class.
 
 ## References
-* Colombet, T. (2008). The Factorisation Forest Theorem.
+* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+
+## Tags
+factorization forest, semigroup, green's relations, simon
 -/
 
 section SplitDefinitions
@@ -45,7 +48,7 @@ structure MultiplicativeLabeling (S α : Type*) [Semigroup S] [LinearOrder α] w
 /-- A split is a function assigning each element of `α` a bounded integer rank in `Fin h`. -/
 abbrev Split (α : Type*) (h : ℕ) := α → Fin h
 
-/-- `SplitRelation s x y` states that `x` and `y` share the same rank under `s`,
+/-- `splitRelation s x y` states that `x` and `y` share the same rank under `s`,
 and any element bounded between them has a rank at most that of `x` and `y`. -/
 def SplitRelation (s : Split α h) (x y : α) : Prop :=
   s x = s y ∧ ∀ z, min x y ≤ z → z ≤ max x y → s z ≤ s (min x y)
@@ -62,7 +65,7 @@ def IsRamsey (L : MultiplicativeLabeling S α) (s : Split α h) : Prop :=
   ∀ x y : α, x < y → SplitRelation s x y → L.σ x y * L.σ x y = L.σ x y
 
 /-- The relation induced by a split function is an equivalence relation. -/
-theorem split_relation_equiv (s : Split α h) : Equivalence (SplitRelation s) := by
+theorem splitRelation_equiv (s : Split α h) : Equivalence (SplitRelation s) := by
   constructor <;> grind [SplitRelation]
 
 end SplitDefinitions
@@ -73,7 +76,7 @@ section GroupCase
 variable {G α : Type*} [Group G] [Fintype G] [LinearOrder α] [Fintype α] [Nonempty α]
 
 open Classical in
-/-- The Factorisation Forest Theorem restricted to a group.
+/-- The Factorization Forest Theorem restricted to a group.
 There exists a normalized split function acting as a Ramsey split for the group labeling. -/
 lemma simon_group_case (σ : MultiplicativeLabeling G α) :
     ∃ (s : Split α (Fintype.card G)), IsNormalized s ∧ IsRamsey σ s := by
@@ -84,7 +87,7 @@ lemma simon_group_case (σ : MultiplicativeLabeling G α) :
   let max_rank : Fin size_G := Fin.cast h_size_cast (Fin.last (size_G - 1))
   let raw_equiv := Fintype.equivFin G
   let index_in_enum := raw_equiv.trans (Equiv.swap (raw_equiv 1) max_rank)
-  let s : Split α size_G := fun y =>
+  let s : Split α size_G := fun y ↦
     if y = x₀ then max_rank else index_in_enum (σ.σ x₀ y)
   use s
   constructor
@@ -123,7 +126,7 @@ lemma simon_group_case (σ : MultiplicativeLabeling G α) :
       have h_mult := σ.prop x₀ x y h_x0_lt_x hlt
       rw [← h_vals_eq] at h_mult
       have h_res : σ.σ x y = 1 := by
-        have h_temp := congr_arg (fun g => (σ.σ x₀ x)⁻¹ * g) h_mult
+        have h_temp := congr_arg (fun g ↦ (σ.σ x₀ x)⁻¹ * g) h_mult
         simp only [inv_mul_cancel_left, inv_mul_cancel] at h_temp
         exact h_temp
       simp only [h_res, mul_one]
@@ -135,7 +138,7 @@ section HClassWrapper
 
 variable {S α : Type*} [Semigroup S] [LinearOrder α]
 
-/-- The Factorisation Forest Theorem applied to an H-class that forms a group. -/
+/-- The Factorization Forest Theorem applied to an H-class that forms a group. -/
 lemma simon_hclass_case
     (σ : MultiplicativeLabeling S α)
     (X : Set α) [Nonempty X] [Fintype X]
@@ -389,7 +392,7 @@ lemma eId_mem (ctx : SimonContext S α) (x : α) : eId ctx x ∈ hOf ctx x :=
   (Classical.choose_spec (hOf_has_idempotent ctx x)).1
 
 /-- The chosen element `eId ctx x` is an idempotent. -/
-lemma eId_idem (ctx : SimonContext S α) (x : α) : eId ctx x * eId ctx x = eId ctx x :=
+@[simp] lemma eId_idem (ctx : SimonContext S α) (x : α) : eId ctx x * eId ctx x = eId ctx x :=
   (Classical.choose_spec (hOf_has_idempotent ctx x)).2
 
 /-- The H-class of `z` is exactly the H-class of its chosen idempotent. -/
@@ -423,8 +426,7 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
     (hm_H : hOf ctx mz = hOf ctx z) :
     eId ctx z * ctx.σ.σ mz z * eId ctx z = ctx.σ.σ mz z ∧
     IsGreenH (ctx.σ.σ mz z) (eId ctx z) := by
-  have he_z_idem : eId ctx z * eId ctx z = eId ctx z := eId_idem ctx z
-  have h_not_min_z : ¬ IsMin z := fun h => lt_irrefl mz (lt_of_lt_of_le h_mz (h (le_of_lt h_mz)))
+  have h_not_min_z : ¬ IsMin z := fun h ↦ lt_irrefl mz (lt_of_lt_of_le h_mz (h (le_of_lt h_mz)))
   have h_L_mz : lOf ctx z = IsGreenL.eqvClass (ctx.σ.σ mz z) := by
     dsimp only [lOf]
     rw [dif_neg h_not_min_z]
@@ -433,7 +435,7 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
   have he_L_mz_z : IsGreenL (eId ctx z) (ctx.σ.σ mz z) := by
     have h1 : eId ctx z ∈ lOf ctx z := (eId_mem ctx z).1
     rwa [h_L_mz] at h1
-  have h_not_max_m : ¬ IsMax mz := fun h => lt_irrefl z (lt_of_le_of_lt (h (le_of_lt h_mz)) h_mz)
+  have h_not_max_m : ¬ IsMax mz := fun h ↦ lt_irrefl z (lt_of_le_of_lt (h (le_of_lt h_mz)) h_mz)
   have h_R_mz : rOf ctx mz = IsGreenR.eqvClass (ctx.σ.σ mz z) := by
     dsimp only [rOf]
     rw [dif_neg h_not_max_m]
@@ -445,12 +447,9 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
     rwa [h_R_mz] at h1
   have he_H_mz_z : IsGreenH (eId ctx z) (ctx.σ.σ mz z) := ⟨he_L_mz_z, he_R_mz_z⟩
   have h_sig_H_e : IsGreenH (ctx.σ.σ mz z) (eId ctx z) := IsGreenH.symm he_H_mz_z
-  have hid := mul_eq_self_of_isGreenH_idempotent h_sig_H_e he_z_idem
+  have hid := mul_eq_self_of_isGreenH_idempotent h_sig_H_e (eId_idem ctx z)
   have h_simp : eId ctx z * ctx.σ.σ mz z * eId ctx z = ctx.σ.σ mz z := by
-    calc eId ctx z * ctx.σ.σ mz z * eId ctx z =
-          (eId ctx z * ctx.σ.σ mz z) * eId ctx z := by simp only [mul_assoc]
-      _ = ctx.σ.σ mz z * eId ctx z := by rw [hid.2]
-      _ = ctx.σ.σ mz z := hid.1
+    rw [hid.2, hid.1]
   exact ⟨h_simp, h_sig_H_e⟩
 
 
@@ -465,17 +464,16 @@ open Classical in
 /-- The coloring function mapping an element `x` to a subtype
 representing its value and properties in the D-class. -/
 noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
-  let m_class := Finset.univ.filter (fun y => hOf ctx y = hOf ctx x)
+  let m_class := Finset.univ.filter (fun y ↦ hOf ctx y = hOf ctx x)
   have hm_nonempty : m_class.Nonempty := ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩⟩
   let m := Finset.min' m_class hm_nonempty
   if h_mx : m < x then
       let val := eId ctx x * ctx.σ.σ m x * eId ctx x
       have h_val_in : val ∈ ctx.D ∧ ∃ e' ∈ ctx.D, e' * e' = e' ∧ IsGreenH val e' := by
-        have he_idem_x : eId ctx x * eId ctx x = eId ctx x := eId_idem ctx x
         have hm_in := Finset.min'_mem m_class hm_nonempty
         have hm_H : hOf ctx m = hOf ctx x := (Finset.mem_filter.mp hm_in).2
         have h_not_min_x : ¬ IsMin x :=
-          fun h => lt_irrefl m (lt_of_lt_of_le h_mx (h (le_of_lt h_mx)))
+          fun h ↦ lt_irrefl m (lt_of_lt_of_le h_mx (h (le_of_lt h_mx)))
         have h_L_mx : lOf ctx x = IsGreenL.eqvClass (ctx.σ.σ m x) := by
           dsimp only [lOf]
           rw [dif_neg h_not_min_x]
@@ -485,7 +483,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
           have h1 : eId ctx x ∈ lOf ctx x := (eId_mem ctx x).1
           rwa [h_L_mx] at h1
         have h_not_max_m : ¬ IsMax m :=
-          fun h => lt_irrefl x (lt_of_le_of_lt (h (le_of_lt h_mx)) h_mx)
+          fun h ↦ lt_irrefl x (lt_of_le_of_lt (h (le_of_lt h_mx)) h_mx)
         have h_R_m : rOf ctx m = IsGreenR.eqvClass (ctx.σ.σ m x) := by
           dsimp only [rOf]
           rw [dif_neg h_not_max_m]
@@ -506,7 +504,7 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
           rcases h_group_or with h_empty | ⟨e', he'H, he'idem, h_mul⟩
           · have h_ee_not := h_empty (eId ctx x) (eId ctx x)
               (IsGreenH.refl (eId ctx x)) (IsGreenH.refl (eId ctx x))
-            rw [he_idem_x] at h_ee_not
+            rw [eId_idem ctx x] at h_ee_not
             exact False.elim (h_ee_not (IsGreenH.refl (eId ctx x)))
           · exact h_mul
         have h_sig_He : ctx.σ.σ m x ∈ IsGreenH.eqvClass (eId ctx x) := h_sig_H_e
@@ -526,11 +524,10 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
         have h_val_D : val ∈ ctx.D := by
           rw [ctx.hx₀] at he_D ⊢
           exact IsGreenD.trans hval_D_e he_D
-        exact ⟨h_val_D, eId ctx x, he_D, he_idem_x, h_val_H_e⟩
+        exact ⟨h_val_D, eId ctx x, he_D, eId_idem ctx x, h_val_H_e⟩
       ⟨val, h_val_in⟩
   else
       have h_e_in : eId ctx x ∈ ctx.D ∧ ∃ e' ∈ ctx.D, e' * e' = e' ∧ IsGreenH (eId ctx x) e' := by
-        have he_idem_x := eId_idem ctx x
         have he_D : eId ctx x ∈ ctx.D := by
           have he_L : eId ctx x ∈ lOf ctx x := (eId_mem ctx x).1
           by_cases h_min : IsMin x
@@ -557,14 +554,14 @@ noncomputable def fColoring (ctx : SimonContext S α) (x : α) : GDType ctx.D :=
             have hD_e_sig : IsGreenD (eId ctx x) (ctx.σ.σ y' x) :=
               ⟨ctx.σ.σ y' x, he_L, IsGreenR.refl _⟩
             exact IsGreenD.trans hD_e_sig ha_D
-        exact ⟨he_D, eId ctx x, he_D, he_idem_x, IsGreenH.refl (eId ctx x)⟩
+        exact ⟨he_D, eId ctx x, he_D, eId_idem ctx x, IsGreenH.refl (eId ctx x)⟩
       ⟨eId ctx x, h_e_in⟩
 
 open Classical in
 /-- The element returned by `fColoring` belongs to the correct Green's H-class. -/
 lemma fColoring_isGreenH (ctx : SimonContext S α) (z : α) :
     IsGreenH (fColoring ctx z).val (eId ctx z) := by
-  let m_class := Finset.univ.filter (fun w => hOf ctx w = hOf ctx z)
+  let m_class := Finset.univ.filter (fun w ↦ hOf ctx w = hOf ctx z)
   have hm_nonempty : m_class.Nonempty := ⟨z, Finset.mem_filter.mpr ⟨Finset.mem_univ z, rfl⟩⟩
   let mz := Finset.min' m_class hm_nonempty
   have hm_in := Finset.min'_mem m_class hm_nonempty
@@ -584,7 +581,7 @@ section WithNonemptyAlpha
 variable [Nonempty α]
 
 open Classical in
-/-- The Factorisation Forest Theorem applied to a regular D-class.
+/-- The Factorization Forest Theorem applied to a regular D-class.
 Given a multiplicative labeling `σ` taking values in a regular D-class `D`,
 there exists a normalized split function into `nD D` ranks that acts as a Ramsey split for `σ`. -/
 lemma simon_regular_d_case
@@ -615,7 +612,7 @@ lemma simon_regular_d_case
   let alpha_min : α := Finset.min' Finset.univ Finset.univ_nonempty
   let index_map := equiv_G_D_Fin.trans
     (Equiv.swap (equiv_G_D_Fin (fColoring ctx alpha_min)) max_rank)
-  let s : Split α (nD D) := fun y => index_map (fColoring ctx y)
+  let s : Split α (nD D) := fun y ↦ index_map (fColoring ctx y)
   use s
   constructor
   · change s alpha_min = Finset.max' Finset.univ Finset.univ_nonempty
@@ -643,8 +640,8 @@ lemma simon_regular_d_case
       exact IsGreenH.trans h1 (h_val_eq ▸ h_fy_H_ey)
     have he_eq_ey : eId ctx x = eId ctx y :=
       eq_of_isGreenH_of_idempotent he_H_ey (eId_idem ctx x) (eId_idem ctx y)
-    let m_class_x := Finset.univ.filter (fun z => hOf ctx z = hOf ctx x)
-    let m_class_y := Finset.univ.filter (fun z => hOf ctx z = hOf ctx y)
+    let m_class_x := Finset.univ.filter (fun z ↦ hOf ctx z = hOf ctx x)
+    let m_class_y := Finset.univ.filter (fun z ↦ hOf ctx z = hOf ctx y)
     have hm_nonempty_x : m_class_x.Nonempty := ⟨x, Finset.mem_filter.mpr ⟨Finset.mem_univ x, rfl⟩⟩
     have hm_nonempty_y : m_class_y.Nonempty := ⟨y, Finset.mem_filter.mpr ⟨Finset.mem_univ y, rfl⟩⟩
     let mx := Finset.min' m_class_x hm_nonempty_x
@@ -655,7 +652,7 @@ lemma simon_regular_d_case
       have h_class_eq : m_class_x = m_class_y := by
         ext z
         simp only [m_class_x, m_class_y, Finset.mem_filter, Finset.mem_univ, true_and]
-        exact ⟨fun h => h.trans h_same_H, fun h => h.trans h_same_H.symm⟩
+        exact ⟨fun h ↦ h.trans h_same_H, fun h ↦ h.trans h_same_H.symm⟩
       apply le_antisymm
       · have h_my_in_x : my ∈ m_class_x := by
           rw [h_class_eq]; exact Finset.min'_mem m_class_y hm_nonempty_y
@@ -687,7 +684,7 @@ lemma simon_regular_d_case
         have h_v_eq : σ.σ mx x * σ.σ x y * eId ctx x = σ.σ mx x := by
           calc σ.σ mx x * σ.σ x y * eId ctx x =
                   (eId ctx x * σ.σ mx x) * σ.σ x y * eId ctx x :=
-                congrArg (fun w => w * σ.σ x y * eId ctx x) hid_mx_mul.2.symm
+                congrArg (fun w ↦ w * σ.σ x y * eId ctx x) hid_mx_mul.2.symm
             _ = eId ctx x * (σ.σ mx x * σ.σ x y) * eId ctx x := by simp only [mul_assoc]
             _ = eId ctx x * σ.σ mx y * eId ctx x := by rw [← σ.prop mx x y h_mx hlt]
             _ = eId ctx y * σ.σ my y * eId ctx y := by rw [he_eq_ey, h_mx_eq_my]
@@ -734,7 +731,7 @@ lemma simon_regular_d_case
           _ = (fColoring ctx x).val := h_val_eq.symm
           _ = eId ctx x := h_fx
     have h_sig_H : IsGreenH (σ.σ x y) (eId ctx x) := by
-      have h_not_min_y : ¬ IsMin y := fun h => lt_irrefl x (lt_of_lt_of_le hlt (h (le_of_lt hlt)))
+      have h_not_min_y : ¬ IsMin y := fun h ↦ lt_irrefl x (lt_of_lt_of_le hlt (h (le_of_lt hlt)))
       have h_L_y : lOf ctx y = IsGreenL.eqvClass (σ.σ x y) := by
         dsimp only [lOf]; rw [dif_neg h_not_min_y]
         exact lOf_well_defined ctx y (getLt y h_not_min_y) x
@@ -742,7 +739,7 @@ lemma simon_regular_d_case
       have hex_in_Hy : eId ctx x ∈ hOf ctx y := h_same_H ▸ eId_mem ctx x
       have he_L : eId ctx x ∈ lOf ctx y := hex_in_Hy.1
       have he_L_mem : IsGreenL (eId ctx x) (σ.σ x y) := by rwa [h_L_y] at he_L
-      have h_not_max_x : ¬ IsMax x := fun h => lt_irrefl y (lt_of_le_of_lt (h (le_of_lt hlt)) hlt)
+      have h_not_max_x : ¬ IsMax x := fun h ↦ lt_irrefl y (lt_of_le_of_lt (h (le_of_lt hlt)) hlt)
       have h_R_x : rOf ctx x = IsGreenR.eqvClass (σ.σ x y) := by
         dsimp only [rOf]; rw [dif_neg h_not_max_x]
         exact rOf_well_defined ctx x (getGt x h_not_max_x) y
@@ -753,7 +750,7 @@ lemma simon_regular_d_case
     have h_final_sigma : σ.σ x y = eId ctx x := by
       have h_sig_id := mul_eq_self_of_isGreenH_idempotent h_sig_H (eId_idem ctx x)
       calc σ.σ x y = eId ctx x * σ.σ x y := h_sig_id.2.symm
-        _ = eId ctx x * (σ.σ x y * eId ctx x) := congrArg (fun w => eId ctx x * w) h_sig_id.1.symm
+        _ = eId ctx x * (σ.σ x y * eId ctx x) := congrArg (fun w ↦ eId ctx x * w) h_sig_id.1.symm
         _ = (eId ctx x * σ.σ x y) * eId ctx x := (mul_assoc _ _ _).symm
         _ = eId ctx x * σ.σ x y * eId ctx x := by simp only [mul_assoc]
         _ = eId ctx x := h_ese_eq_e
