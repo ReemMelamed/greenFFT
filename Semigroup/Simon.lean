@@ -415,31 +415,18 @@ lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
     (hm_H : hOf ctx mz = hOf ctx z) :
     eId ctx z * ctx.σ.σ mz z * eId ctx z = ctx.σ.σ mz z ∧
     IsGreenH (ctx.σ.σ mz z) (eId ctx z) := by
-  have h_not_min_z : ¬ IsMin z := fun h ↦ lt_irrefl mz (lt_of_lt_of_le h_mz (h (le_of_lt h_mz)))
-  have h_L_mz : lOf ctx z = IsGreenL.eqvClass (ctx.σ.σ mz z) := by
-    dsimp only [lOf]
-    rw [dif_neg h_not_min_z]
-    exact lOf_well_defined ctx z (getLt z h_not_min_z) mz
-      h_not_min_z (getLt_prop z h_not_min_z) h_mz
-  have he_L_mz_z : IsGreenL (eId ctx z) (ctx.σ.σ mz z) := by
-    have h1 : eId ctx z ∈ lOf ctx z := (eId_mem ctx z).1
-    rwa [h_L_mz] at h1
-  have h_not_max_m : ¬ IsMax mz := fun h ↦ lt_irrefl z (lt_of_le_of_lt (h (le_of_lt h_mz)) h_mz)
-  have h_R_mz : rOf ctx mz = IsGreenR.eqvClass (ctx.σ.σ mz z) := by
-    dsimp only [rOf]
-    rw [dif_neg h_not_max_m]
-    exact rOf_well_defined ctx mz (getGt mz h_not_max_m) z
-      h_not_max_m (getGt_prop mz h_not_max_m) h_mz
-  have he_R_mz_z : IsGreenR (eId ctx z) (ctx.σ.σ mz z) := by
-    have hz_in_H : eId ctx z ∈ hOf ctx mz := hm_H ▸ eId_mem ctx z
-    have h1 : eId ctx z ∈ rOf ctx mz := hz_in_H.2
-    rwa [h_R_mz] at h1
-  have he_H_mz_z : IsGreenH (eId ctx z) (ctx.σ.σ mz z) := ⟨he_L_mz_z, he_R_mz_z⟩
-  have h_sig_H_e : IsGreenH (ctx.σ.σ mz z) (eId ctx z) := IsGreenH.symm he_H_mz_z
-  have hid := mul_eq_self_of_isGreenH_idempotent h_sig_H_e (eId_idem ctx z)
-  have h_simp : eId ctx z * ctx.σ.σ mz z * eId ctx z = ctx.σ.σ mz z := by
-    rw [hid.2, hid.1]
-  exact ⟨h_simp, h_sig_H_e⟩
+  have hn_min : ¬ IsMin z := fun h ↦ lt_irrefl mz (lt_of_lt_of_le h_mz (h (le_of_lt h_mz)))
+  have hn_max : ¬ IsMax mz := fun h ↦ lt_irrefl z (lt_of_le_of_lt (h (le_of_lt h_mz)) h_mz)
+  have hL : IsGreenL (eId ctx z) (ctx.σ.σ mz z) := by
+    have h := (eId_mem ctx z).1
+    rw [lOf, dif_neg hn_min, lOf_well_defined ctx z _ mz hn_min (getLt_prop z hn_min) h_mz] at h
+    exact h
+  have hR : IsGreenR (eId ctx z) (ctx.σ.σ mz z) := by
+    have h := (hm_H ▸ eId_mem ctx z).2
+    rw [rOf, dif_neg hn_max, rOf_well_defined ctx mz _ z hn_max (getGt_prop mz hn_max) h_mz] at h
+    exact h
+  have hH : IsGreenH (ctx.σ.σ mz z) (eId ctx z) := ⟨IsGreenL.symm hL, IsGreenR.symm hR⟩
+  grind [mul_eq_self_of_isGreenH_idempotent hH (eId_idem ctx z), mul_assoc]
 
 
 section WithFintypeAlpha
