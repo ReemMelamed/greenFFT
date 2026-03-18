@@ -2,7 +2,6 @@
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz -/
 
-import Mathlib.Algebra.Group.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Order.Basic
 import Mathlib.Data.Fin.Basic
