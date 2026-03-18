@@ -397,29 +397,18 @@ lemma eId_mem (ctx : SimonContext S α) (x : α) : eId ctx x ∈ hOf ctx x :=
 
 /-- The H-class of `z` is exactly the H-class of its chosen idempotent. -/
 lemma hOf_eq_class (ctx : SimonContext S α) (z : α) :
-  hOf ctx z = IsGreenH.eqvClass (eId ctx z) := by
+    hOf ctx z = IsGreenH.eqvClass (eId ctx z) := by
   ext w
-  constructor
-  · rintro ⟨hwL, hwR⟩
-    have h1 : eId ctx z ∈ lOf ctx z := (eId_mem ctx z).1
-    have h2 : eId ctx z ∈ rOf ctx z := (eId_mem ctx z).2
-    have he_L_rel : IsGreenL (eId ctx z) w := by
-      dsimp only [lOf] at h1 hwL
-      split_ifs at h1 hwL <;> exact IsGreenL.trans h1 (IsGreenL.symm hwL)
-    have he_R_rel : IsGreenR (eId ctx z) w := by
-      dsimp only [rOf] at h2 hwR
-      split_ifs at h2 hwR <;> exact IsGreenR.trans h2 (IsGreenR.symm hwR)
-    exact ⟨IsGreenL.symm he_L_rel, IsGreenR.symm he_R_rel⟩
-  · rintro ⟨hwL, hwR⟩
-    have h1 : eId ctx z ∈ lOf ctx z := (eId_mem ctx z).1
-    have h2 : eId ctx z ∈ rOf ctx z := (eId_mem ctx z).2
-    have hw_L_mem : w ∈ lOf ctx z := by
-      dsimp only [lOf] at h1 ⊢
-      split_ifs at h1 ⊢ <;> exact IsGreenL.trans hwL h1
-    have hw_R_mem : w ∈ rOf ctx z := by
-      dsimp only [rOf] at h2 ⊢
-      split_ifs at h2 ⊢ <;> exact IsGreenR.trans hwR h2
-    exact ⟨hw_L_mem, hw_R_mem⟩
+  have he := eId_mem ctx z
+  dsimp only [hOf, lOf, rOf, IsGreenH.eqvClass,
+              IsGreenL.eqvClass, IsGreenR.eqvClass, IsGreenH] at he ⊢
+  rw [Set.mem_inter_iff] at he
+  split_ifs at he ⊢
+  all_goals {
+    change (_ ∧ _) at he
+    change (_ ∧ _) ↔ _
+    grind [IsGreenL.trans, IsGreenL.symm, IsGreenR.trans, IsGreenR.symm]
+  }
 
 /-- Under certain conditions, `σ mz z` behaves multiplicatively with idempotents. -/
 lemma sigma_props (ctx : SimonContext S α) (z mz : α) (h_mz : mz < z)
@@ -682,18 +671,8 @@ lemma simon_regular_d_case
         have hid_mx_mul := mul_eq_self_of_isGreenH_idempotent h_props_x.2 (eId_idem ctx x)
         have hid_my_mul := mul_eq_self_of_isGreenH_idempotent h_props_y.2 (eId_idem ctx y)
         have h_v_eq : σ.σ mx x * σ.σ x y * eId ctx x = σ.σ mx x := by
-          calc σ.σ mx x * σ.σ x y * eId ctx x =
-                  (eId ctx x * σ.σ mx x) * σ.σ x y * eId ctx x :=
-                congrArg (fun w ↦ w * σ.σ x y * eId ctx x) hid_mx_mul.2.symm
-            _ = eId ctx x * (σ.σ mx x * σ.σ x y) * eId ctx x := by simp only [mul_assoc]
-            _ = eId ctx x * σ.σ mx y * eId ctx x := by rw [← σ.prop mx x y h_mx hlt]
-            _ = eId ctx y * σ.σ my y * eId ctx y := by rw [he_eq_ey, h_mx_eq_my]
-            _ = (eId ctx y * σ.σ my y) * eId ctx y := by simp only [mul_assoc]
-            _ = σ.σ my y * eId ctx y := by rw [hid_my_mul.2]
-            _ = σ.σ my y := hid_my_mul.1
-            _ = (fColoring ctx y).val := h_fy.symm
-            _ = (fColoring ctx x).val := h_val_eq.symm
-            _ = σ.σ mx x := h_fx
+          grind [hid_mx_mul.1, hid_mx_mul.2, σ.prop mx x y h_mx hlt,
+                hid_my_mul.1, hid_my_mul.2, mul_assoc]
         have he_L_sig : IsGreenL (eId ctx x) (σ.σ mx x) := IsGreenL.symm h_props_x.2.left
         rcases he_L_sig.left with heq | ⟨u, hu⟩
         · calc eId ctx x * σ.σ x y * eId ctx x = σ.σ mx x * σ.σ x y * eId ctx x := by rw [heq]
