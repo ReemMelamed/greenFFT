@@ -83,6 +83,18 @@ lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
     · exact Or.inr ⟨unop z, op_injective h⟩
 
 open MulOpposite in
+/-- Left and right divisibility are dual under the opposite semigroup. -/
+lemma isGreenLeftDvd_iff_isGreenRightDvd_op {a b : S} :
+    IsGreenLeftDvd a b ↔ IsGreenRightDvd (op a) (op b) := by
+  constructor
+  · rintro (rfl | ⟨z, rfl⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨op z, rfl⟩
+  · rintro (h | ⟨z, h⟩)
+    · exact Or.inl (op_injective h)
+    · exact Or.inr ⟨unop z, op_injective h⟩
+
+open MulOpposite in
 /-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenR_iff_isGreenL_op {a b : S} :
     IsGreenR a b ↔ IsGreenL (op a) (op b) := by
@@ -92,23 +104,7 @@ open MulOpposite in
 /-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenL_iff_isGreenR_op {a b : S} :
     IsGreenL a b ↔ IsGreenR (op a) (op b) := by
-  constructor
-  · rintro ⟨h1, h2⟩
-    constructor
-    · rcases h1 with rfl | ⟨z, rfl⟩
-      · exact Or.inl rfl
-      · exact Or.inr ⟨op z, op_mul z b⟩
-    · rcases h2 with rfl | ⟨z, rfl⟩
-      · exact Or.inl rfl
-      · exact Or.inr ⟨op z, op_mul z a⟩
-  · rintro ⟨h1, h2⟩
-    constructor
-    · rcases h1 with h | ⟨z, h⟩
-      · exact Or.inl (op_injective h)
-      · exact Or.inr ⟨unop z, op_injective (by rw [h, op_mul, op_unop])⟩
-    · rcases h2 with h | ⟨z, h⟩
-      · exact Or.inl (op_injective h)
-      · exact Or.inr ⟨unop z, op_injective (by rw [h, op_mul, op_unop])⟩
+  simp only [IsGreenL, IsGreenR, isGreenLeftDvd_iff_isGreenRightDvd_op]
 
 end GreenDefinitions
 
@@ -286,7 +282,18 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     trans := trans
   }
 
+open MulOpposite in
+/-- Green's H relation is self-dual under the opposite semigroup. -/
+lemma isGreenH_iff_isGreenH_op {a b : S} :
+    IsGreenH a b ↔ IsGreenH (op a) (op b) := by
+  constructor
+  · rintro ⟨hL, hR⟩
+    exact ⟨isGreenR_iff_isGreenL_op.mp hR, isGreenL_iff_isGreenR_op.mp hL⟩
+  · rintro ⟨hL_op, hR_op⟩
+    exact ⟨isGreenL_iff_isGreenR_op.mpr hR_op, isGreenR_iff_isGreenL_op.mpr hL_op⟩
+
 end IsGreenH
+
 
 /-- Green's L and R relations commute: `L ∘ R = R ∘ L`. -/
 lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR z b) :
@@ -314,18 +321,6 @@ lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR 
     right; use v; rw [← mul_assoc, ← hv, hy]
   exact ⟨⟨hR1, hR2⟩, ⟨hL1, hL2⟩⟩
 
-open MulOpposite in
-lemma isGreenD_iff_isGreenD_op {a b : S} :
-    IsGreenD a b ↔ IsGreenD (op a) (op b) := by
-  constructor
-  · rintro ⟨z, hL, hR⟩
-    obtain ⟨z', hR', hL'⟩ := isGreenL_commutes_isGreenR hL hR
-    exact ⟨op z', isGreenR_iff_isGreenL_op.mp hR', isGreenL_iff_isGreenR_op.mp hL'⟩
-  · rintro ⟨z, hL, hR⟩
-    have h1 : IsGreenR a (unop z) := isGreenR_iff_isGreenL_op.mpr hL
-    have h2 : IsGreenL (unop z) b := isGreenL_iff_isGreenR_op.mpr hR
-    obtain ⟨z', hR_bz', hL_z'a⟩ := isGreenL_commutes_isGreenR (IsGreenL.symm h2) (IsGreenR.symm h1)
-    exact ⟨z', IsGreenL.symm hL_z'a, IsGreenR.symm hR_bz'⟩
 
 namespace IsGreenD
 
@@ -361,6 +356,20 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
     symm := symm
     trans := trans
   }
+
+open MulOpposite in
+/-- Green's D relation is self-dual under the opposite semigroup. -/
+lemma isGreenD_iff_isGreenD_op {a b : S} :
+    IsGreenD a b ↔ IsGreenD (op a) (op b) := by
+  constructor
+  · rintro ⟨z, hL, hR⟩
+    obtain ⟨z', hR', hL'⟩ := isGreenL_commutes_isGreenR hL hR
+    exact ⟨op z', isGreenR_iff_isGreenL_op.mp hR', isGreenL_iff_isGreenR_op.mp hL'⟩
+  · rintro ⟨z, hL, hR⟩
+    have h1 : IsGreenR a (unop z) := isGreenR_iff_isGreenL_op.mpr hL
+    have h2 : IsGreenL (unop z) b := isGreenL_iff_isGreenR_op.mpr hR
+    obtain ⟨z', hR_bz', hL_z'a⟩ := isGreenL_commutes_isGreenR (IsGreenL.symm h2) (IsGreenR.symm h1)
+    exact ⟨z', IsGreenL.symm hL_z'a, IsGreenR.symm hR_bz'⟩
 
 end IsGreenD
 
@@ -1071,7 +1080,7 @@ open MulOpposite in
 lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
     IsGreenR a (a * b) := by
   have hop : IsGreenD (op a) (op b * op a) := by
-    have hd := isGreenD_iff_isGreenD_op.mp h
+    have hd := IsGreenD.isGreenD_iff_isGreenD_op.mp h
     rwa [op_mul] at hd
   exact isGreenR_iff_isGreenL_op.mpr (isGreenL_sl_of_isGreenD_sl hop)
 
