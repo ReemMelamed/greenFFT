@@ -16,20 +16,6 @@ This file defines Green's relations (L, R, H, D, and J) on a general semigroup `
 their fundamental properties. It also explores regular D-classes, idempotents,
 and the coincidence of the D and J relations in finite semigroups.
 
-## Main definitions
-* `IsGreenL`, `IsGreenR`, `IsGreenH`, `IsGreenD`, `IsGreenJ`: Green's relations.
-* `GreenLClass`, `GreenRClass`, `GreenHClass`,
-  `GreenDClass`, `GreenJClass`: The equivalence classes.
-* `IsGreenRegular`: An element `a` is regular if `a * s * a = a` for some `s`.
-* `IsRegularDClass`: A D-class where every element is regular.
-
-## Main statements
-* `isGreenL_commutes_isGreenR`: Green's L and R relations commute.
-* `equivHClassOfIsGreenR`, `equivHClassOfIsGreenL`: Bijections between H-classes.
-* `isGreenD_eq_isGreenJ_of_finite`: In a finite semigroup, Green's D and J relations coincide.
-* `isGroup_isGreenH_eqvClass_iff_idempotent`:
-  An H-class is a group if and only if it contains an idempotent.
-
 ## References
 * Colombet, T. (2008). The Factorisation Forest Theorem.
 -/
@@ -416,8 +402,18 @@ def eqvClass (x : S) : Set S := setOf (IsGreenR · x)
 end IsGreenR
 
 namespace IsGreenH
+
 /-- The equivalence class of `x` under Green's H relation. -/
 def eqvClass (x : S) : Set S := setOf (IsGreenH · x)
+
+open MulOpposite in
+/-- An equivalence between the H-class of `a` and the H-class of `op a`. -/
+def equivHClassOp (a : S) : eqvClass a ≃ eqvClass (op a) where
+  toFun := fun ⟨x, hx⟩ ↦ ⟨op x, isGreenH_iff_isGreenH_op.mp hx⟩
+  invFun := fun ⟨y, hy⟩ ↦ ⟨unop y, isGreenH_iff_isGreenH_op.mpr (by rwa [op_unop])⟩
+  left_inv := fun ⟨x, _⟩ ↦ Subtype.ext (unop_op x)
+  right_inv := fun ⟨y, _⟩ ↦ Subtype.ext (op_unop y)
+
 end IsGreenH
 
 namespace IsGreenD
@@ -432,43 +428,6 @@ end IsGreenJ
 
 /-- The quotient type of `S` by Green's L relation. -/
 def GreenLClass (S : Type*) [Semigroup S] := Quotient (IsGreenL.setoid S)
-
-namespace GreenLClass
-/-- Constructs the Green's L-class of an element `x`. -/
-def mk (x : S) : GreenLClass S := Quotient.mk (IsGreenL.setoid S) x
-end GreenLClass
-
-/-- The quotient type of `S` by Green's R relation. -/
-def GreenRClass (S : Type*) [Semigroup S] := Quotient (IsGreenR.setoid S)
-
-namespace GreenRClass
-/-- Constructs the Green's R-class of an element `x`. -/
-def mk (x : S) : GreenRClass S := Quotient.mk (IsGreenR.setoid S) x
-end GreenRClass
-
-/-- The quotient type of `S` by Green's H relation. -/
-def GreenHClass (S : Type*) [Semigroup S] := Quotient (IsGreenH.setoid S)
-
-namespace GreenHClass
-/-- Constructs the Green's H-class of an element `x`. -/
-def mk (x : S) : GreenHClass S := Quotient.mk (IsGreenH.setoid S) x
-end GreenHClass
-
-/-- The quotient type of `S` by Green's D relation. -/
-def GreenDClass (S : Type*) [Semigroup S] := Quotient (IsGreenD.setoid S)
-
-namespace GreenDClass
-/-- Constructs the Green's D-class of an element `x`. -/
-def mk (x : S) : GreenDClass S := Quotient.mk (IsGreenD.setoid S) x
-end GreenDClass
-
-/-- The quotient type of `S` by Green's J relation. -/
-def GreenJClass (S : Type*) [Semigroup S] := Quotient (IsGreenJ.setoid S)
-
-namespace GreenJClass
-/-- Constructs the Green's J-class of an element `x`. -/
-def mk (x : S) : GreenJClass S := Quotient.mk (IsGreenJ.setoid S) x
-end GreenJClass
 
 /-- An element `a` is regular if there exists `s` such that `a * s * a = a`. -/
 def IsGreenRegular (a : S) := ∃ s, a * s * a = a
@@ -682,14 +641,12 @@ lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b *
 
 
 open MulOpposite in
-/-- If `b = c * b * u * y`, then `b` is R-related to `b * u`. -/
+/-- If `b = c * b * (u * y)`, then `b` is R-related to `b * u`. -/
 lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * y)) :
     IsGreenR b (b * u) := by
   have hop : op b = (op y * op u) * op b * op c := by
-    calc op b = op (c * b * (u * y)) := congrArg op h
-      _ = op (u * y) * op (c * b) := op_mul (c * b) (u * y)
-      _ = (op y * op u) * (op b * op c) := by rw [op_mul, op_mul]
-      _ = (op y * op u) * op b * op c := (mul_assoc _ _ _).symm
+    calc op b = op (c * b * (u * y))            := congrArg op h
+      _       = (op y * op u) * op b * op c     := by simp only [op_mul, mul_assoc]
   exact isGreenR_iff_isGreenL_op.mpr (isGreenL_of_eq_mul_mul_mul hop)
 
 /-- If `a` is a two-sided multiple of `b`, and `b` is a two-sided multiple of `a`,
@@ -725,21 +682,14 @@ lemma isGreenD_of_JRel_left_both [Finite S] {a b x y z : S}
   have hL3 : IsGreenL b a := h1.symm ▸ hL2
   exact ⟨b, IsGreenL.symm hL3, IsGreenR.refl b⟩
 
+open MulOpposite in
 /-- If `a` is a right multiple of `b` and `b` is a two-sided multiple of `a`, they are D-related. -/
 lemma isGreenD_of_JRel_right_both [Finite S] {a b x y u : S}
     (h1 : a = b * u) (h2 : b = x * a * y) : IsGreenD a b := by
-  have h_b_eq : b = x * b * (u * y) := by
-    calc b = x * a * y := h2
-      _ = x * (b * u) * y := by rw [h1]
-      _ = (x * b) * u * y := by rw [← mul_assoc x b u]
-      _ = x * b * (u * y) := by rw [mul_assoc (x * b) u y]
-  have hr1 := greenR_of_eq_mul_mul h_b_eq
-  have h_assoc : b * (u * y) = (b * u) * y := (mul_assoc b u y).symm
-  have hR : IsGreenR b ((b * u) * y) := h_assoc ▸ hr1
-  have hR2 : IsGreenR b (b * u) := isGreenR_of_isGreenR_mul hR
-  have hR3 : IsGreenR b a := h1.symm ▸ hR2
-  have hL : IsGreenL b (x * b) := greenL_of_eq_mul_mul h_b_eq
-  exact ⟨a, IsGreenL.refl a, IsGreenR.symm hR3⟩
+  rw [IsGreenD.isGreenD_iff_isGreenD_op]
+  have h1_op : op a = op u * op b := by simp only [h1, op_mul]
+  have h2_op : op b = op y * op a * op x := by simp only [h2, op_mul, mul_assoc]
+  exact isGreenD_of_JRel_left_both h1_op h2_op
 
 /-- If `a` is a left multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
 lemma isGreenD_of_left_right [Finite S] {a b u y : S} (h1 : a = u * b) (h2 : b = a * y) :
@@ -786,18 +736,20 @@ lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}
   · have h_assoc : (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
     rw [h_assoc, hs]
 
+open MulOpposite in
 /-- A regular element `a` has an idempotent in its R-class. -/
 lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
     (hReg : IsGreenRegular a) : ∃ e ∈ IsGreenR.eqvClass a, e * e = e := by
-  obtain ⟨s, hs⟩ := hReg
-  use a * s
+  have hReg_op : IsGreenRegular (op a) := by
+    obtain ⟨s, hs⟩ := hReg
+    use op s
+    simp only [← op_mul, ← mul_assoc, hs]
+  obtain ⟨e_op, he_L, he_idem⟩ := exists_idempotent_in_greenL_of_regular hReg_op
+  use unop e_op
   constructor
-  · constructor
-    · right; use s
-    · right; use a
-      exact hs.symm
-  · have h_assoc : (a * s) * (a * s) = (a * s * a) * s := by simp [mul_assoc]
-    rw [h_assoc, hs]
+  · have h_L_op : IsGreenL (op (unop e_op)) (op a) := by rwa [op_unop]
+    exact isGreenR_iff_isGreenL_op.mpr h_L_op
+  · exact op_injective (by simp only [op_mul, op_unop, he_idem])
 
 /-- Two H-related idempotents must be equal. -/
 lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
@@ -863,45 +815,6 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
     · use u * q
       rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
 
-/-- A bijection between the H-classes of two R-related elements. -/
-noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
-    IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
-  by_cases hab_eq : a = b
-  · exact hab_eq ▸ Equiv.refl _
-  · have hex_w : ∃ w, a = b * w := h.left.resolve_left hab_eq
-    let w := Classical.choose hex_w
-    have hw : a = b * w := Classical.choose_spec hex_w
-    have hba_neq : b ≠ a := fun heq ↦ hab_eq heq.symm
-    have hex_z : ∃ z, b = a * z := h.right.resolve_left hba_neq
-    let z := Classical.choose hex_z
-    have hz : b = a * z := Classical.choose_spec hex_z
-    have h_cancel_a : a * z * w = a := by rw [← hz, ← hw]
-    have h_cancel_b : b * w * z = b := by rw [← hw, ← hz]
-    refine {
-      toFun := fun ⟨x, hx⟩ ↦ ⟨x * z, ?_⟩
-      invFun := fun ⟨y, hy⟩ ↦ ⟨y * w, ?_⟩
-      left_inv := fun ⟨x, hx⟩ ↦ Subtype.ext
-        (by dsimp only; exact IsGreenL.cancellation hx.left h_cancel_a)
-      right_inv := fun ⟨y, hy⟩ ↦ Subtype.ext
-        (by dsimp only; exact IsGreenL.cancellation hy.left h_cancel_b)
-    }
-    · have hL1 : IsGreenL (x * z) (a * z) := IsGreenL.mul_right z hx.left
-      have hL : IsGreenL (x * z) b := by rwa [← hz] at hL1
-      have h_cancel_x : x * z * w = x := IsGreenL.cancellation hx.left h_cancel_a
-      have hdvd1 : IsGreenRightDvd (x * z) x := Or.inr ⟨z, rfl⟩
-      have hdvd2 : IsGreenRightDvd x (x * z) := Or.inr ⟨w, h_cancel_x.symm⟩
-      have hR1 : IsGreenR (x * z) x := ⟨hdvd1, hdvd2⟩
-      have hR : IsGreenR (x * z) b := IsGreenR.trans hR1 (IsGreenR.trans hx.right h)
-      exact ⟨hL, hR⟩
-    · have hL1 : IsGreenL (y * w) (b * w) := IsGreenL.mul_right w hy.left
-      have hL : IsGreenL (y * w) a := by rwa [← hw] at hL1
-      have h_cancel_y : y * w * z = y := IsGreenL.cancellation hy.left h_cancel_b
-      have hdvd1 : IsGreenRightDvd (y * w) y := Or.inr ⟨w, rfl⟩
-      have hdvd2 : IsGreenRightDvd y (y * w) := Or.inr ⟨z, h_cancel_y.symm⟩
-      have hR1 : IsGreenR (y * w) y := ⟨hdvd1, hdvd2⟩
-      have hR : IsGreenR (y * w) a := IsGreenR.trans hR1 (IsGreenR.trans hy.right (IsGreenR.symm h))
-      exact ⟨hL, hR⟩
-
 /-- A bijection between the H-classes of two L-related elements. -/
 noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
     IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
@@ -940,6 +853,14 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h : IsGreenL a b) :
       have hL1 : IsGreenL (w * y) y := ⟨hdvd1, hdvd2⟩
       have hL : IsGreenL (w * y) a := IsGreenL.trans hL1 (IsGreenL.trans hy.left (IsGreenL.symm h))
       exact ⟨hL, hR⟩
+
+open MulOpposite in
+/-- A bijection between the H-classes of two R-related elements. -/
+noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
+    IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b :=
+  (IsGreenH.equivHClassOp a).trans
+      ((equivHClassOfIsGreenL (isGreenR_iff_isGreenL_op.mp h)).trans
+      (IsGreenH.equivHClassOp b).symm)
 
 open Classical in
 /-- Any two H-classes within the same D-class have the same cardinality. -/

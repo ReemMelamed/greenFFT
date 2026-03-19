@@ -17,14 +17,6 @@ import Semigroup.Green
 This file defines the basic structures for the Factorization Forest Theorem
 and proves specific cases (e.g., the group H-class case and regular D-class case).
 
-## Main definitions
-* `MultiplicativeLabeling`: A labeling function obeying multiplicative properties.
-* `Split`: A function assigning a bounded rank to elements.
-
-## Main statements
-* `simon_group_case`: The Factorization Forest Theorem restricted to a group.
-* `simon_regular_d_case`: The theorem applied to a regular D-class.
-
 ## References
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
 
