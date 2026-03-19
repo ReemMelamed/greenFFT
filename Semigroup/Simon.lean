@@ -9,7 +9,9 @@ import Mathlib.Data.Finset.Max
 import Mathlib.Tactic
 import Mathlib.Order.Max
 
-import Semigroup.Green
+import Semigroup.GreensRelations.Defs
+import Semigroup.GreensRelations.Classes
+import Semigroup.GreensRelations.Theorems
 
 /-!
 # The Factorization Forest Theorem
