@@ -39,8 +39,6 @@ variable {S : Type*} [Semigroup S]
 
 open MulSeq
 
-section GreensTheorems
-
 /-- A `D`-class is regular if and only if it contains an idempotent. -/
 theorem isRegularDClass_iff_exists_idempotent [Finite S]
   (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
@@ -399,5 +397,3 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
     have hLuv_a : IsGreenL (u * v) a := IsGreenL.trans hLuv_v hvH.left
     have hRuv_a : IsGreenR (u * v) a := IsGreenR.trans hRuv_u huH.right
     exact ⟨hLuv_a, hRuv_a⟩
-
-end GreensTheorems

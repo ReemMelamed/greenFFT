@@ -67,7 +67,7 @@ lemma isGreenL_iff_isGreenR_op {a b : S} :
 end Duality
 
 
-section GreenEquivalences
+section Equivalences
 
 namespace IsGreenLeftDvd
 
@@ -319,4 +319,4 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 
 end IsGreenJ
 
-end GreenEquivalences
+end Equivalences

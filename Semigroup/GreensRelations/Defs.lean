@@ -32,8 +32,6 @@ green's relations, semigroup, divisibility, ideal
 
 variable {S : Type*} [Semigroup S]
 
-section GreenDefinitions
-
 /-- `IsGreenLeftDvd a b` means that `a` is a left multiple of `b`,
   i.e., `a = b` or `a = z * b`. -/
 def IsGreenLeftDvd (a b : S) : Prop := a = b ∨ ∃ z, a = z * b
@@ -69,5 +67,3 @@ def IsGreenD (a b : S) : Prop := ∃ z, IsGreenL a z ∧ IsGreenR z b
 
 /-- Green's J relation: `a` and `b` generate the same principal two-sided ideal. -/
 def IsGreenJ (a b : S) : Prop := IsGreenJRel a b ∧ IsGreenJRel b a
-
-end GreenDefinitions
