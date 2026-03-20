@@ -240,7 +240,6 @@ noncomputable def getGt (x : α) (h : ¬ IsMax x) : α :=
 lemma getGt_prop (x : α) (h : ¬ IsMax x) : x < getGt x h :=
   Classical.choose_spec (not_isMax_iff.mp h)
 
---------------------------------------------------------------------------------
 section WithFintypeS
 variable [Fintype S]
 
@@ -474,7 +473,6 @@ lemma fColoring_helper_val_in (ctx : SimonContext S α) (x m : α)
     exact IsGreenD.trans hval_D_e he_D
   exact ⟨h_val_D, eId ctx x, he_D, eId_idem ctx x, h_val_H_e⟩
 
---------------------------------------------------------------------------------
 section WithFintypeAlpha
 variable [Fintype α]
 
@@ -515,7 +513,6 @@ lemma fColoring_isGreenH (ctx : SimonContext S α) (z : α) :
     exact h_props.2
   · exact IsGreenH.refl (eId ctx z)
 
---------------------------------------------------------------------------------
 section WithNonemptyAlpha
 variable [Nonempty α]
 
