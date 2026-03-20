@@ -270,7 +270,9 @@ lemma isGreenR_sr_of_isGreenD_sr [Finite S] {a b : S} (h : IsGreenD a (a * b)) :
       isGreenR_iff_isGreenL_op, isGreenL_sl_of_isGreenD_sl]
 
 /-- If `a`, `b`, and `a * b` are all in the same regular `D`-class,
-    then `a` is `R`-related to `a * b`, `b` is `L`-related to `a * b`, and there exists an idempotent `e` in the `D`-class such that `a` is `L`-related to `e` and `b` is `R`-related to `e`. -/
+    then `a` is `R`-related to `a * b`, `b` is `L`-related to `a * b`,
+    and there exists an idempotent `e` in the `D`-class such that `a`
+    is `L`-related to `e` and `b` is `R`-related to `e`. -/
 theorem mul_mem_isGreenD_eqvClass_properties
   [Finite S] {D : Set S} (hD : ∃ x, D = IsGreenD.eqvClass x)
     (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
