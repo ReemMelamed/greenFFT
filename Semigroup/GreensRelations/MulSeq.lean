@@ -199,7 +199,7 @@ lemma greenL_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenL
 open MulOpposite in
 /-- If `b = c * b * d`, then `b` is R-related to `b * d`. -/
 lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR b (b * d) := by
-    grind [op_mul, mul_assoc, isGreenR_iff_isGreenL_op, greenL_of_eq_mul_mul]
+  grind [op_mul, mul_assoc, isGreenR_iff_isGreenL_op, greenL_of_eq_mul_mul]
 
 /-- Green's L relation holds when a left multiplier is dropped from an already L-related element. -/
 lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGreenL b (z * b) := by
