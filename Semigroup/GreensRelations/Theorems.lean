@@ -139,9 +139,9 @@ lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a 
   rcases h with ⟨hab, hba⟩
   cases hab <;> cases hba <;>
     grind [isGreenD_of_left_left, isGreenD_of_left_right,
-                     isGreenD_of_right_left, isGreenD_of_right_right,
-                     isGreenD_of_JRel_left_both, isGreenD_of_JRel_right_both,
-                     isGreenD_of_JRel_both, IsGreenD.refl, IsGreenD.symm]
+        isGreenD_of_right_left, isGreenD_of_right_right,
+        isGreenD_of_JRel_left_both, isGreenD_of_JRel_right_both,
+        isGreenD_of_JRel_both, IsGreenD.refl, IsGreenD.symm]
 
 /-- If `a` and `b` are `D`-related, they satisfy the basic `J`-relation step. -/
 lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
