@@ -72,7 +72,7 @@ section Equivalences
 namespace IsGreenLeftDvd
 
 /-- Left divisibility is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenLeftDvd a a := Or.inl rfl
+@[simp, refl] theorem refl (a : S) : IsGreenLeftDvd a a := Or.inl rfl
 
 /-- Left divisibility is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenLeftDvd a b)
@@ -88,7 +88,7 @@ end IsGreenLeftDvd
 namespace IsGreenRightDvd
 
 /-- Right divisibility is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenRightDvd a a := Or.inl rfl
+@[simp, refl] theorem refl (a : S) : IsGreenRightDvd a a := Or.inl rfl
 
 open MulOpposite in
 /-- Right divisibility is transitive. -/
@@ -102,7 +102,7 @@ end IsGreenRightDvd
 namespace IsGreenJRel
 
 /-- The basic J-relation step is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenJRel a a := eq rfl
+@[simp, refl] theorem refl (a : S) : IsGreenJRel a a := eq rfl
 
 /-- The basic J-relation step is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJRel a b)
@@ -133,7 +133,7 @@ end IsGreenJRel
 namespace IsGreenL
 
 /-- Green's L relation is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenL a a := ⟨IsGreenLeftDvd.refl a, IsGreenLeftDvd.refl a⟩
+@[simp, refl] theorem refl (a : S) : IsGreenL a a := ⟨IsGreenLeftDvd.refl a, IsGreenLeftDvd.refl a⟩
 
 /-- Green's L relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenL a b) : IsGreenL b a := ⟨h.right, h.left⟩
@@ -159,7 +159,7 @@ theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c
     · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
 
 /-- Right cancellation property for elements related by Green's L relation. -/
-theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
+@[simp] theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
     x * u * v = x := by
   rcases hx.left with rfl | ⟨k, rfl⟩
   · exact h_cancel
@@ -170,7 +170,8 @@ end IsGreenL
 namespace IsGreenR
 
 /-- Green's R relation is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenR a a := ⟨IsGreenRightDvd.refl a, IsGreenRightDvd.refl a⟩
+@[simp, refl] theorem refl (a : S) : IsGreenR a a :=
+  ⟨IsGreenRightDvd.refl a, IsGreenRightDvd.refl a⟩
 
 /-- Green's R relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenR a b) : IsGreenR b a := ⟨h.right, h.left⟩
@@ -191,7 +192,7 @@ theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b)
   exact IsGreenL.mul_right (op c) h
 
 /-- Left cancellation property for elements related by Green's R relation. -/
-theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
+@[simp] theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
     v * u * x = x := by
   rcases hx.left with rfl | ⟨k, rfl⟩
   · exact h_cancel
@@ -202,7 +203,7 @@ end IsGreenR
 namespace IsGreenH
 
 /-- Green's H relation is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenH a a := ⟨IsGreenL.refl a, IsGreenR.refl a⟩
+@[simp, refl] theorem refl (a : S) : IsGreenH a a := ⟨IsGreenL.refl a, IsGreenR.refl a⟩
 
 /-- Green's H relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenH a b) : IsGreenH b a :=
@@ -258,7 +259,7 @@ lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR 
 namespace IsGreenD
 
 /-- Green's D relation is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenD a a := ⟨a, IsGreenL.refl a, IsGreenR.refl a⟩
+@[simp, refl] theorem refl (a : S) : IsGreenD a a := ⟨a, IsGreenL.refl a, IsGreenR.refl a⟩
 
 /-- Green's D relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenD a b) : IsGreenD b a := by
@@ -267,7 +268,8 @@ namespace IsGreenD
   exact ⟨z', IsGreenL.symm h_z'_L_y, IsGreenR.symm h_x_R_z'⟩
 
 /-- Green's D relation is transitive. -/
-@[trans] theorem trans {a b c : S} (hab : IsGreenD a b) (hbc : IsGreenD b c) : IsGreenD a c := by
+@[trans] theorem trans {a b c : S} (hab : IsGreenD a b)
+    (hbc : IsGreenD b c) : IsGreenD a c := by
   obtain ⟨z1, h_x_L_z1, h_z1_R_y⟩ := hab
   obtain ⟨z2, h_y_L_z2, h_z2_R_z⟩ := hbc
   have h_z2_L_y : IsGreenL z2 b := IsGreenL.symm h_y_L_z2
@@ -303,7 +305,7 @@ end IsGreenD
 namespace IsGreenJ
 
 /-- Green's J relation is reflexive. -/
-@[refl] theorem refl (a : S) : IsGreenJ a a := ⟨IsGreenJRel.refl a, IsGreenJRel.refl a⟩
+@[simp, refl] theorem refl (a : S) : IsGreenJ a a := ⟨IsGreenJRel.refl a, IsGreenJRel.refl a⟩
 
 /-- Green's J relation is symmetric. -/
 @[symm] theorem symm {a b : S} (h : IsGreenJ a b) : IsGreenJ b a := ⟨h.right, h.left⟩
