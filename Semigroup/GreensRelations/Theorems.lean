@@ -157,11 +157,8 @@ lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b :=
   ⟨isGreenJRel_of_isGreenD h, isGreenJRel_of_isGreenD h.symm⟩
 
 /-- In a finite semigroup, Green's `D` relation and Green's `J` relation are equal. -/
-theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
-  ext a b
-  constructor
-  · exact isGreenJ_of_isGreenD
-  · exact isGreenD_of_isGreenJ
+theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ :=
+  funext₂ fun _ _ => propext ⟨isGreenJ_of_isGreenD, isGreenD_of_isGreenJ⟩
 
 open MulOpposite in
 /-- If `b` and `a * b` are `D`-related in a finite semigroup, they are `L`-related. -/
