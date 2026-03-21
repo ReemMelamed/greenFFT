@@ -61,18 +61,14 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
     have h_ye : IsGreenD y e := IsGreenD.trans hyD (IsGreenD.symm heD)
     obtain ⟨z, hL_yz, hR_ze⟩ := h_ye
     have h_ez_z : e * z = z := by
-      rcases hR_ze.left with rfl | ⟨v, hv⟩
-      · exact he_idem
-      · rw [hv, ← mul_assoc e e v, he_idem]
+      rcases hR_ze.left with rfl | ⟨v, hv⟩ <;> grind [mul_assoc]
     have hz_reg : ∃ u, z * u * z = z := by
       rcases hR_ze.right with rfl | ⟨u, hu⟩
       · exact ⟨e, by simp [he_idem]⟩
       · exact ⟨u, by simp [← hu, h_ez_z]⟩
     obtain ⟨u, hu_z⟩ := hz_reg
     have hy_uz : y * u * z = y := by
-      rcases hL_yz.left with rfl | ⟨p, hp⟩
-      · exact hu_z
-      · rw [hp, mul_assoc p z u, mul_assoc p (z * u) z, hu_z]
+      rcases hL_yz.left with rfl | ⟨p, hp⟩ <;> grind [mul_assoc]
     rcases hL_yz.right with rfl | ⟨q, hq⟩
     · exact ⟨u, hy_uz⟩
     · use u * q
@@ -241,29 +237,18 @@ theorem mul_mem_isGreenD_eqvClass_properties
   exact ⟨⟨hR_a_ab, hL_b_ab⟩, by
     have h_a_dvd : IsGreenRightDvd a (a * b) := hR_a_ab.left
     have h_b_dvd : IsGreenLeftDvd b (a * b) := hL_b_ab.left
-    rcases h_a_dvd with ha_eq_ab | ⟨u, ha_eq_abu⟩
-    · rcases h_b_dvd with hb_eq_ab | ⟨v, hb_eq_vab⟩
-      · have hab_eq : a = b := ha_eq_ab.trans hb_eq_ab.symm
-        have h_idem : a * a = a := by grind
-        exact ⟨a, ha, h_idem, IsGreenL.refl a, hab_eq ▸ IsGreenR.refl b⟩
-      · have h_va_eq_b : v * a = b := by grind
-        have h_idem : b * b = b := by grind
-        have hLab : IsGreenL a b := ⟨Or.inr ⟨a, ha_eq_ab⟩, Or.inr ⟨v, h_va_eq_b.symm⟩⟩
-        exact ⟨b, hb, h_idem, hLab, IsGreenR.refl b⟩
-    · rcases h_b_dvd with hb_eq_ab | ⟨v, hb_eq_vab⟩
-      · have h_bu_eq_a : b * u = a := by grind
-        have h_idem : a * a = a := by grind
-        have hRba : IsGreenR b a := ⟨Or.inr ⟨b, hb_eq_ab⟩, Or.inr ⟨u, h_bu_eq_a.symm⟩⟩
-        exact ⟨a, ha, h_idem, IsGreenL.refl a, hRba⟩
-      · have he_eq : v * a = b * u := by grind [mul_assoc]
-        have h_idem : (v * a) * (v * a) = v * a := by grind
-        have hLae1 : a = a * (v * a) := by grind
-        have hLae : IsGreenL a (v * a) := ⟨Or.inr ⟨a, hLae1⟩, Or.inr ⟨v, rfl⟩⟩
-        have hRbe1 : b = (v * a) * b := by grind
-        have hRbe : IsGreenR b (v * a) := ⟨Or.inr ⟨b, hRbe1⟩, Or.inr ⟨u, he_eq⟩⟩
-        have hDea : IsGreenD (v * a) a := ⟨a, IsGreenL.symm hLae, IsGreenR.refl a⟩
-        have heD : v * a ∈ D := hx₀.symm ▸ (IsGreenD.trans hDea hDa)
-        exact ⟨v * a, heD, h_idem, hLae, hRbe⟩
+    rcases h_a_dvd with ha_eq | ⟨u, hu⟩ <;> rcases h_b_dvd with hb_eq | ⟨v, hv⟩
+    · exact ⟨a, ha, by grind, IsGreenL.refl a, by grind [IsGreenR.refl]⟩
+    · have hLab : IsGreenL a b := ⟨Or.inr ⟨a, ha_eq⟩, Or.inr ⟨v, by grind⟩⟩
+      exact ⟨b, hb, by grind, hLab, IsGreenR.refl b⟩
+    · have hRba : IsGreenR b a := ⟨Or.inr ⟨b, hb_eq⟩, Or.inr ⟨u, by grind⟩⟩
+      exact ⟨a, ha, by grind, IsGreenL.refl a, hRba⟩
+    · have h_idem : (v * a) * (v * a) = v * a := by grind [mul_assoc]
+      have hLae : IsGreenL a (v * a) := ⟨Or.inr ⟨a, by grind [mul_assoc]⟩, Or.inr ⟨v, rfl⟩⟩
+      have hRbe : IsGreenR b (v * a) :=
+        ⟨Or.inr ⟨b, by grind [mul_assoc]⟩, Or.inr ⟨u, by grind [mul_assoc]⟩⟩
+      exact ⟨v * a, hx₀.symm ▸ IsGreenD.trans
+          ⟨a, IsGreenL.symm hLae, IsGreenR.refl a⟩ hDa, h_idem, hLae, hRbe⟩
   ⟩
 
 /-- An `H`-class is either a group or contains no idempotents
@@ -299,13 +284,9 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
       have hLue : IsGreenL u e := hue.left
       have hRve : IsGreenR v e := hve.right
       have hev : e * v = v := by
-        rcases hRve.left with rfl | ⟨z, hz⟩
-        · exact he_idem
-        · rw [hz, ← mul_assoc, he_idem]
+        rcases hRve.left with rfl | ⟨z, hz⟩ <;> grind [mul_assoc]
       have hue_eq : u * e = u := by
-        rcases hLue.left with rfl | ⟨w, hw⟩
-        · exact he_idem
-        · rw [hw, mul_assoc, he_idem]
+        rcases hLue.left with rfl | ⟨w, hw⟩ <;> grind [mul_assoc]
       have hLuv_ev : IsGreenL (u * v) (e * v) := IsGreenL.mul_right v hLue
       have hLuv_v : IsGreenL (u * v) v := by rwa [hev] at hLuv_ev
       have hRuv_ue : IsGreenR (u * v) (u * e) := IsGreenR.mul_left u hRve
