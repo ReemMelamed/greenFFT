@@ -144,15 +144,13 @@ lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a 
         isGreenD_of_JRel_both, IsGreenD.refl, IsGreenD.symm]
 
 /-- If `a` and `b` are `D`-related, they satisfy the basic `J`-relation step. -/
-lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
-  rcases h with ⟨z, hL, hR⟩
-  rcases hL.left with rfl | ⟨u, hu⟩
-  · rcases hR.left with rfl | ⟨v, hv⟩
-    · exact IsGreenJRel.eq rfl
-    · exact IsGreenJRel.mul_right v hv
-  · rcases hR.left with rfl | ⟨v, hv⟩
-    · exact IsGreenJRel.mul_left u hu
-    · exact IsGreenJRel.mul_both u v (by rw [hu, hv, mul_assoc])
+lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b :=
+  let ⟨z, hL, hR⟩ := h
+  match hL.left, hR.left with
+  | .inl rfl, .inl rfl => .eq rfl
+  | .inl rfl, .inr ⟨v, hv⟩ => .mul_right v hv
+  | .inr ⟨u, hu⟩, .inl rfl => .mul_left u hu
+  | .inr ⟨u, hu⟩, .inr ⟨v, hv⟩ => .mul_both u v (hu ▸ hv ▸ (mul_assoc u b v).symm)
 
 /-- If `a` and `b` are `D`-related, they are also `J`-related. -/
 lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b :=
