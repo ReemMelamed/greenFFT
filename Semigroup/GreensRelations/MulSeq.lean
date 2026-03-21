@@ -202,17 +202,8 @@ lemma greenR_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) : IsGreenR
   grind [op_mul, mul_assoc, isGreenR_iff_isGreenL_op, greenL_of_eq_mul_mul]
 
 /-- Green's L relation holds when a left multiplier is dropped from an already L-related element. -/
-lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGreenL b (z * b) := by
-  have h2 : IsGreenLeftDvd (z * b) b := Or.inr ⟨z, rfl⟩
-  have h1 : IsGreenLeftDvd b (z * b) := by
-    cases h.left with
-    | inl h_eq => exact Or.inr ⟨x, h_eq⟩
-    | inr h_ex =>
-      rcases h_ex with ⟨w, hw⟩
-      exact Or.inr ⟨w * x, by
-        calc b = w * (x * (z * b)) := hw
-          _ = (w * x) * (z * b) := (mul_assoc w x (z * b)).symm⟩
-  exact ⟨h1, h2⟩
+lemma isGreenL_of_isGreenL_mul {b x z : S} (h : IsGreenL b (x * (z * b))) : IsGreenL b (z * b) :=
+  ⟨IsGreenLeftDvd.trans h.left (Or.inr ⟨x, rfl⟩), Or.inr ⟨z, rfl⟩⟩
 
 open MulOpposite in
 /-- Green's R relation holds when a right multiplier
