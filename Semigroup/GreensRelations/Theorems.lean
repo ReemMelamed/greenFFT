@@ -49,9 +49,7 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
     have hx₀_in : x₀ ∈ IsGreenD.eqvClass x₀ := IsGreenD.refl x₀
     obtain ⟨s, hs⟩ := hReg x₀ hx₀_in
     let e := x₀ * s
-    have he_idem : e * e = e := by
-      dsimp [e]
-      rw [← mul_assoc (x₀ * s) x₀ s, hs]
+    have he_idem : e * e = e := by grind
     have he_R_x₀ : IsGreenR e x₀ := by
       constructor
       · right; exact ⟨s, rfl⟩
@@ -68,9 +66,8 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
       · rw [hv, ← mul_assoc e e v, he_idem]
     have hz_reg : ∃ u, z * u * z = z := by
       rcases hR_ze.right with rfl | ⟨u, hu⟩
-      · exact ⟨e, by rw [he_idem, he_idem]⟩
-      · use u
-        rw [← hu, h_ez_z]
+      · exact ⟨e, by simp [he_idem]⟩
+      · exact ⟨u, by simp [← hu, h_ez_z]⟩
     obtain ⟨u, hu_z⟩ := hz_reg
     have hy_uz : y * u * z = y := by
       rcases hL_yz.left with rfl | ⟨p, hp⟩
@@ -336,15 +333,9 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
     have hx₀H : IsGreenH x₀ a := hx₀
     have hy₀H : IsGreenH y₀ a := hy₀
     have hxy₀H : IsGreenH (x₀ * y₀) a := hxy₀
-    have hx₀D : x₀ ∈ IsGreenD.eqvClass a := by
-      simp only [IsGreenD.eqvClass, Set.mem_setOf_eq]
-      exact ⟨a, hx₀H.left, IsGreenR.refl a⟩
-    have hy₀D : y₀ ∈ IsGreenD.eqvClass a := by
-      simp only [IsGreenD.eqvClass, Set.mem_setOf_eq]
-      exact ⟨a, hy₀H.left, IsGreenR.refl a⟩
-    have hxy₀D : x₀ * y₀ ∈ IsGreenD.eqvClass a := by
-      simp only [IsGreenD.eqvClass, Set.mem_setOf_eq]
-      exact ⟨a, hxy₀H.left, IsGreenR.refl a⟩
+    have hx₀D : x₀ ∈ IsGreenD.eqvClass a := ⟨a, hx₀H.left, IsGreenR.refl a⟩
+    have hy₀D : y₀ ∈ IsGreenD.eqvClass a := ⟨a, hy₀H.left, IsGreenR.refl a⟩
+    have hxy₀D : x₀ * y₀ ∈ IsGreenD.eqvClass a := ⟨a, hxy₀H.left, IsGreenR.refl a⟩
     have hD_ex : Exists (fun y => IsGreenD.eqvClass a = IsGreenD.eqvClass y) := ⟨a, rfl⟩
     obtain ⟨hRL_unused, e, heD, he_idem, hLx₀e, hRy₀e⟩ :=
       mul_mem_isGreenD_eqvClass_properties hD_ex x₀ y₀ hx₀D hy₀D hxy₀D
