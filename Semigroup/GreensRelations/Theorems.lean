@@ -268,18 +268,12 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
     have hRae : IsGreenR a e := IsGreenR.trans (IsGreenR.symm hRy₀a) hRy₀e
     have heH : e ∈ IsGreenH.eqvClass a := ⟨IsGreenL.symm hLae, IsGreenR.symm hRae⟩
     exact ⟨e, heH, he_idem, fun u v huH hvH ↦ by
-      have hue : IsGreenH u e := IsGreenH.trans huH (IsGreenH.symm heH)
-      have hve : IsGreenH v e := IsGreenH.trans hvH (IsGreenH.symm heH)
-      have hLue : IsGreenL u e := hue.left
-      have hRve : IsGreenR v e := hve.right
-      have hev : e * v = v := by
-        rcases hRve.left with rfl | ⟨z, hz⟩ <;> grind [mul_assoc]
-      have hue_eq : u * e = u := by
-        rcases hLue.left with rfl | ⟨w, hw⟩ <;> grind [mul_assoc]
-      have hLuv_ev : IsGreenL (u * v) (e * v) := IsGreenL.mul_right v hLue
-      have hLuv_v : IsGreenL (u * v) v := by rwa [hev] at hLuv_ev
-      have hRuv_ue : IsGreenR (u * v) (u * e) := IsGreenR.mul_left u hRve
-      have hRuv_u : IsGreenR (u * v) u := by rwa [hue_eq] at hRuv_ue
-      have hLuv_a : IsGreenL (u * v) a := IsGreenL.trans hLuv_v hvH.left
-      have hRuv_a : IsGreenR (u * v) a := IsGreenR.trans hRuv_u huH.right
-      exact ⟨hLuv_a, hRuv_a⟩⟩
+      let hue : IsGreenH u e := huH.trans heH.symm
+      let hve : IsGreenH v e := hvH.trans heH.symm
+      have hLuv_v : IsGreenL (u * v) v := by
+        simpa [MulSeq.mul_eq_self_of_isGreenH_idempotent hve he_idem]
+          using IsGreenL.mul_right v hue.1
+      have hRuv_u : IsGreenR (u * v) u := by
+        simpa [MulSeq.mul_eq_self_of_isGreenH_idempotent hue he_idem]
+          using IsGreenR.mul_left u hve.2
+      exact ⟨hLuv_v.trans hvH.1, hRuv_u.trans huH.2⟩⟩
