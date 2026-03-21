@@ -336,7 +336,7 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
     have hx₀D : x₀ ∈ IsGreenD.eqvClass a := ⟨a, hx₀H.left, IsGreenR.refl a⟩
     have hy₀D : y₀ ∈ IsGreenD.eqvClass a := ⟨a, hy₀H.left, IsGreenR.refl a⟩
     have hxy₀D : x₀ * y₀ ∈ IsGreenD.eqvClass a := ⟨a, hxy₀H.left, IsGreenR.refl a⟩
-    have hD_ex : Exists (fun y => IsGreenD.eqvClass a = IsGreenD.eqvClass y) := ⟨a, rfl⟩
+    have hD_ex : Exists (fun y ↦ IsGreenD.eqvClass a = IsGreenD.eqvClass y) := ⟨a, rfl⟩
     obtain ⟨hRL_unused, e, heD, he_idem, hLx₀e, hRy₀e⟩ :=
       mul_mem_isGreenD_eqvClass_properties hD_ex x₀ y₀ hx₀D hy₀D hxy₀D
     have hLx₀a : IsGreenL x₀ a := hx₀H.left
