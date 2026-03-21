@@ -199,8 +199,7 @@ theorem nD_pos (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) : 0 < nD D := b
     obtain ⟨e, heD, he_idem⟩ := (isRegularDClass_iff_exists_idempotent D hD).mp hReg
     use e
     simp only [Finset.mem_univ, Finset.mem_filter, true_and]
-    refine ⟨heD, e, heD, he_idem, ?_⟩
-    exact IsGreenH.refl e
+    exact ⟨heD, e, heD, he_idem, IsGreenH.refl e⟩
   · exact Nat.zero_lt_one
 
 /-- Instance providing that the set of available ranks for a D-class is inhabited. -/
@@ -369,12 +368,14 @@ lemma hOf_eq_class (ctx : SimonContext S α) (z : α) :
   have he := eId_mem ctx z
   dsimp only [hOf, lOf, rOf, IsGreenH.eqvClass,
               IsGreenL.eqvClass, IsGreenR.eqvClass, IsGreenH] at he ⊢
-  rw [Set.mem_inter_iff] at he
+  simp only [Set.mem_inter_iff, Set.mem_setOf_eq] at he ⊢
   split_ifs at he ⊢
   all_goals {
-    change (_ ∧ _) at he
-    change (_ ∧ _) ↔ _
-    grind [IsGreenL.trans, IsGreenL.symm, IsGreenR.trans, IsGreenR.symm]
+    exact ⟨
+      fun ⟨hwL, hwR⟩ => ⟨IsGreenL.trans hwL (IsGreenL.symm he.1),
+          IsGreenR.trans hwR (IsGreenR.symm he.2)⟩,
+      fun ⟨hwL, hwR⟩ ↦ ⟨IsGreenL.trans hwL he.1, IsGreenR.trans hwR he.2⟩
+    ⟩
   }
 
 /-- Under certain conditions, `σ mz z` behaves multiplicatively with idempotents. -/
