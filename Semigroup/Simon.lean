@@ -110,12 +110,7 @@ lemma simon_group_case (σ : MultiplicativeLabeling G α) :
       simp only [h_val_1, mul_one]
     · have h_x0_lt_x : x₀ < x :=
         lt_of_le_of_ne (Finset.min'_le (.univ) x (Finset.mem_univ x)) (ne_comm.mp hx)
-      have h_sx : s x = index_in_enum (σ.σ x₀ x) := by simp only [s, ne_of_gt h_x0_lt_x, ite_false]
-      have h_x0_lt_y : x₀ < y := lt_trans h_x0_lt_x hlt
-      have h_sy : s y = index_in_enum (σ.σ x₀ y) := by simp only [s, ne_of_gt h_x0_lt_y, ite_false]
-      have h_s_eq : s x = s y := hsr.left
-      rw [h_sx, h_sy] at h_s_eq
-      have h_vals_eq : σ.σ x₀ x = σ.σ x₀ y := Equiv.injective index_in_enum h_s_eq
+      have h_vals_eq : σ.σ x₀ x = σ.σ x₀ y := by grind
       have h_mult := σ.prop x₀ x y h_x0_lt_x hlt
       rw [← h_vals_eq] at h_mult
       have h_res : σ.σ x y = 1 := by

@@ -97,9 +97,8 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h_L_ab : IsGreenL a b) :
         have hR_zx_za : IsGreenR (z * x) (z * a) := IsGreenR.mul_left z hx_in_H.right
         have hR_zx_b : IsGreenR (z * x) b := by rwa [← hb_eq_za] at hR_zx_za
         have hwzx_eq_x : w * z * x = x := IsGreenR.cancellation hx_in_H.right hwza_eq_a
-        have hdvd_zx_x : IsGreenLeftDvd (z * x) x := Or.inr ⟨z, rfl⟩
-        have hdvd_x_zx : IsGreenLeftDvd x (z * x) := Or.inr ⟨w, by rw [← mul_assoc, hwzx_eq_x]⟩
-        have hL_zx_x : IsGreenL (z * x) x := ⟨hdvd_zx_x, hdvd_x_zx⟩
+        have hL_zx_x : IsGreenL (z * x) x :=
+          ⟨Or.inr ⟨z, rfl⟩, Or.inr ⟨w, by simp [← mul_assoc, hwzx_eq_x]⟩⟩
         have hL_zx_b : IsGreenL (z * x) b :=
           IsGreenL.trans hL_zx_x (IsGreenL.trans hx_in_H.left h_L_ab)
         exact ⟨hL_zx_b, hR_zx_b⟩⟩
@@ -145,26 +144,11 @@ theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b)
 /-- If `a` and `b` are `J`-related in a finite semigroup, they are also `D`-related. -/
 lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
   rcases h with ⟨hab, hba⟩
-  cases hab
-  case eq h1 => exact h1 ▸ IsGreenD.refl b
-  case mul_left u h1 =>
-    cases hba
-    case eq h2 => exact h2.symm ▸ IsGreenD.refl a
-    case mul_left x h2 => exact isGreenD_of_left_left h1 h2
-    case mul_right y h2 => exact isGreenD_of_left_right h1 h2
-    case mul_both x y h2 => exact isGreenD_of_JRel_left_both h1 h2
-  case mul_right v h1 =>
-    cases hba
-    case eq h2 => exact h2.symm ▸ IsGreenD.refl a
-    case mul_left x h2 => exact isGreenD_of_right_left h1 h2
-    case mul_right y h2 => exact isGreenD_of_right_right h1 h2
-    case mul_both x y h2 => exact isGreenD_of_JRel_right_both h1 h2
-  case mul_both z u h1 =>
-    cases hba
-    case eq h2 => exact h2.symm ▸ IsGreenD.refl a
-    case mul_left x h2 => exact IsGreenD.symm (isGreenD_of_JRel_left_both h2 h1)
-    case mul_right y h2 => exact IsGreenD.symm (isGreenD_of_JRel_right_both h2 h1)
-    case mul_both x y h2 => exact isGreenD_of_JRel_both h1 h2
+  cases hab <;> cases hba <;>
+    grind [isGreenD_of_left_left, isGreenD_of_left_right,
+                     isGreenD_of_right_left, isGreenD_of_right_right,
+                     isGreenD_of_JRel_left_both, isGreenD_of_JRel_right_both,
+                     isGreenD_of_JRel_both, IsGreenD.refl, IsGreenD.symm]
 
 /-- If `a` and `b` are `D`-related, they satisfy the basic `J`-relation step. -/
 lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := by
@@ -199,70 +183,35 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
   have h_b_dvd_ab : IsGreenLeftDvd b (a * b) := by
     rcases h with ⟨z', hL_bz', hR_z'ab⟩
     obtain ⟨z, hR_bz, hL_zab⟩ := isGreenL_commutes_isGreenR hL_bz' hR_z'ab
-    have h_exists_c : ∃ c, z = c * b ∧ IsGreenLeftDvd c a := by
+    obtain ⟨c, rfl, hc_dvd⟩ : ∃ c, z = c * b ∧ IsGreenLeftDvd c a := by
       rcases hL_zab.left with rfl | ⟨w, hw⟩
       · exact ⟨a, rfl, Or.inl rfl⟩
       · exact ⟨w * a, by rw [hw, ← mul_assoc], Or.inr ⟨w, rfl⟩⟩
-    rcases h_exists_c with ⟨c, rfl, hc_dvd⟩
-    rcases leftMulSeq_pigeonhole c b with ⟨i, j, hij, heq⟩
+    obtain ⟨i, j, hij, heq⟩ := leftMulSeq_pigeonhole c b
     have hR_all : ∀ n, IsGreenR b (leftMulSeq c b n) := by
-      intro n
-      induction n with
+      intro n; induction n with
       | zero => exact IsGreenR.refl b
       | succ n ih => exact IsGreenR.trans hR_bz (IsGreenR.mul_left c ih)
-    have hR_cib : IsGreenR b (leftMulSeq c b i) := hR_all i
     have h_b_eq_ckb : ∃ k > 0, b = leftMulSeq c b k := by
-      let k := j - i
-      have hk_pos : 0 < k := Nat.sub_pos_of_lt hij
-      have hk_eq_j : i + k = j := Nat.add_sub_of_le (le_of_lt hij)
-      have h_shift : leftMulSeq c b j = leftMulSeq c (leftMulSeq c b i) k := by
-        have hs : ∀ m, leftMulSeq c b (i + m) = leftMulSeq c (leftMulSeq c b i) m := by
-          intro m
-          induction m with
-          | zero => rfl
-          | succ m ih =>
-            calc leftMulSeq c b (i + m + 1) = c * leftMulSeq c b (i + m) := rfl
-              _ = c * leftMulSeq c (leftMulSeq c b i) m := by rw [ih]
-              _ = leftMulSeq c (leftMulSeq c b i) (m + 1) := rfl
-        calc leftMulSeq c b j = leftMulSeq c b (i + k) := by rw [← hk_eq_j]
-          _ = leftMulSeq c (leftMulSeq c b i) k := hs k
+      obtain ⟨k, hk_pos, hk_eq_j⟩ : ∃ k > 0, i + k = j := ⟨j - i, by omega, by omega⟩
+      have hs : ∀ m, leftMulSeq c b (i + m) = leftMulSeq c (leftMulSeq c b i) m := by
+        intro m; induction m with
+        | zero => rfl
+        | succ m ih => rw [← add_assoc]; exact congrArg (fun x ↦ c * x) ih
       have h_gi_k : leftMulSeq c (leftMulSeq c b i) k = leftMulSeq c b i := by
-        rw [← h_shift, heq]
-      use k, hk_pos
-      rcases hR_cib.left with heq_b | ⟨v_outer, hv⟩
-      · calc b = leftMulSeq c b i := heq_b
-          _ = leftMulSeq c (leftMulSeq c b i) k := h_gi_k.symm
-          _ = leftMulSeq c b k := by rw [← heq_b]
-      · calc b = leftMulSeq c b i * v_outer := hv
-          _ = leftMulSeq c (leftMulSeq c b i) k * v_outer := by rw [h_gi_k]
-          _ = leftMulSeq c (leftMulSeq c b i * v_outer) k :=
-            (leftMulSeq_mul_pull c k _ v_outer).symm
-          _ = leftMulSeq c b k := by rw [← hv]
+        rw [← hs k, hk_eq_j, ← heq]
+      rcases (hR_all i).left with heq_b | ⟨v_outer, hv⟩
+      · exact ⟨k, hk_pos, by grind⟩
+      · exact ⟨k, hk_pos, by grind [leftMulSeq_mul_pull]⟩
     rcases h_b_eq_ckb with ⟨k, hk_pos, hk_eq⟩
     obtain ⟨m, rfl⟩ : ∃ m, k = m + 1 := Nat.exists_eq_succ_of_ne_zero (ne_of_gt hk_pos)
     rcases hc_dvd with hc_eq_a | ⟨w, hw⟩
     · rcases m with _ | m_pred
-      · have h_final : b = a * b := by
-          calc b = leftMulSeq c b (0 + 1) := hk_eq
-            _ = leftMulSeq c (c * b) 0 := leftMulSeq_pull_c c 0 b
-            _ = leftMulSeq c (a * b) 0 := congrArg (fun x ↦ leftMulSeq c (x * b) 0) hc_eq_a
-            _ = a * b := rfl
-        exact Or.inl h_final
-      · have h_final : b = leftMulSeq c c m_pred * (a * b) := by
-          calc b = leftMulSeq c b (m_pred + 1 + 1) := hk_eq
-            _ = leftMulSeq c (c * b) (m_pred + 1) := leftMulSeq_pull_c c (m_pred + 1) b
-            _ = leftMulSeq c (a * b) (m_pred + 1) :=
-              congrArg (fun x ↦ leftMulSeq c (x * b) (m_pred + 1)) hc_eq_a
-            _ = leftMulSeq c (c * (a * b)) m_pred := leftMulSeq_pull_c c m_pred (a * b)
-            _ = leftMulSeq c c m_pred * (a * b) := leftMulSeq_mul_pull c m_pred c (a * b)
-        exact Or.inr ⟨leftMulSeq c c m_pred, h_final⟩
-    · have h_final : b = leftMulSeq c w m * (a * b) := by
-        calc b = leftMulSeq c b (m + 1) := hk_eq
-          _ = leftMulSeq c (c * b) m := leftMulSeq_pull_c c m b
-          _ = leftMulSeq c ((w * a) * b) m := congrArg (fun x ↦ leftMulSeq c (x * b) m) hw
-          _ = leftMulSeq c (w * (a * b)) m := congrArg (leftMulSeq c · m) (mul_assoc w a b)
-          _ = leftMulSeq c w m * (a * b) := leftMulSeq_mul_pull c m w (a * b)
-      exact Or.inr ⟨leftMulSeq c w m, h_final⟩
+      · exact Or.inl (by grind [leftMulSeq])
+      · exact Or.inr ⟨leftMulSeq c c m_pred, by
+          grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
+    · exact Or.inr ⟨leftMulSeq c w m, by
+        grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
 
 open MulOpposite in
@@ -281,10 +230,10 @@ theorem mul_mem_isGreenD_eqvClass_properties
   (a b : S) (ha : a ∈ D) (hb : b ∈ D) (hab : a * b ∈ D) :
   (IsGreenR a (a * b) ∧ IsGreenL b (a * b)) ∧
   (∃ e ∈ D, e * e = e ∧ IsGreenL a e ∧ IsGreenR b e) := by
-  obtain ⟨x0, hx0⟩ := hD_exists
-  have hDa : a ∈ IsGreenD.eqvClass x0 := hx0 ▸ ha
-  have hDb : b ∈ IsGreenD.eqvClass x0 := hx0 ▸ hb
-  have hDab : a * b ∈ IsGreenD.eqvClass x0 := hx0 ▸ hab
+  obtain ⟨x₀, hx₀⟩ := hD_exists
+  have hDa : a ∈ IsGreenD.eqvClass x₀ := hx₀ ▸ ha
+  have hDb : b ∈ IsGreenD.eqvClass x₀ := hx₀ ▸ hb
+  have hDab : a * b ∈ IsGreenD.eqvClass x₀ := hx₀ ▸ hab
   have h_a_D_ab : IsGreenD a (a * b) := IsGreenD.trans hDa (IsGreenD.symm hDab)
   have h_b_D_ab : IsGreenD b (a * b) := IsGreenD.trans hDb (IsGreenD.symm hDab)
   have hR_a_ab : IsGreenR a (a * b) := isGreenR_sr_of_isGreenD_sr h_a_D_ab
@@ -313,7 +262,7 @@ theorem mul_mem_isGreenD_eqvClass_properties
         have hRbe1 : b = (v * a) * b := by grind
         have hRbe : IsGreenR b (v * a) := ⟨Or.inr ⟨b, hRbe1⟩, Or.inr ⟨u, he_eq⟩⟩
         have hDea : IsGreenD (v * a) a := ⟨a, IsGreenL.symm hLae, IsGreenR.refl a⟩
-        have heD : v * a ∈ D := hx0.symm ▸ (IsGreenD.trans hDea hDa)
+        have heD : v * a ∈ D := hx₀.symm ▸ (IsGreenD.trans hDea hDa)
         exact ⟨v * a, heD, h_idem, hLae, hRbe⟩
   ⟩
 
