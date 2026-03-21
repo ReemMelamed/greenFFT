@@ -213,10 +213,8 @@ lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGr
 
 /-- If `b = x * z * b * d`, then `b` is L-related to `z * b`. -/
 lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b * d) :
-    IsGreenL b (z * b) := by
-  apply isGreenL_of_isGreenL_mul (x := x)
-  rw [← mul_assoc]
-  exact greenL_of_eq_mul_mul h
+    IsGreenL b (z * b) :=
+  isGreenL_of_isGreenL_mul (by rw [← mul_assoc]; exact greenL_of_eq_mul_mul h)
 
 open MulOpposite in
 /-- If `b = c * b * (u * y)`, then `b` is R-related to `b * u`. -/

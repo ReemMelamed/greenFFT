@@ -129,13 +129,10 @@ noncomputable def equivHClassOfIsGreenR {a b : S} (h : IsGreenR a b) :
 open Classical in
 /-- Any two `H`-classes within the same `D`-class have the same cardinality. -/
 theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b) :
-    Fintype.card (IsGreenH.eqvClass a) = Fintype.card (IsGreenH.eqvClass b) := by
-  rcases h with ⟨z, hL, hR⟩
-  let equiv_az := equivHClassOfIsGreenL hL
-  let equiv_zb := equivHClassOfIsGreenR hR
-  trans Fintype.card (IsGreenH.eqvClass z)
-  · exact Fintype.card_congr equiv_az
-  · exact Fintype.card_congr equiv_zb
+    Fintype.card (IsGreenH.eqvClass a) = Fintype.card (IsGreenH.eqvClass b) :=
+  let ⟨_, hL, hR⟩ := h
+  (Fintype.card_congr (equivHClassOfIsGreenL hL)).trans
+      (Fintype.card_congr (equivHClassOfIsGreenR hR))
 
 /-- If `a` and `b` are `J`-related in a finite semigroup, they are also `D`-related. -/
 lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
@@ -158,11 +155,8 @@ lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b := 
     · exact IsGreenJRel.mul_both u v (by rw [hu, hv, mul_assoc])
 
 /-- If `a` and `b` are `D`-related, they are also `J`-related. -/
-lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b := by
-  constructor
-  · exact isGreenJRel_of_isGreenD h
-  · have h_symm : IsGreenD b a := IsGreenD.symm h
-    exact isGreenJRel_of_isGreenD h_symm
+lemma isGreenJ_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJ a b :=
+  ⟨isGreenJRel_of_isGreenD h, isGreenJRel_of_isGreenD h.symm⟩
 
 /-- In a finite semigroup, Green's `D` relation and Green's `J` relation are equal. -/
 theorem isGreenD_eq_isGreenJ_of_finite [Finite S] : (IsGreenD : S → S → Prop) = IsGreenJ := by
