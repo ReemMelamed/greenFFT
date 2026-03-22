@@ -143,14 +143,8 @@ lemma b_eq_right_left_seq (c b d : S) (h : b = c * b * d) (n : ℕ) :
   induction n with
   | zero => rfl
   | succ n ih =>
-    calc b = c * b * d := h
-      _ = c * rightMulSeq (leftMulSeq c b n) d n * d := congrArg (fun x ↦ c * x * d) ih
-      _ = c * (rightMulSeq (leftMulSeq c b n) d n * d) :=
-        mul_assoc c (rightMulSeq (leftMulSeq c b n) d n) d
-      _ = c * rightMulSeq (leftMulSeq c b n) d (n + 1) := rfl
-      _ = rightMulSeq (c * leftMulSeq c b n) d (n + 1) :=
-        (rightMulSeq_mul_pull d (n + 1) (leftMulSeq c b n) c).symm
-      _ = rightMulSeq (leftMulSeq c b (n + 1)) d (n + 1) := rfl
+    rw [h, ih]
+    grind [rightMulSeq_mul_pull, leftMulSeq, rightMulSeq, mul_assoc]
 
 /-- If `b = c * b * d` in a finite semigroup, `b` is equivalent to some left multiple sequence. -/
 lemma eq_leftMulSeq_of_eq_mul_mul [Finite S] {b c d : S} (h : b = c * b * d) :
@@ -226,13 +220,7 @@ lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * 
 then `a` and `b` are Green's D-related. -/
 lemma isGreenD_of_JRel_both [Finite S] {a b x y z u : S}
     (h1 : a = z * b * u) (h2 : b = x * a * y) : IsGreenD a b := by
-  have h_b_eq : b = (x * z) * b * (u * y) := by
-    calc b = x * a * y := h2
-      _ = x * (z * b * u) * y := by rw [h1]
-      _ = x * ((z * b) * u) * y := rfl
-      _ = (x * (z * b)) * u * y := by rw [← mul_assoc x (z * b) u]
-      _ = ((x * z) * b) * u * y := by rw [← mul_assoc x z b]
-      _ = ((x * z) * b) * (u * y) := by rw [mul_assoc ((x * z) * b) u y]
+  have h_b_eq : b = (x * z) * b * (u * y) := by grind [mul_assoc]
   have hR : IsGreenR b (b * u) := isGreenR_of_eq_mul_mul_mul h_b_eq
   have hL : IsGreenL b (z * b) := isGreenL_of_eq_mul_mul_mul h_b_eq
   have hL_bu_a : IsGreenL (b * u) a := by
