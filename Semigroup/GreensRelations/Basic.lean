@@ -237,24 +237,18 @@ lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR 
   have h_za : IsGreenLeftDvd z a := hL.right
   have h_zb : IsGreenRightDvd z b := hR.left
   have h_bz : IsGreenRightDvd b z := hR.right
-  rcases h_az with rfl | ⟨u, hu⟩
-  · exact ⟨b, hR, IsGreenL.refl b⟩
-  rcases h_za with rfl | ⟨v, hv⟩
-  · exact ⟨b, hR, IsGreenL.refl b⟩
-  rcases h_zb with rfl | ⟨x, hx⟩
-  · exact ⟨a, IsGreenR.refl a, hL⟩
-  rcases h_bz with rfl | ⟨y, hy⟩
-  · exact ⟨a, IsGreenR.refl a, hL⟩
+  rcases h_az with rfl | ⟨u, hu⟩; · exact ⟨b, hR, IsGreenL.refl b⟩
+  rcases h_za with rfl | ⟨v, hv⟩; · exact ⟨b, hR, IsGreenL.refl b⟩
+  rcases h_zb with rfl | ⟨x, hx⟩; · exact ⟨a, IsGreenR.refl a, hL⟩
+  rcases h_bz with rfl | ⟨y, hy⟩; · exact ⟨a, IsGreenR.refl a, hL⟩
   use a * y
-  have hR1 : IsGreenRightDvd a (a * y) := by
-    right; use x; rw [hu, mul_assoc u z y, ← hy, mul_assoc u b x, ← hx]
-  have hR2 : IsGreenRightDvd (a * y) a := by
-    right; exact ⟨y, rfl⟩
-  have hL1 : IsGreenLeftDvd (a * y) b := by
-    right; use u; rw [hu, mul_assoc, ← hy]
-  have hL2 : IsGreenLeftDvd b (a * y) := by
-    right; use v; rw [← mul_assoc, ← hv, hy]
-  exact ⟨⟨hR1, hR2⟩, ⟨hL1, hL2⟩⟩
+  constructor
+  · constructor
+    · right; use x; simp [hu, ← hy, ← hx, mul_assoc]
+    · right; exact ⟨y, rfl⟩
+  · constructor
+    · right; use u; simp [hu, ← hy, mul_assoc]
+    · right; use v; simp [← hv, hy, ← mul_assoc]
 
 namespace IsGreenD
 
