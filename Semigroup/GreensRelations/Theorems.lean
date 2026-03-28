@@ -12,20 +12,6 @@ This file proves the major structural theorems regarding Green's relations,
 including Green's Lemma (bijections between H-classes), the equivalence of D and J
 in finite semigroups, and conditions for H-classes to be subgroups.
 
-## Main results
-
-* `isRegularDClass_iff_exists_idempotent`:
-    A `D`-class is regular if and only if it contains an idempotent.
-* `equivHClassOfIsGreenL` / `equivHClassOfIsGreenR`:
-    Green's Lemma, providing bijections between
-        `H`-classes contained in the same `L`-class or `R`-class.
-* `card_greenHClass_eq_of_isGreenD`:
-    All `H`-classes within the same `D`-class have the same cardinality.
-* `isGreenD_eq_isGreenJ_of_finite`: In a finite semigroup, Green's `D` and `J` relations coincide.
-* `isGroup_isGreenH_eqvClass_iff_idempotent`:
-    Green's Theorem stating that an `H`-class is a subgroup
-        if and only if it contains an idempotent.
-
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]

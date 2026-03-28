@@ -12,13 +12,6 @@ import Mathlib.Algebra.Group.Opposite
 This file proves the foundational equivalences and duality properties of Green's relations,
 establishing them as setoids over a semigroup.
 
-## Main results
-* Reflexivity, symmetry, and transitivity proofs
-    for the divisibility relations and Green's relations.
-* `Setoid` instances for `IsGreenL`, `IsGreenR`, `IsGreenH`, `IsGreenD`, and `IsGreenJ`.
-* Duality lemmas mapping relations in `S` to their counterparts in the opposite semigroup `Sᵐᵒᵖ`.
-* `isGreenL_commutes_isGreenR`: Proof that Green's L and R relations commute.
-
 ## References
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
 

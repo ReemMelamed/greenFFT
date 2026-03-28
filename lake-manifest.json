@@ -88,7 +88,7 @@
    "rev": "28e0856d4424863a85b18f38868c5420c55f9bae",
    "name": "Cli",
    "manifestFile": "lake-manifest.json",
-   "inputRev": "v4.28.0-rc1",
+   "inputRev": "v4.29.0",
    "inherited": true,
    "configFile": "lakefile.toml"}],
  "name": "greenFFT",

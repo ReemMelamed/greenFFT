@@ -22,12 +22,6 @@ It also introduces the concepts of regular elements and regular D-classes.
 * `IsGreenRegular`: A predicate indicating that an element `a` is regular (`a * s * a = a`).
 * `IsRegularDClass`: A predicate indicating that all elements in a D-class are regular.
 
-## Main results
-
-* `PartialOrder (GreenLClass S)`: Green's L relation induces a partial order on its quotient space.
-* `PartialOrder (GreenRClass S)`: Green's R relation induces a partial order on its quotient space.
-* `PartialOrder (GreenJClass S)`: Green's J relation induces a partial order on its quotient space.
-
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
@@ -108,10 +102,10 @@ lemma mk_surjective : Function.Surjective (mk : S → GreenLClass S) :=
   @Quotient.exists_rep _ (IsGreenL.setoid S)
 
 /-- The quotient constructor is definitionally equal to `mk a`. -/
-@[simp] lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenL.setoid S) a = mk a := rfl
+lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenL.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's L-class if and only if they are L-related. -/
-@[simp] lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenL a b :=
+lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenL a b :=
   @Quotient.eq _ (IsGreenL.setoid S) _ _
 
 instance [Inhabited S] : Inhabited (GreenLClass S) := ⟨mk default⟩
@@ -155,10 +149,10 @@ lemma mk_surjective : Function.Surjective (mk : S → GreenRClass S) :=
   @Quotient.exists_rep _ (IsGreenR.setoid S)
 
 /-- The quotient constructor is definitionally equal to `mk a`. -/
-@[simp] lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenR.setoid S) a = mk a := rfl
+lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenR.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's R-class if and only if they are R-related. -/
-@[simp] lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenR a b :=
+lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenR a b :=
   @Quotient.eq _ (IsGreenR.setoid S) _ _
 
 instance [Inhabited S] : Inhabited (GreenRClass S) := ⟨mk default⟩
@@ -202,10 +196,10 @@ lemma mk_surjective : Function.Surjective (mk : S → GreenJClass S) :=
   @Quotient.exists_rep _ (IsGreenJ.setoid S)
 
 /-- The quotient constructor is definitionally equal to `mk a`. -/
-@[simp] lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenJ.setoid S) a = mk a := rfl
+lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenJ.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's J-class if and only if they are J-related. -/
-@[simp] lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenJ a b :=
+lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenJ a b :=
   @Quotient.eq _ (IsGreenJ.setoid S) _ _
 
 instance [Inhabited S] : Inhabited (GreenJClass S) := ⟨mk default⟩
@@ -249,10 +243,10 @@ lemma mk_surjective : Function.Surjective (mk : S → GreenHClass S) :=
   @Quotient.exists_rep _ (IsGreenH.setoid S)
 
 /-- The quotient constructor is definitionally equal to `mk a`. -/
-@[simp] lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenH.setoid S) a = mk a := rfl
+lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenH.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's H-class if and only if they are H-related. -/
-@[simp] lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenH a b :=
+lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenH a b :=
   @Quotient.eq _ (IsGreenH.setoid S) _ _
 
 instance [Inhabited S] : Inhabited (GreenHClass S) := ⟨mk default⟩
@@ -273,10 +267,10 @@ lemma mk_surjective : Function.Surjective (mk : S → GreenDClass S) :=
   @Quotient.exists_rep _ (IsGreenD.setoid S)
 
 /-- The quotient constructor is definitionally equal to `mk a`. -/
-@[simp] lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenD.setoid S) a = mk a := rfl
+lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenD.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's D-class if and only if they are D-related. -/
-@[simp] lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenD a b :=
+lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenD a b :=
   @Quotient.eq _ (IsGreenD.setoid S) _ _
 
 instance [Inhabited S] : Inhabited (GreenDClass S) := ⟨mk default⟩

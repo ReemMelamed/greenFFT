@@ -17,15 +17,6 @@ required to prove the main theorems of Green's relations.
 * `MulSeq.rightMulSeq a c n`: The element obtained by multiplying `a` by `c` on the right `n` times.
 * `MulSeq.leftMulSeq c a n`: The element obtained by multiplying `a` by `c` on the left `n` times.
 
-## Main results
-
-* `leftMulSeq_pigeonhole`: Proof that in a finite semigroup, a left multiplication sequence
-  eventually repeats.
-* `greenL_of_eq_mul_mul`: If `b = c * b * d`, then `b` is Green's L-related to `c * b`.
-* `isGreenD_of_JRel_both`: Proof that the basic J-relation (two-sided divisibility)
-  implies the D-relation in finite semigroups.
-* `exists_idempotent_in_greenL_of_regular`: Every regular element has an idempotent in its L-class.
-
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]

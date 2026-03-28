@@ -4,7 +4,7 @@ keywords = ["math"]
 defaultTargets = ["Semigroup"]
 
 [leanOptions]
-pp.unicode.fun = true # pretty-prints `fun a ↦ b`
+pp.unicode.fun = true
 relaxedAutoImplicit = false
 weak.linter.mathlibStandardSet = true
 maxSynthPendingDepth = 3
@@ -13,7 +13,7 @@ autoImplicit = false
 [[require]]
 name = "mathlib"
 scope = "leanprover-community"
-rev = "v4.28.0-rc1"
+rev = "v4.29.0"
 
 [[lean_lib]]
 name = "Semigroup"
