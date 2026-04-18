@@ -22,19 +22,16 @@ with a focus on Green's relations.
 ### `Semigroup/GreensRelations/`
 
 * `Defs.lean`
-  - Contains the foundational definitions for Green's relations (L, R, H, D, and J) and left/right divisibility over semigroups. 
-  - Establishes the basic logical predicates used throughout the entire library.
+  - The foundational definitions for Green's relations (L, R, H, D, and J) and left/right divisibility over semigroups. 
 
 * `Basic.lean`
-  - Proves the foundational equivalences and sets up the relations as formal setoids.
-  - Establishes the vital duality of left and right divisibility by utilizing the opposite semigroup (MulOpposite).
+  - Foundational equivalences and the setup of the relations as formal setoids.
 
 * `Classes.lean`
-  - Defines the equivalence classes and quotient spaces for the relations.
-  - Proves that these quotient spaces form partial orders and formally defines the notions of regular elements and regular D-classes.
+  - Equivalence classes and quotient spaces for the relations.
  
 * `MulSeq.lean`
-  - Provides tools for analyzing finite semigroups using iterated multiplication sequences.
+  - Tools for analyzing finite semigroups using iterated multiplication sequences.
   - Structural helper lemmas, such as applications of the pigeonhole principle.
  
 * `Theorems.lean`
@@ -45,6 +42,6 @@ Green's lemma (constructing explicit bijections between H-classes), and the proo
 ### `Semigroup/`
 
 * `Simon.lean`
-  - Contains the core components of Simon's Factorization Forest theorem.
-  - Defines the necessary structures like multiplicative labeling, normalized split, and Ramsey split.
-  - Holds the formal proofs for the group case, the subgroup H-class case, and the regular D-class case.
+  - The core components of Simon's Factorization Forest theorem.
+  - Structures like multiplicative labeling, normalized split, and Ramsey split.
+  - Proofs for the group case, the subgroup H-class case, and the regular D-class case.
