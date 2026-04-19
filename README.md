@@ -10,12 +10,10 @@ with a focus on Green's relations.
 
 ## What this repository formalizes
 
-```text
 - Green's relations: L, R, H, D, J
 - Equivalence classes and quotient constructions for Green's relations
 - Finite-semigroup structure results (regular D-classes, idempotents, D = J)
 - Special cases of Simon's theorem: group case, H-class case, and regular D-class case
-```
 
 ## Overview
 
