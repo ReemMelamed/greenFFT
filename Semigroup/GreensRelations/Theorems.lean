@@ -67,11 +67,8 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h_L_ab : IsGreenL a b) :
   · exact ha_eq_b ▸ Equiv.refl _
   · have h_exists_w : ∃ w, a = w * b := h_L_ab.left.resolve_left ha_eq_b
     have h_exists_z : ∃ z, b = z * a := h_L_ab.right.resolve_left (Ne.symm ha_eq_b)
-    let w := Classical.choose h_exists_w
-    let z := Classical.choose h_exists_z
-    have ha_eq_wb : a = w * b := Classical.choose_spec h_exists_w
-    have hb_eq_za : b = z * a := Classical.choose_spec h_exists_z
-    have hb_eq_za : b = z * a := Classical.choose_spec h_exists_z
+    choose w ha_eq_wb using h_exists_w
+    choose z hb_eq_za using h_exists_z
     have hwza_eq_a : w * z * a = a := by rw [mul_assoc, ← hb_eq_za, ← ha_eq_wb]
     have hzwb_eq_b : z * w * b = b := by rw [mul_assoc, ← ha_eq_wb, ← hb_eq_za]
     exact {
