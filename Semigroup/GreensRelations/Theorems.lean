@@ -234,7 +234,7 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
     x * y ∉ IsGreenH.eqvClass a
   · exact Or.inl h
   · right
-    push_neg at h
+    push Not at h
     obtain ⟨x₀, y₀, hx₀, hy₀, hxy₀⟩ := h
     have hx₀H : IsGreenH x₀ a := hx₀
     have hy₀H : IsGreenH y₀ a := hy₀
