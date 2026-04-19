@@ -304,21 +304,21 @@ lemma hOf_has_idempotent (ctx : SimonContext S α) (x : α) :
         rw [ctx.hx₀]
         exact IsGreenD.refl ctx.x₀
       have h_exists := MulSeq.exists_idempotent_in_greenL_of_regular (ctx.hReg _ ha_D)
-      use choose h_exists
-      have he_prop := choose_spec h_exists
+      choose e he_prop using h_exists
+      use e
       simp [lOf, rOf, h_min, h_max, he_prop, IsGreenR.eqvClass, IsGreenR.refl]
     · have ha_D : ctx.σ.σ x (choose (not_isMax_iff.mp h_max)) ∈ ctx.D :=
         ctx.h_range x _ (choose_spec (not_isMax_iff.mp h_max))
-      have h_exists := MulSeq.exists_idempotent_in_greenR_of_regular (ctx.hReg _ ha_D)
-      use choose h_exists
-      have he_prop := choose_spec h_exists
+      have h_exists := MulSeq.exists_idempotent_in_greenL_of_regular (ctx.hReg _ ha_D)
+      choose e he_prop using h_exists
+      use e
       simp [lOf, rOf, h_min, h_max, he_prop, IsGreenL.eqvClass, IsGreenL.refl]
   · by_cases h_max : IsMax x
     · have ha_D : ctx.σ.σ (choose (not_isMin_iff.mp h_min)) x ∈ ctx.D :=
         ctx.h_range _ x (choose_spec (not_isMin_iff.mp h_min))
       have h_exists := MulSeq.exists_idempotent_in_greenL_of_regular (ctx.hReg _ ha_D)
-      use choose h_exists
-      have he_prop := choose_spec h_exists
+      choose e he_prop using h_exists
+      use e
       simp [lOf, rOf, h_min, h_max, he_prop, IsGreenR.eqvClass, IsGreenR.refl]
     · have ha : ctx.σ.σ (choose (not_isMin_iff.mp h_min)) x ∈ ctx.D :=
         ctx.h_range _ _ (choose_spec (not_isMin_iff.mp h_min))
