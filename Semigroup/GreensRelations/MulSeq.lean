@@ -199,7 +199,7 @@ lemma isGreenR_of_isGreenR_mul {b u y : S} (h : IsGreenR b ((b * u) * y)) : IsGr
 /-- If `b = x * z * b * d`, then `b` is L-related to `z * b`. -/
 lemma isGreenL_of_eq_mul_mul_mul [Finite S] {b x z d : S} (h : b = (x * z) * b * d) :
     IsGreenL b (z * b) :=
-  isGreenL_of_isGreenL_mul (by rw [← mul_assoc]; exact greenL_of_eq_mul_mul h)
+  isGreenL_of_isGreenL_mul (mul_assoc x z b ▸ greenL_of_eq_mul_mul h)
 
 open MulOpposite in
 /-- If `b = c * b * (u * y)`, then `b` is R-related to `b * u`. -/
@@ -242,34 +242,23 @@ lemma isGreenD_of_JRel_right_both [Finite S] {a b x y u : S}
 
 /-- If `a` is a left multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
 lemma isGreenD_of_left_right [Finite S] {a b u y : S} (h1 : a = u * b) (h2 : b = a * y) :
-  IsGreenD a b := by
-  have h_a : a = u * a * y := by
-    calc a = u * b := h1
-      _ = u * (a * y) := congrArg (fun x ↦ u * x) h2
-      _ = (u * a) * y := (mul_assoc u a y).symm
-  have hR : IsGreenR a (a * y) := greenR_of_eq_mul_mul h_a
-  have hR_ab : IsGreenR a b := h2.symm ▸ hR
-  exact ⟨a, IsGreenL.refl a, hR_ab⟩
+    IsGreenD a b :=
+  ⟨a, IsGreenL.refl a, h2.symm ▸ greenR_of_eq_mul_mul ((h2 ▸ h1).trans (mul_assoc u a y).symm)⟩
 
 /-- If `a` is a right multiple of `b` and `b` is a left multiple of `a`, they are D-related. -/
 lemma isGreenD_of_right_left [Finite S] {a b v x : S} (h1 : a = b * v) (h2 : b = x * a) :
-  IsGreenD a b := by
-  have h_a : a = x * a * v := by
-    calc a = b * v := h1
-      _ = (x * a) * v := congrArg (fun y ↦ y * v) h2
-  have hL : IsGreenL a (x * a) := greenL_of_eq_mul_mul h_a
-  have hL_ab : IsGreenL a b := h2.symm ▸ hL
-  exact ⟨b, hL_ab, IsGreenR.refl b⟩
+    IsGreenD a b :=
+  ⟨b, h2.symm ▸ greenL_of_eq_mul_mul (h2 ▸ h1), IsGreenR.refl b⟩
 
 /-- If `a` is a left multiple of `b` and `b` is a left multiple of `a`, they are D-related. -/
 lemma isGreenD_of_left_left [Finite S] {a b u x : S} (h1 : a = u * b) (h2 : b = x * a) :
-  IsGreenD a b := by
-  exact ⟨b, ⟨Or.inr ⟨u, h1⟩, Or.inr ⟨x, h2⟩⟩, IsGreenR.refl b⟩
+  IsGreenD a b :=
+  ⟨b, ⟨Or.inr ⟨u, h1⟩, Or.inr ⟨x, h2⟩⟩, IsGreenR.refl b⟩
 
 /-- If `a` is a right multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
 lemma isGreenD_of_right_right [Finite S] {a b v y : S} (h1 : a = b * v) (h2 : b = a * y) :
-  IsGreenD a b := by
-  exact ⟨a, IsGreenL.refl a, ⟨Or.inr ⟨v, h1⟩, Or.inr ⟨y, h2⟩⟩⟩
+  IsGreenD a b :=
+  ⟨a, IsGreenL.refl a, ⟨Or.inr ⟨v, h1⟩, Or.inr ⟨y, h2⟩⟩⟩
 
 /-- A regular element `a` has an idempotent in its L-class. -/
 lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}

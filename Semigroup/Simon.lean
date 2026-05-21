@@ -622,25 +622,53 @@ end RegularDClassCase
 
 section SimonSplit
 
-variable {S : Type*} [Semigroup S] [Fintype S]
+variable {S : Type*} [Semigroup S]
+
+def JUp (a : S) : Set S := { b | GreenJClass.mk a ≤ GreenJClass.mk b }
+
+def LabelingIn {α : Type*} [LinearOrder α]
+    (σ : MultiplicativeLabeling S α) (U : Set S) : Prop :=
+  ∀ x y : α, x < y → σ.σ x y ∈ U
+
+lemma irregular_d_class_no_three_seq [Finite S] (a : S) {α : Type*} [LinearOrder α]
+    (σ : MultiplicativeLabeling S α) (x y z : α)
+    (h_img : LabelingIn σ (JUp a))
+    (h_xy : x < y) (h_yz : y < z)
+    (h_d1 : IsGreenD (σ.σ x y) a)
+    (h_d2 : IsGreenD (σ.σ y z) a) :
+    IsRegularDClass (IsGreenD.eqvClass a) :=
+  have h_xz_le_xy : GreenJClass.mk (σ.σ x z) ≤ GreenJClass.mk (σ.σ x y) :=
+    σ.prop x y z h_xy h_yz ▸ IsGreenJRel.mul_right (σ.σ y z) rfl
+  have h_xz_le_a : GreenJClass.mk (σ.σ x z) ≤ GreenJClass.mk a :=
+    GreenJClass.mk_eq_mk_iff.mpr (isGreenJ_of_isGreenD h_d1) ▸ h_xz_le_xy
+  have h_D_xz_a : IsGreenD (σ.σ x y * σ.σ y z) a :=
+    (σ.prop x y z h_xy h_yz).symm ▸ isGreenD_of_isGreenJ
+      (GreenJClass.mk_eq_mk_iff.mp (le_antisymm h_xz_le_a (h_img x z (lt_trans h_xy h_yz))))
+  (isRegularDClass_iff_exists_idempotent (IsGreenD.eqvClass a) ⟨a, rfl⟩).mpr (
+    let ⟨e, he_D, he_idem, _⟩ :=
+      (mul_mem_isGreenD_eqvClass_properties ⟨a, rfl⟩ _ _ h_d1 h_d2 h_D_xz_a).2
+    ⟨e, he_D, he_idem⟩
+  )
+
+variable [Fintype S]
 
 open Classical in
 noncomputable def nSElement (x : S) : ℕ :=
   let current_cost := nD (IsGreenD.eqvClass x)
-  let strictly_below := Finset.univ.filter
-    (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)
-  let max_below := strictly_below.attach.sup (fun ⟨y, _hy⟩ => nSElement y)
-  current_cost + max_below
+  let strictly_above := Finset.univ.filter
+    (fun (y : S) => GreenJClass.mk x < GreenJClass.mk y)
+  let max_above := strictly_above.attach.sup (fun ⟨y, _hy⟩ => nSElement y)
+  current_cost + max_above
 termination_by (Finset.univ.filter
-  (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)).card
+  (fun (y : S) => GreenJClass.mk x < GreenJClass.mk y)).card
 decreasing_by
-  have h_lt : GreenJClass.mk y < GreenJClass.mk x :=
+  have h_lt : GreenJClass.mk x < GreenJClass.mk y :=
     (Finset.mem_filter.mp _hy).right
-  have h_le : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ⊆
-              Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
+  have h_le : Finset.univ.filter (fun (z : S) => GreenJClass.mk y < GreenJClass.mk z) ⊆
+              Finset.univ.filter (fun (z : S) => GreenJClass.mk x < GreenJClass.mk z) := by
                 grind
-  have h_ne : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ≠
-              Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
+  have h_ne : Finset.univ.filter (fun (z : S) => GreenJClass.mk y < GreenJClass.mk z) ≠
+              Finset.univ.filter (fun (z : S) => GreenJClass.mk x < GreenJClass.mk z) := by
                 grind
   exact Finset.card_lt_card (lt_of_le_of_ne h_le h_ne)
 
@@ -651,6 +679,50 @@ noncomputable def nS (S : Type*) [Semigroup S] [Fintype S] : ℕ :=
     Finset.max' all_vals h
   else
     0
+
+lemma nSElement_pos (x : S) : 0 < nSElement x := by
+  rw [nSElement]
+  have h_pos : 0 < nD (IsGreenD.eqvClass x) := nD_pos (IsGreenD.eqvClass x) ⟨x, rfl⟩
+  omega
+
+instance instNonemptyFin_nSElement (x : S) : Nonempty (Fin (nSElement x)) :=
+  Fin.pos_iff_nonempty.mp (nSElement_pos x)
+
+open Classical in
+noncomputable def buildXSeq (a : S) {α : Type*} [LinearOrder α] [Fintype α]
+    (σ : MultiplicativeLabeling S α) (x : α) : List α :=
+  let candidates := Finset.univ.filter (fun y => x < y ∧ IsGreenD (σ.σ x y) a)
+  if h : candidates.Nonempty then
+    let y := Finset.min' candidates h
+    x :: buildXSeq a σ y
+  else
+    [x]
+termination_by (Finset.univ.filter (fun z => x < z)).card
+decreasing_by
+  have h_mem := Finset.min'_mem _ h
+  have h_x_lt_y : x < y := (Finset.mem_filter.mp h_mem).2.1
+  have h_le : Finset.univ.filter (fun z => y < z) ⊆ Finset.univ.filter (fun z => x < z) := by
+    intro z hz
+    rw [Finset.mem_filter] at hz ⊢
+    exact ⟨hz.1, lt_trans h_x_lt_y hz.2⟩
+  have h_ne : Finset.univ.filter (fun z => y < z) ≠ Finset.univ.filter (fun z => x < z) := by
+    intro heq
+    have hy_mem : y ∈ Finset.univ.filter (fun z => x < z) := by
+      rw [Finset.mem_filter]; exact ⟨Finset.mem_univ y, h_x_lt_y⟩
+    rw [← heq] at hy_mem
+    have : y < y := (Finset.mem_filter.mp hy_mem).2
+    exact lt_irrefl y this
+  exact Finset.card_lt_card (lt_of_le_of_ne h_le h_ne)
+
+lemma simon_split_induction (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
+    (σ : MultiplicativeLabeling S α)
+    (h_img : LabelingIn σ (JUp a)) :
+    ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
+  let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
+  let X_seq := buildXSeq a σ x_0
+  by_cases h_reg : IsRegularDClass (IsGreenD.eqvClass a)
+  · sorry
+  · sorry
 
 theorem simon_split {S α : Type*} [Semigroup S] [Fintype S]
     [LinearOrder α] [Fintype α] [Nonempty α] [Nonempty (Fin (nS S))]
