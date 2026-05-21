@@ -617,3 +617,129 @@ end WithNonemptyAlpha
 end WithFintypeAlpha
 end WithFintypeS
 end RegularDClassCase
+
+
+
+section SimonSplit
+
+variable {S : Type*} [Semigroup S] [Fintype S]
+
+open Classical in
+noncomputable def nSElement (x : S) : ℕ :=
+  let current_cost := nD (IsGreenD.eqvClass x)
+  let strictly_below := (Finset.univ.filter
+    (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)).toList
+  let max_below := strictly_below.attach.foldl (fun acc ⟨y, _hy⟩ =>
+    max acc (nSElement y)
+  ) 0
+  current_cost + max_below
+termination_by (Finset.univ.filter
+  (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)).card
+decreasing_by
+  have h_lt : GreenJClass.mk y < GreenJClass.mk x :=
+    (Finset.mem_filter.mp (Finset.mem_toList.mp _hy)).right
+  have h_le : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ⊆
+              Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
+                grind
+  have h_ne : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ≠
+              Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
+    intro heq
+    have hy : y ∈ Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
+      aesop
+    grind
+  exact Finset.card_lt_card (lt_of_le_of_ne h_le h_ne)
+
+open Classical in
+noncomputable def nS (S : Type*) [Semigroup S] [Fintype S] : ℕ :=
+  let all_vals := Finset.univ.image (fun (x : S) => nSElement x)
+  if h : all_vals.Nonempty then
+    Finset.max' all_vals h
+  else
+    0
+
+theorem simon_split {S α : Type*} [Semigroup S] [Fintype S]
+    [LinearOrder α] [Fintype α] [Nonempty α] [Nonempty (Fin (nS S))]
+    (σ : MultiplicativeLabeling S α) :
+    ∃ (s : Split α (nS S)), IsNormalized s ∧ IsRamsey σ s := by
+      sorry
+
+end SimonSplit
+
+
+
+section SplitToTree
+
+inductive FactorizationTree (A : Type*)
+| leaf (a : A)
+| binary (left right : FactorizationTree A)
+| nary (children : List (FactorizationTree A))
+
+def FactorizationTree.height {A : Type*} : FactorizationTree A → ℕ
+| leaf _ => 0
+| binary l r => max l.height r.height + 1
+| nary cs => cs.foldl (fun acc c => max acc c.height) 0 + 1
+
+def FactorizationTree.word {A : Type*} : FactorizationTree A → List A
+| leaf a => [a]
+| binary l r => l.word ++ r.word
+| nary cs => cs.flatMap FactorizationTree.word
+
+def IsRamseyTree {A S : Type*} [Semigroup S] (eval : List A → S) :
+    FactorizationTree A → Prop
+| FactorizationTree.leaf _ => True
+| FactorizationTree.binary l r => IsRamseyTree eval l ∧ IsRamseyTree eval r
+| FactorizationTree.nary cs =>
+    cs.length ≥ 3 ∧
+    (∀ c ∈ cs, IsRamseyTree eval c) ∧
+    ∃ (e : S), e * e = e ∧ (∀ c ∈ cs, eval c.word = e)
+
+def wordLabeling {A S : Type*} [Semigroup S]
+    (eval : List A → S)
+    (hmul : ∀ u v, u ≠ [] → v ≠ [] → eval (u ++ v) = eval u * eval v)
+    (u : List A) : MultiplicativeLabeling S (Fin (u.length + 1)) where
+  σ := fun i j => eval ((u.drop i.val).take (j.val - i.val))
+  prop := by
+    intros x y z hxy hyz
+    let u_xy := (u.drop x.val).take (y.val - x.val)
+    let u_yz := (u.drop y.val).take (z.val - y.val)
+    let u_xz := (u.drop x.val).take (z.val - x.val)
+    have h1 : u_xy ≠ [] ∧ u_yz ≠ [] := by
+      simp [u_xy, u_yz]
+      omega
+    have h2 : u_xy ++ u_yz = u_xz := by
+      have h_add : z.val - x.val = (y.val - x.val) + (z.val - y.val) := by
+        omega
+      have h_drop : u.drop y.val = (u.drop x.val).drop (y.val - x.val) := by
+        simp
+        grind
+      grind
+    grind
+
+lemma exists_factorizationTree_of_split {A S : Type*} [Semigroup S]
+    (eval : List A → S)
+    (hmul : ∀ u v, u ≠ [] → v ≠ [] → eval (u ++ v) = eval u * eval v)
+    (u : List A) (hu : u ≠ [])
+    {k : ℕ} [Nonempty (Fin k)]
+    (s : Split (Fin (u.length + 1)) k)
+    (hs_norm : IsNormalized s)
+    (hs_ramsey : IsRamsey (wordLabeling eval hmul u) s) :
+    ∃ (t : FactorizationTree A), t.word = u ∧
+      t.height ≤ 3 * k - 1 ∧ IsRamseyTree eval t :=
+  sorry
+
+end SplitToTree
+
+
+
+section FactorizationForest
+
+theorem factorization_forest {A S : Type*} [Semigroup S] [Fintype S]
+    [Nonempty (Fin (nS S))]
+    (eval : List A → S)
+    (hmul : ∀ u v, u ≠ [] → v ≠ [] → eval (u ++ v) = eval u * eval v)
+    (u : List A) (hu : u ≠ []) :
+    ∃ (t : FactorizationTree A), t.word = u ∧
+      t.height ≤ 3 * (nS S) - 1 ∧ IsRamseyTree eval t :=
+  sorry
+
+end FactorizationForest
