@@ -724,7 +724,7 @@ lemma exists_factorizationTree_of_split {A S : Type*} [Semigroup S]
     (hs_norm : IsNormalized s)
     (hs_ramsey : IsRamsey (wordLabeling eval hmul u) s) :
     ∃ (t : FactorizationTree A), t.word = u ∧
-      t.height ≤ 3 * k - 1 ∧ IsRamseyTree eval t :=
+      t.height ≤ 3 * k - 1 ∧ IsRamseyTree eval t := by
   sorry
 
 end SplitToTree
@@ -739,7 +739,7 @@ theorem factorization_forest {A S : Type*} [Semigroup S] [Fintype S]
     (hmul : ∀ u v, u ≠ [] → v ≠ [] → eval (u ++ v) = eval u * eval v)
     (u : List A) (hu : u ≠ []) :
     ∃ (t : FactorizationTree A), t.word = u ∧
-      t.height ≤ 3 * (nS S) - 1 ∧ IsRamseyTree eval t :=
+      t.height ≤ 3 * (nS S) - 1 ∧ IsRamseyTree eval t := by
   sorry
 
 end FactorizationForest
