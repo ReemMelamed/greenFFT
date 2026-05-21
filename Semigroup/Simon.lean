@@ -627,26 +627,21 @@ variable {S : Type*} [Semigroup S] [Fintype S]
 open Classical in
 noncomputable def nSElement (x : S) : ℕ :=
   let current_cost := nD (IsGreenD.eqvClass x)
-  let strictly_below := (Finset.univ.filter
-    (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)).toList
-  let max_below := strictly_below.attach.foldl (fun acc ⟨y, _hy⟩ =>
-    max acc (nSElement y)
-  ) 0
+  let strictly_below := Finset.univ.filter
+    (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)
+  let max_below := strictly_below.attach.sup (fun ⟨y, _hy⟩ => nSElement y)
   current_cost + max_below
 termination_by (Finset.univ.filter
   (fun (y : S) => GreenJClass.mk y < GreenJClass.mk x)).card
 decreasing_by
   have h_lt : GreenJClass.mk y < GreenJClass.mk x :=
-    (Finset.mem_filter.mp (Finset.mem_toList.mp _hy)).right
+    (Finset.mem_filter.mp _hy).right
   have h_le : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ⊆
               Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
                 grind
   have h_ne : Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk y) ≠
               Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
-    intro heq
-    have hy : y ∈ Finset.univ.filter (fun (z : S) => GreenJClass.mk z < GreenJClass.mk x) := by
-      aesop
-    grind
+                grind
   exact Finset.card_lt_card (lt_of_le_of_ne h_le h_ne)
 
 open Classical in
