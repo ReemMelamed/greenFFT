@@ -409,7 +409,7 @@ lemma eId_mem_D (ctx : SimonContext S α) (x : α) : eId ctx x ∈ ctx.D := by
     exact IsGreenD.trans ⟨ctx.σ.σ y' x, he_L, IsGreenR.refl _⟩ ha_D
 
 open Classical in
-/-- Helper lemma for fColoring to reduce compilation time. -/
+/-- Helper lemma for fColoring. -/
 lemma fColoring_helper_val_in (ctx : SimonContext S α) (x m : α)
     (h_mx : m < x) (hm_H : hOf ctx m = hOf ctx x) :
     (eId ctx x * ctx.σ.σ m x * eId ctx x) ∈ ctx.D ∧
