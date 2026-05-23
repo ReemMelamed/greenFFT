@@ -957,156 +957,221 @@ lemma IrregularSplits_props {α S : Type*}
       have h_idem_Y := @hsY_ramsey i h_ne x_val y_val hlt_Y hsr_Y
       rwa [h_σ_Y i x_val y_val, hx_eq, hy_eq] at h_idem_Y
 
+lemma buildXSeq_covers {S α : Type*} [Semigroup S] [LinearOrder α] [Fintype α]
+    (a : S) (σ : MultiplicativeLabeling S α) (x₀ : α) (x : α) :
+    x ∉ buildXSeq a σ x₀ →
+    ∃ (i : ℕ) (h1 : i < (buildXSeq a σ x₀).length) (h2 : i + 1 < (buildXSeq a σ x₀).length),
+      (buildXSeq a σ x₀).get ⟨i, h1⟩ < x ∧ x < (buildXSeq a σ x₀).get ⟨i + 1, h2⟩ := by
+  sorry
+
+lemma simon_split_regular_case {S : Type*} [Semigroup S] [Fintype S]
+    (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
+    (σ : MultiplicativeLabeling S α) (_h_img : LabelingIn σ (JUp a))
+    (h_reg : IsRegularDClass (IsGreenD.eqvClass a))
+    (ih : ∀ b : S, nSElement b < nSElement a →
+          ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
+          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+          ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)), IsNormalized s ∧ IsRamsey σ_β s) :
+    ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
+  let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
+  let X_seq := buildXSeq a σ x_0
+  have h_X_ne : X_seq ≠ [] := by
+    intro h_eq
+    unfold X_seq at h_eq
+    rw [buildXSeq] at h_eq
+    dsimp only at h_eq
+    split at h_eq
+    · contradiction
+    · contradiction
+  haveI instX : Nonempty { x // x ∈ X_seq } := by
+    cases h : X_seq
+    · exact False.elim (h_X_ne h)
+    · next hd tl => exact ⟨⟨hd, by simp⟩⟩
+  let σ_X : MultiplicativeLabeling S { x // x ∈ X_seq } :=
+    ⟨fun x y ↦ σ.σ x y, fun x y z hxy hyz ↦ σ.prop x y z hxy hyz⟩
+  let Y_α (i : Nat) := OpenIntervalType X_seq i
+  let σ_Y (i : Nat) : MultiplicativeLabeling S (Y_α i) :=
+    ⟨fun y z ↦ σ.σ y.1 z.1, fun y z w hyz hzw ↦ σ.prop y.1 z.1 w.1 hyz hzw⟩
+  have h_min_in : x_0 ∈ X_seq := by
+    change x_0 ∈ buildXSeq a σ x_0
+    rw [buildXSeq]
+    split
+    · simp
+    · simp
+  have h_min_in_alpha : (Finset.min' Finset.univ (Finset.univ_nonempty (α := α))) ∈ X_seq :=
+    h_min_in
+  have h_σ_X_eq : ∀ x y, σ_X.σ x y = σ.σ x.val y.val := fun _ _ ↦ rfl
+  have h_σ_Y_eq : ∀ i x y, (σ_Y i).σ x y = σ.σ x.val y.val := fun _ _ _ ↦ rfl
+  have h_nD_pos : 0 < nD (IsGreenD.eqvClass a) :=
+    nD_pos (IsGreenD.eqvClass a) ⟨a, rfl⟩
+  haveI instFinFin : Nonempty (Fin (nD (IsGreenD.eqvClass a))) := ⟨⟨0, h_nD_pos⟩⟩
+  have h_X_split : ∃ sX : Split {x // x ∈ X_seq} (nD (IsGreenD.eqvClass a)),
+      IsNormalized sX ∧ IsRamsey σ_X sX := by
+    have h_range : ∀ (x y : {x // x ∈ X_seq}), x < y → σ_X.σ x y ∈ IsGreenD.eqvClass a := by
+      sorry
+    exact simon_regular_d_case σ_X (IsGreenD.eqvClass a) ⟨a, rfl⟩ h_reg h_range
+  have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
+      LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
+    intro i h_ne x y h_lt
+    sorry
+  have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
+      ∃ (sY : Split (Y_α i) (nSElement a)),
+      IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
+    intro i h_ne
+    have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
+      sorry
+    obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
+    obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih b hb_lt X_seq i (σ_Y i) hb_img
+    let embed_fin (v : Fin (nSElement b)) : Fin (nSElement a) :=
+      ⟨v.val, by
+        have := v.isLt
+        omega
+      ⟩
+    use fun y ↦ embed_fin (sY_b y)
+    constructor
+    · sorry
+    · sorry
+  obtain ⟨sX, hsX_norm, hsX_ramsey⟩ := h_X_split
+  let sY_fun (i : Nat) [h : Nonempty (Y_α i)] := Classical.choose (h_Y_splits i)
+  have hsY_norm : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsNormalized (sY_fun i) := by
+    intro i h
+    exact (Classical.choose_spec (h_Y_splits i)).1
+  have hsY_ramsey : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsRamsey (σ_Y i) (sY_fun i) := by
+    intro i h
+    exact (Classical.choose_spec (h_Y_splits i)).2
+  let s := RegularSplits a X_seq sX sY_fun
+  use s
+  have h_cov : ∀ x ∉ X_seq, ∃ i h1 h2, X_seq.get ⟨i, h1⟩ < x ∧ x < X_seq.get ⟨i + 1, h2⟩ := by
+    intro x hnx
+    exact buildXSeq_covers a σ x_0 x hnx
+  have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
+      (sY_fun i z).val < nSElement a - nD (IsGreenD.eqvClass a) := sorry
+  have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
+    ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
+      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
+  have h_min_sX :
+    (sX ⟨Finset.min' _ Finset.univ_nonempty, h_min_in⟩).val =
+      nD (IsGreenD.eqvClass a) - 1 := sorry
+  have h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
+    Finset.univ_nonempty).val = nSElement a - 1 := sorry
+  have h_N_pos : 0 < nD (IsGreenD.eqvClass a) := h_nD_pos
+  have h_N_le_M : nD (IsGreenD.eqvClass a) ≤ nSElement a := sorry
+  constructor
+  · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
+      hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
+        h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).1
+  · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
+      hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
+        h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).2
+
+lemma simon_split_irregular_case {S : Type*} [Semigroup S] [Fintype S]
+    (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
+    (σ : MultiplicativeLabeling S α) (_h_img : LabelingIn σ (JUp a))
+    (_h_not_reg : ¬ IsRegularDClass (IsGreenD.eqvClass a))
+    (ih : ∀ b : S, nSElement b < nSElement a →
+          ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
+          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+          ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)), IsNormalized s ∧ IsRamsey σ_β s) :
+    ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
+  let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
+  let X_seq := buildXSeq a σ x_0
+  have h_X_ne : X_seq ≠ [] := by
+    intro h_eq
+    unfold X_seq at h_eq
+    rw [buildXSeq] at h_eq
+    dsimp only at h_eq
+    split at h_eq
+    · contradiction
+    · contradiction
+  haveI instX : Nonempty { x // x ∈ X_seq } := by
+    cases h : X_seq
+    · exact False.elim (h_X_ne h)
+    · next hd tl => exact ⟨⟨hd, by simp⟩⟩
+  let Y_α (i : Nat) := OpenIntervalType X_seq i
+  let σ_Y (i : Nat) : MultiplicativeLabeling S (Y_α i) :=
+    ⟨fun y z ↦ σ.σ y.1 z.1, fun y z w hyz hzw ↦ σ.prop y.1 z.1 w.1 hyz hzw⟩
+  have h_min_in : x_0 ∈ X_seq := by
+    change x_0 ∈ buildXSeq a σ x_0
+    rw [buildXSeq]
+    split
+    · simp
+    · simp
+  have h_min_in_alpha : (Finset.min' Finset.univ (Finset.univ_nonempty (α := α))) ∈ X_seq :=
+    h_min_in
+  have h_σ_Y_eq : ∀ i x y, (σ_Y i).σ x y = σ.σ x.val y.val := fun _ _ _ ↦ rfl
+  have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
+      LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
+    intro i h_ne x y h_lt
+    sorry
+  have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
+      ∃ (sY : Split (Y_α i) (nSElement a)),
+      IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
+    intro i h_ne
+    have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
+      sorry
+    obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
+    obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih b hb_lt X_seq i (σ_Y i) hb_img
+    let embed_fin (v : Fin (nSElement b)) : Fin (nSElement a) :=
+      ⟨v.val, by
+        have := v.isLt
+        omega
+      ⟩
+    use fun y ↦ embed_fin (sY_b y)
+    constructor
+    · sorry
+    · sorry
+  let sY_fun (i : Nat) [h : Nonempty (Y_α i)] := Classical.choose (h_Y_splits i)
+  have hsY_norm : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsNormalized (sY_fun i) := by
+    intro i h
+    exact (Classical.choose_spec (h_Y_splits i)).1
+  have hsY_ramsey : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsRamsey (σ_Y i) (sY_fun i) := by
+    intro i h
+    exact (Classical.choose_spec (h_Y_splits i)).2
+  let s := IrregularSplits a X_seq sY_fun
+  use s
+  have h_cov : ∀ x ∉ X_seq, ∃ i h1 h2, X_seq.get ⟨i, h1⟩ < x ∧ x < X_seq.get ⟨i + 1, h2⟩ := by
+    intro x hnx
+    exact buildXSeq_covers a σ x_0 x hnx
+  have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
+      (sY_fun i z).val < nSElement a - 1 := sorry
+  have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
+    ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
+      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
+  have h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
+    Finset.univ_nonempty).val = nSElement a - 1 := sorry
+  have h_X_ramsey : ∀ x y, x ∈ X_seq → y ∈ X_seq → x < y → SplitRelation s x y →
+      σ.σ x y * σ.σ x y = σ.σ x y := sorry
+  constructor
+  · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
+      h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
+        h_interval_ramsey h_X_ramsey).1
+  · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
+      h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
+        h_interval_ramsey h_X_ramsey).2
+
 lemma simon_split_induction_aux {S : Type*} [Semigroup S] [Fintype S]
     (n : ℕ) :
-    ∀ (a : S) (hn : nSElement a ≤ n)
+    ∀ (a : S) (_hn : nSElement a ≤ n)
     {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
     (σ : MultiplicativeLabeling S α)
-    (h_img : LabelingIn σ (JUp a)),
+    (_h_img : LabelingIn σ (JUp a)),
     ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
   induction n using Nat.strong_induction_on with
-  | h n ih =>
-    intro a hn α instLin instFin instNon σ h_img
-    let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
-    let X_seq := buildXSeq a σ x_0
-    have h_X_ne : X_seq ≠ [] := by
-      intro h_eq
-      unfold X_seq at h_eq
-      rw [buildXSeq] at h_eq
-      dsimp only at h_eq
-      split at h_eq
-      · contradiction
-      · contradiction
-    haveI instX : Nonempty { x // x ∈ X_seq } := by
-      cases h : X_seq
-      · exact False.elim (h_X_ne h)
-      · next hd tl => exact ⟨⟨hd, by simp⟩⟩
-    let σ_X : MultiplicativeLabeling S { x // x ∈ X_seq } :=
-      ⟨fun x y ↦ σ.σ x y, fun x y z hxy hyz ↦ σ.prop x y z hxy hyz⟩
-    let Y_α (i : Nat) := OpenIntervalType X_seq i
-    let σ_Y (i : Nat) : MultiplicativeLabeling S (Y_α i) :=
-      ⟨fun y z ↦ σ.σ y.1 z.1, fun y z w hyz hzw ↦ σ.prop y.1 z.1 w.1 hyz hzw⟩
-    have h_min_in : x_0 ∈ X_seq := by
-      change x_0 ∈ buildXSeq a σ x_0
-      rw [buildXSeq]
-      split
-      · simp
-      · simp
-    have h_min_in_alpha : (Finset.min' Finset.univ (Finset.univ_nonempty (α := α))) ∈ X_seq :=
-      h_min_in
-    have h_σ_X_eq : ∀ x y, σ_X.σ x y = σ.σ x.val y.val := fun _ _ ↦ rfl
-    have h_σ_Y_eq : ∀ i x y, (σ_Y i).σ x y = σ.σ x.val y.val := fun _ _ _ ↦ rfl
+  | h n ihn =>
+    intro a _ α _ _ _ σ h_img
+    have ih : ∀ b : S, nSElement b < nSElement a →
+              ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
+              (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+              ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)),
+                IsNormalized s ∧ IsRamsey σ_β s := by
+                  intro b _hb X_seq i _h_ne_i σ_β h_img_β
+                  apply ihn (nSElement b)
+                  · omega
+                  · exact le_rfl
+                  · exact h_img_β
     by_cases h_reg : IsRegularDClass (IsGreenD.eqvClass a)
-    · have h_nD_pos : 0 < nD (IsGreenD.eqvClass a) :=
-        nD_pos (IsGreenD.eqvClass a) ⟨a, rfl⟩
-      haveI instFinFin : Nonempty (Fin (nD (IsGreenD.eqvClass a))) := ⟨⟨0, h_nD_pos⟩⟩
-      have h_X_split : ∃ sX : Split {x // x ∈ X_seq} (nD (IsGreenD.eqvClass a)),
-          IsNormalized sX ∧ IsRamsey σ_X sX := by
-        have h_range : ∀ (x y : {x // x ∈ X_seq}), x < y → σ_X.σ x y ∈ IsGreenD.eqvClass a := by
-          sorry
-        exact simon_regular_d_case σ_X (IsGreenD.eqvClass a) ⟨a, rfl⟩ h_reg h_range
-      have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-          LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
-        intro i h_ne x y h_lt
-        sorry
-      have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-          ∃ (sY : Split (Y_α i) (nSElement a)),
-          IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
-        intro i h_ne
-        have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
-          sorry
-        obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
-        have hb_le_n : nSElement b ≤ n - 1 := by omega
-        obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih (n - 1) (by omega) b hb_le_n (σ_Y i) hb_img
-        let embed_fin (v : Fin (nSElement b)) : Fin (nSElement a) :=
-          ⟨v.val, by
-            have := v.isLt
-            omega
-          ⟩
-        use fun y ↦ embed_fin (sY_b y)
-        constructor
-        · sorry
-        · sorry
-      obtain ⟨sX, hsX_norm, hsX_ramsey⟩ := h_X_split
-      let sY_fun (i : Nat) [h : Nonempty (Y_α i)] := Classical.choose (h_Y_splits i)
-      have hsY_norm : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsNormalized (sY_fun i) := by
-        intro i h
-        exact (Classical.choose_spec (h_Y_splits i)).1
-      have hsY_ramsey : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsRamsey (σ_Y i) (sY_fun i) := by
-        intro i h
-        exact (Classical.choose_spec (h_Y_splits i)).2
-      let s := RegularSplits a X_seq sX sY_fun
-      use s
-      have h_cov : ∀ x ∉ X_seq, ∃ i h1 h2, X_seq.get ⟨i, h1⟩ < x ∧ x < X_seq.get ⟨i + 1, h2⟩ :=
-        sorry
-      have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
-          (sY_fun i z).val < nSElement a - nD (IsGreenD.eqvClass a) := sorry
-      have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
-        ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
-          xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
-      have h_min_sX :
-        (sX ⟨Finset.min' _ Finset.univ_nonempty, h_min_in⟩).val =
-          nD (IsGreenD.eqvClass a) - 1 := sorry
-      have h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
-        Finset.univ_nonempty).val = nSElement a - 1 := sorry
-      have h_N_pos : 0 < nD (IsGreenD.eqvClass a) := nD_pos (IsGreenD.eqvClass a) ⟨a, rfl⟩
-      have h_N_le_M : nD (IsGreenD.eqvClass a) ≤ nSElement a := sorry
-      constructor
-      · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
-          hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
-            h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).1
-      · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
-          hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
-            h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).2
-    · have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-          LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
-        intro i h_ne x y h_lt
-        sorry
-      have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-          ∃ (sY : Split (Y_α i) (nSElement a)),
-          IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
-        intro i h_ne
-        have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
-          sorry
-        obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
-        have hb_le_n : nSElement b ≤ n - 1 := by omega
-        obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih (n - 1) (by omega) b hb_le_n (σ_Y i) hb_img
-        let embed_fin (v : Fin (nSElement b)) : Fin (nSElement a) :=
-          ⟨v.val, by
-            have := v.isLt
-            omega
-          ⟩
-        use fun y ↦ embed_fin (sY_b y)
-        constructor
-        · sorry
-        · sorry
-      let sY_fun (i : Nat) [h : Nonempty (Y_α i)] := Classical.choose (h_Y_splits i)
-      have hsY_norm : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsNormalized (sY_fun i) := by
-        intro i h
-        exact (Classical.choose_spec (h_Y_splits i)).1
-      have hsY_ramsey : ∀ (i : Nat) [h : Nonempty (Y_α i)], IsRamsey (σ_Y i) (sY_fun i) := by
-        intro i h
-        exact (Classical.choose_spec (h_Y_splits i)).2
-      let s := IrregularSplits a X_seq sY_fun
-      use s
-      have h_cov : ∀ x ∉ X_seq, ∃ i h1 h2, X_seq.get ⟨i, h1⟩ < x ∧ x < X_seq.get ⟨i + 1, h2⟩ :=
-        sorry
-      have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
-          (sY_fun i z).val < nSElement a - 1 := sorry
-      have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
-        ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
-          xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
-      have h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
-        Finset.univ_nonempty).val = nSElement a - 1 := sorry
-      have h_X_ramsey : ∀ x y, x ∈ X_seq → y ∈ X_seq → x < y → SplitRelation s x y →
-          σ.σ x y * σ.σ x y = σ.σ x y := sorry
-      constructor
-      · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
-          h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
-            h_interval_ramsey h_X_ramsey).1
-      · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
-          h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
-            h_interval_ramsey h_X_ramsey).2
+    · exact simon_split_regular_case a σ h_img h_reg ih
+    · exact simon_split_irregular_case a σ h_img h_reg ih
 
 lemma simon_split_induction (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
     (σ : MultiplicativeLabeling S α)
