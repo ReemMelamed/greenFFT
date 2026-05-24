@@ -75,8 +75,9 @@ lemma simon_group_case (σ : MultiplicativeLabeling G α) :
   classical
   let sizeG := Fintype.card G
   let x₀ : α := Finset.min' .univ Finset.univ_nonempty
-  have h_size_cast : sizeG - 1 + 1 = sizeG := by grind [Fintype.card_pos]
-  haveI : Nonempty (Fin sizeG) := by grind [Fintype.card_pos, Fin.pos_iff_nonempty]
+  have h_pos : 0 < sizeG := Fintype.card_pos
+  have h_size_cast : sizeG - 1 + 1 = sizeG := by omega
+  haveI : Nonempty (Fin sizeG) := Fin.pos_iff_nonempty.mp h_pos
   let maxRank : Fin sizeG := Fin.cast h_size_cast (Fin.last (sizeG - 1))
   let rawEquiv := Fintype.equivFin G
   let indexInEnum := rawEquiv.trans (Equiv.swap (rawEquiv 1) maxRank)
@@ -98,32 +99,20 @@ lemma simon_group_case (σ : MultiplicativeLabeling G α) :
     unfold SplitRelation at hsr
     by_cases hx : x = x₀
     · subst hx
-      have h_eq : s x₀ = s y := hsr.left
-      have h_sx0 : s x₀ = maxRank := by simp only [s, ite_true]
-      have h_y_ne : y ≠ x₀ := ne_of_gt hlt
-      have h_sy : s y = indexInEnum (σ.σ x₀ y) := by simp only [s, h_y_ne, ite_false]
-      rw [h_sx0, h_sy] at h_eq
-      have h_map_1 : indexInEnum 1 = maxRank := by
-        simp only [indexInEnum, Equiv.trans_apply, Equiv.swap_apply_left]
-      rw [← h_map_1] at h_eq
-      have h_val_1 : σ.σ x₀ y = 1 := Equiv.injective indexInEnum h_eq.symm
-      simp only [h_val_1, mul_one]
-    · have h_x0_lt_x : x₀ < x :=
-        lt_of_le_of_ne (Finset.min'_le (.univ) x (Finset.mem_univ x)) (ne_comm.mp hx)
-      have h_sx : s x = indexInEnum (σ.σ x₀ x) := by simp only [s, ne_of_gt h_x0_lt_x, ite_false]
-      have h_x0_lt_y : x₀ < y := lt_trans h_x0_lt_x hlt
-      have h_sy : s y = indexInEnum (σ.σ x₀ y) := by simp only [s, ne_of_gt h_x0_lt_y, ite_false]
-      have h_s_eq : s x = s y := hsr.left
-      rw [h_sx, h_sy] at h_s_eq
-      have h_vals_eq : σ.σ x₀ x = σ.σ x₀ y := Equiv.injective indexInEnum h_s_eq
-      have h_mult := σ.prop x₀ x y h_x0_lt_x hlt
-      have h_res : σ.σ x y = 1 := mul_left_cancel (by rw [h_mult, h_vals_eq, mul_one])
-      simp only [h_res, mul_one]
+      have h_val : σ.σ x₀ y = 1 := Equiv.injective indexInEnum
+        (by simpa [s, ne_of_gt hlt, indexInEnum] using hsr.left.symm)
+      simp [h_val]
+    · have h_lt : x₀ < x := (Finset.min'_le _ x (Finset.mem_univ x)).lt_of_ne (Ne.symm hx)
+      have h_eq : σ.σ x₀ x = σ.σ x₀ y := Equiv.injective indexInEnum
+        (by simpa [s, hx, ne_of_gt (lt_trans h_lt hlt)] using hsr.left)
+      have h_one : σ.σ x y = 1 := by simpa [h_eq] using σ.prop x₀ x y h_lt hlt
+      simp [h_one]
 
 end GroupCase
 
 
-section HClassWrapper
+
+section HClassGroupCase
 
 variable {S α : Type*} [Semigroup S] [LinearOrder α]
 
@@ -136,39 +125,30 @@ lemma simon_hclass_case
     (h_range : ∀ x y : α, x ∈ X → y ∈ X → x < y → σ.σ x y ∈ H) :
     ∃ (s : Split X (Fintype.card H)),
       IsNormalized s ∧
-      (∀ x y : X, (x : α) < (y : α) → SplitRelation s x y →
-        σ.σ (x : α) (y : α) * σ.σ (x : α) (y : α) = σ.σ (x : α) (y : α)) := by
+      (∀ x y : X, x < y → SplitRelation s x y →
+        σ.σ x y * σ.σ x y = σ.σ x y) := by
   classical
-  let σ_H_fun : X → X → H := fun x y ↦
-    if h : (x : α) < (y : α) then
-      ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property h⟩
-    else
-      1
-  have σ_H_prop : ∀ (x y z : X), x < y → y < z → σ_H_fun x y * σ_H_fun y z = σ_H_fun x z := by
+  let σHFun : X → X → H := fun x y ↦
+    if h : x < y then ⟨σ.σ x y, h_range x y x.2 y.2 h⟩ else 1
+  have σH_prop : ∀ (x y z : X), x < y → y < z → σHFun x y * σHFun y z = σHFun x z := by
     intro x y z hxy hyz
-    have hxy_val : (x : α) < (y : α) := hxy
-    have hyz_val : (y : α) < (z : α) := hyz
-    have hxz_val : (x : α) < (z : α) := lt_trans hxy_val hyz_val
     ext
+    dsimp [σHFun]
+    rw [dif_pos hxy, dif_pos hyz, dif_pos (lt_trans hxy hyz)]
     rw [← h_mul_eq]
-    simp only [σ_H_fun, dif_pos hxy_val, dif_pos hyz_val, dif_pos hxz_val, Subtype.coe_mk]
-    exact σ.prop (x : α) (y : α) (z : α) hxy_val hyz_val
-  let σ_H : MultiplicativeLabeling H X := ⟨σ_H_fun, σ_H_prop⟩
-  obtain ⟨s_H, h_norm, h_ramsey⟩ := simon_group_case σ_H
-  use s_H
-  constructor
+    exact σ.prop x y z hxy hyz
+  let σH : MultiplicativeLabeling H X := ⟨σHFun, σH_prop⟩
+  obtain ⟨sH, h_norm, h_ramsey⟩ := simon_group_case σH
+  use sH; constructor
   · exact h_norm
   · intro x y hxy h_split
-    have h_ramsey_xy := h_ramsey x y hxy h_split
-    have h_val : σ_H.σ x y =
-        ⟨σ.σ (x : α) (y : α), h_range (x : α) (y : α) x.property y.property hxy⟩ := by
-      simp only [σ_H, σ_H_fun, hxy, dif_pos]
-    have h_eq_in_S := congr_arg Subtype.val h_ramsey_xy
-    simp only [h_val] at h_eq_in_S
-    rw [← h_mul_eq] at h_eq_in_S
-    exact h_eq_in_S
+    have h_eq := congr_arg Subtype.val (h_ramsey x y hxy h_split)
+    rw [← h_mul_eq] at h_eq
+    dsimp [σH, σHFun] at h_eq
+    rw [dif_pos hxy] at h_eq
+    exact h_eq
 
-end HClassWrapper
+end HClassGroupCase
 
 
 
@@ -523,13 +503,13 @@ lemma simon_regular_d_case
         rw [h_card_G_D]
         exact Fin.pos_iff_nonempty.mpr h_ne)) (Fin.last _)
       )
-  let index_map := equiv.trans (Equiv.swap (equiv (fColoring ctx
+  let indexMap := equiv.trans (Equiv.swap (equiv (fColoring ctx
       (Finset.min' Finset.univ Finset.univ_nonempty))) maxRank)
-  use fun y ↦ index_map (fColoring ctx y)
+  use fun y ↦ indexMap (fColoring ctx y)
   constructor
-  · change index_map _ = Finset.max' _ _
-    rw [show index_map _ = maxRank by
-      dsimp [index_map]
+  · change indexMap _ = Finset.max' _ _
+    rw [show indexMap _ = maxRank by
+      dsimp [indexMap]
       rw [Equiv.trans_apply, Equiv.swap_apply_left]]
     symm
     rw [Finset.max'_eq_iff]
@@ -539,7 +519,7 @@ lemma simon_regular_d_case
   · intros x y hlt hsr
     unfold SplitRelation at hsr
     have h_val_eq : (fColoring ctx x).val = (fColoring ctx y).val :=
-      congrArg Subtype.val (Equiv.injective index_map hsr.left)
+      congrArg Subtype.val (Equiv.injective indexMap hsr.left)
     have he_eq_ey : eId ctx x = eId ctx y := MulSeq.eq_of_isGreenH_of_idempotent
       (IsGreenH.trans (IsGreenH.symm (fColoring_isGreenH ctx x))
           (h_val_eq ▸ fColoring_isGreenH ctx y)) (eId_idem ctx x) (eId_idem ctx y)
