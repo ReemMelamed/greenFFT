@@ -635,15 +635,15 @@ section SimonSplit
 
 variable {S : Type*} [Semigroup S]
 
-def JUp (a : S) : Set S := { b | GreenJClass.mk a ≤ GreenJClass.mk b }
+def jUp (a : S) : Set S := { b | GreenJClass.mk a ≤ GreenJClass.mk b }
 
-def LabelingIn {α : Type*} [LinearOrder α]
+def labelingIn {α : Type*} [LinearOrder α]
     (σ : MultiplicativeLabeling S α) (U : Set S) : Prop :=
   ∀ x y : α, x < y → σ.σ x y ∈ U
 
 lemma irregular_d_class_no_three_seq [Finite S] (a : S) {α : Type*} [LinearOrder α]
     (σ : MultiplicativeLabeling S α) (x y z : α)
-    (h_img : LabelingIn σ (JUp a))
+    (h_img : labelingIn σ (jUp a))
     (h_xy : x < y) (h_yz : y < z)
     (h_d1 : IsGreenD (σ.σ x y) a)
     (h_d2 : IsGreenD (σ.σ y z) a) :
@@ -766,7 +766,7 @@ noncomputable def RegularSplits {α S : Type*}
   else
     ⟨0, nSElement_pos a⟩
 
-lemma RegularSplits_props {α S : Type*}
+lemma regular_splits_props {α S : Type*}
     [LinearOrder α] [Fintype α] [Nonempty α] [Semigroup S] [Fintype S]
     (a : S) (X_seq : List α) [Nonempty {x // x ∈ X_seq}]
     [Nonempty (Fin (nD (IsGreenD.eqvClass a)))]
@@ -776,8 +776,7 @@ lemma RegularSplits_props {α S : Type*}
     (sX : Split {x // x ∈ X_seq} (nD (IsGreenD.eqvClass a)))
     (sY : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)],
       Split (OpenIntervalType X_seq i) (nSElement a))
-    (_hsX_norm : IsNormalized sX) (hsX_ramsey : IsRamsey σ_X sX)
-    (_hsY_norm : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)], IsNormalized (sY i))
+    (hsX_ramsey : IsRamsey σ_X sX)
     (hsY_ramsey : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)], IsRamsey (σ_Y i) (sY i))
     (h_min_in : (Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty) ∈ X_seq)
     (h_σ_X : ∀ x y, σ_X.σ x y = σ.σ x.val y.val)
@@ -790,9 +789,8 @@ lemma RegularSplits_props {α S : Type*}
       (sY i z).val < nSElement a - nD (IsGreenD.eqvClass a))
     (h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y →
       SplitRelation (RegularSplits a X_seq sX sY) x y →
-      ∃ (i : ℕ) (_h_ne : Nonempty (OpenIntervalType X_seq i))
-        (x_val y_val : OpenIntervalType X_seq i),
-        x_val.val = x ∧ y_val.val = y ∧ SplitRelation (sY i) x_val y_val)
+      ∃ (i : ℕ) (x_val y_val : OpenIntervalType X_seq i),
+        x_val.val = x ∧ y_val.val = y ∧ SplitRelation (@sY i ⟨x_val⟩) x_val y_val)
     (h_min_sX : (sX ⟨Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty,
       h_min_in⟩).val = nD (IsGreenD.eqvClass a) - 1)
     (h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
@@ -869,12 +867,13 @@ lemma RegularSplits_props {α S : Type*}
           omega
       have h_idem_X := hsX_ramsey ⟨x, hx⟩ ⟨y, hy⟩ hlt hsr_X
       rwa [h_σ_X] at h_idem_X
-    · obtain ⟨i, h_ne, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
+    · obtain ⟨i, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
         h_interval_ramsey x y hx hlt hsr
       have hlt_Y : x_val < y_val := by
         have h_lt_copy := hlt
         rw [← hx_eq, ← hy_eq] at h_lt_copy
         exact h_lt_copy
+      haveI : Nonempty (OpenIntervalType X_seq i) := ⟨x_val⟩
       have h_idem_Y := hsY_ramsey i x_val y_val hlt_Y hsr_Y
       rwa [h_σ_Y i x_val y_val, hx_eq, hy_eq] at h_idem_Y
 
@@ -896,14 +895,13 @@ noncomputable def IrregularSplits {α S : Type*}
   else
     ⟨0, nSElement_pos a⟩
 
-lemma IrregularSplits_props {α S : Type*}
+lemma irregular_splits_props {α S : Type*}
     [LinearOrder α] [Fintype α] [Nonempty α] [Semigroup S] [Fintype S]
     (a : S) (X_seq : List α)
     (σ : MultiplicativeLabeling S α)
     (σ_Y : ∀ (i : ℕ), MultiplicativeLabeling S (OpenIntervalType X_seq i))
     (sY : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)],
       Split (OpenIntervalType X_seq i) (nSElement a))
-    (_hsY_norm : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)], IsNormalized (sY i))
     (hsY_ramsey : ∀ (i : ℕ) [Nonempty (OpenIntervalType X_seq i)], IsRamsey (σ_Y i) (sY i))
     (h_min_in : (Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty) ∈ X_seq)
     (h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
@@ -916,9 +914,8 @@ lemma IrregularSplits_props {α S : Type*}
       ∀ z : OpenIntervalType X_seq i, (sY i z).val < nSElement a - 1)
     (h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y →
       SplitRelation (IrregularSplits a X_seq sY) x y →
-      ∃ (i : ℕ) (_h_ne : Nonempty (OpenIntervalType X_seq i))
-        (x_val y_val : OpenIntervalType X_seq i),
-        x_val.val = x ∧ y_val.val = y ∧ SplitRelation (sY i) x_val y_val)
+      ∃ (i : ℕ) (x_val y_val : OpenIntervalType X_seq i),
+        x_val.val = x ∧ y_val.val = y ∧ SplitRelation (@sY i ⟨x_val⟩) x_val y_val)
     (h_X_ramsey : ∀ x y, x ∈ X_seq → y ∈ X_seq → x < y →
       SplitRelation (IrregularSplits a X_seq sY) x y →
       σ.σ x y * σ.σ x y = σ.σ x y) :
@@ -948,13 +945,14 @@ lemma IrregularSplits_props {α S : Type*}
           simp [hx]
         omega
       exact h_X_ramsey x y hx hy hlt hsr
-    · obtain ⟨i, h_ne, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
+    · obtain ⟨i, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
         h_interval_ramsey x y hx hlt hsr
       have hlt_Y : x_val < y_val := by
         have h_lt_copy := hlt
         rw [← hx_eq, ← hy_eq] at h_lt_copy
         exact h_lt_copy
-      have h_idem_Y := @hsY_ramsey i h_ne x_val y_val hlt_Y hsr_Y
+      haveI : Nonempty (OpenIntervalType X_seq i) := ⟨x_val⟩
+      have h_idem_Y := hsY_ramsey i x_val y_val hlt_Y hsr_Y
       rwa [h_σ_Y i x_val y_val, hx_eq, hy_eq] at h_idem_Y
 
 lemma buildXSeq_covers {S α : Type*} [Semigroup S] [LinearOrder α] [Fintype α]
@@ -966,11 +964,11 @@ lemma buildXSeq_covers {S α : Type*} [Semigroup S] [LinearOrder α] [Fintype α
 
 lemma simon_split_regular_case {S : Type*} [Semigroup S] [Fintype S]
     (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
-    (σ : MultiplicativeLabeling S α) (_h_img : LabelingIn σ (JUp a))
+    (σ : MultiplicativeLabeling S α) (_h_img : labelingIn σ (jUp a))
     (h_reg : IsRegularDClass (IsGreenD.eqvClass a))
     (ih : ∀ b : S, nSElement b < nSElement a →
           ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
-          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), labelingIn σ_β (jUp b) →
           ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)), IsNormalized s ∧ IsRamsey σ_β s) :
     ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
   let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
@@ -1011,14 +1009,14 @@ lemma simon_split_regular_case {S : Type*} [Semigroup S] [Fintype S]
       sorry
     exact simon_regular_d_case σ_X (IsGreenD.eqvClass a) ⟨a, rfl⟩ h_reg h_range
   have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-      LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
+      labelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
     intro i h_ne x y h_lt
     sorry
   have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
       ∃ (sY : Split (Y_α i) (nSElement a)),
       IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
     intro i h_ne
-    have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
+    have h_b_exists : ∃ (b : S), labelingIn (σ_Y i) (jUp b) ∧ nSElement b < nSElement a := by
       sorry
     obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
     obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih b hb_lt X_seq i (σ_Y i) hb_img
@@ -1047,8 +1045,8 @@ lemma simon_split_regular_case {S : Type*} [Semigroup S] [Fintype S]
   have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
       (sY_fun i z).val < nSElement a - nD (IsGreenD.eqvClass a) := sorry
   have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
-    ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
-      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
+    ∃ (i : ℕ) (xv yv : Y_α i),
+      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i ⟨xv⟩) xv yv := sorry
   have h_min_sX :
     (sX ⟨Finset.min' _ Finset.univ_nonempty, h_min_in⟩).val =
       nD (IsGreenD.eqvClass a) - 1 := sorry
@@ -1057,20 +1055,20 @@ lemma simon_split_regular_case {S : Type*} [Semigroup S] [Fintype S]
   have h_N_pos : 0 < nD (IsGreenD.eqvClass a) := h_nD_pos
   have h_N_le_M : nD (IsGreenD.eqvClass a) ≤ nSElement a := sorry
   constructor
-  · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
-      hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
+  · exact (regular_splits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_ramsey
+      hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
         h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).1
-  · exact (RegularSplits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_norm hsX_ramsey
-      hsY_norm hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
+  · exact (regular_splits_props a X_seq σ σ_X σ_Y sX sY_fun hsX_ramsey
+      hsY_ramsey h_min_in_alpha h_σ_X_eq h_σ_Y_eq h_cov hsY_strict
         h_interval_ramsey h_min_sX h_max_val h_N_pos h_N_le_M).2
 
 lemma simon_split_irregular_case {S : Type*} [Semigroup S] [Fintype S]
     (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
-    (σ : MultiplicativeLabeling S α) (_h_img : LabelingIn σ (JUp a))
+    (σ : MultiplicativeLabeling S α) (_h_img : labelingIn σ (jUp a))
     (_h_not_reg : ¬ IsRegularDClass (IsGreenD.eqvClass a))
     (ih : ∀ b : S, nSElement b < nSElement a →
           ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
-          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+          (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), labelingIn σ_β (jUp b) →
           ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)), IsNormalized s ∧ IsRamsey σ_β s) :
     ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
   let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
@@ -1100,14 +1098,14 @@ lemma simon_split_irregular_case {S : Type*} [Semigroup S] [Fintype S]
     h_min_in
   have h_σ_Y_eq : ∀ i x y, (σ_Y i).σ x y = σ.σ x.val y.val := fun _ _ _ ↦ rfl
   have h_Y_strict : ∀ (i : Nat) [h : Nonempty (Y_α i)],
-      LabelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
+      labelingIn (σ_Y i) {b | GreenJClass.mk a < GreenJClass.mk b} := by
     intro i h_ne x y h_lt
     sorry
   have h_Y_splits : ∀ (i : Nat) [h : Nonempty (Y_α i)],
       ∃ (sY : Split (Y_α i) (nSElement a)),
       IsNormalized sY ∧ IsRamsey (σ_Y i) sY := by
     intro i h_ne
-    have h_b_exists : ∃ (b : S), LabelingIn (σ_Y i) (JUp b) ∧ nSElement b < nSElement a := by
+    have h_b_exists : ∃ (b : S), labelingIn (σ_Y i) (jUp b) ∧ nSElement b < nSElement a := by
       sorry
     obtain ⟨b, hb_img, hb_lt⟩ := h_b_exists
     obtain ⟨sY_b, hsY_norm, hsY_ramsey⟩ := ih b hb_lt X_seq i (σ_Y i) hb_img
@@ -1135,17 +1133,17 @@ lemma simon_split_irregular_case {S : Type*} [Semigroup S] [Fintype S]
   have hsY_strict : ∀ (i : ℕ) [inst : Nonempty (Y_α i)] (z : Y_α i),
       (sY_fun i z).val < nSElement a - 1 := sorry
   have h_interval_ramsey : ∀ x y, x ∉ X_seq → x < y → SplitRelation s x y →
-    ∃ (i : ℕ) (h_ne : Nonempty (Y_α i)) (xv yv : Y_α i),
-      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i h_ne) xv yv := sorry
+    ∃ (i : ℕ) (xv yv : Y_α i),
+      xv.val = x ∧ yv.val = y ∧ SplitRelation (@sY_fun i ⟨xv⟩) xv yv := sorry
   have h_max_val : (Finset.max' (Finset.univ : Finset (Fin (nSElement a)))
     Finset.univ_nonempty).val = nSElement a - 1 := sorry
   have h_X_ramsey : ∀ x y, x ∈ X_seq → y ∈ X_seq → x < y → SplitRelation s x y →
       σ.σ x y * σ.σ x y = σ.σ x y := sorry
   constructor
-  · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
+  · exact (irregular_splits_props a X_seq σ σ_Y sY_fun hsY_ramsey
       h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
         h_interval_ramsey h_X_ramsey).1
-  · exact (IrregularSplits_props a X_seq σ σ_Y sY_fun hsY_norm hsY_ramsey
+  · exact (irregular_splits_props a X_seq σ σ_Y sY_fun hsY_ramsey
       h_min_in_alpha h_max_val h_σ_Y_eq h_cov hsY_strict
         h_interval_ramsey h_X_ramsey).2
 
@@ -1154,14 +1152,14 @@ lemma simon_split_induction_aux {S : Type*} [Semigroup S] [Fintype S]
     ∀ (a : S) (_hn : nSElement a ≤ n)
     {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
     (σ : MultiplicativeLabeling S α)
-    (_h_img : LabelingIn σ (JUp a)),
+    (_h_img : labelingIn σ (jUp a)),
     ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s := by
   induction n using Nat.strong_induction_on with
   | h n ihn =>
     intro a _ α _ _ _ σ h_img
     have ih : ∀ b : S, nSElement b < nSElement a →
               ∀ (X_seq : List α) (i : ℕ) [Nonempty (OpenIntervalType X_seq i)]
-              (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), LabelingIn σ_β (JUp b) →
+              (σ_β : MultiplicativeLabeling S (OpenIntervalType X_seq i)), labelingIn σ_β (jUp b) →
               ∃ (s : Split (OpenIntervalType X_seq i) (nSElement b)),
                 IsNormalized s ∧ IsRamsey σ_β s := by
                   intro b _hb X_seq i _h_ne_i σ_β h_img_β
@@ -1175,7 +1173,7 @@ lemma simon_split_induction_aux {S : Type*} [Semigroup S] [Fintype S]
 
 lemma simon_split_induction (a : S) {α : Type*} [LinearOrder α] [Fintype α] [Nonempty α]
     (σ : MultiplicativeLabeling S α)
-    (h_img : LabelingIn σ (JUp a)) :
+    (h_img : labelingIn σ (jUp a)) :
     ∃ (s : Split α (nSElement a)), IsNormalized s ∧ IsRamsey σ s :=
   simon_split_induction_aux (nSElement a) a le_rfl σ h_img
 
@@ -1186,7 +1184,7 @@ theorem simon_split {S α : Type*} [Semigroup S] [Fintype S]
   let x_0 := Finset.min' (Finset.univ : Finset α) Finset.univ_nonempty
   let y_0 := Finset.max' (Finset.univ : Finset α) Finset.univ_nonempty
   let a := σ.σ x_0 y_0
-  have ha : LabelingIn σ (JUp a) := by
+  have ha : labelingIn σ (jUp a) := by
     intros x y hlt
     have hx0 : x_0 ≤ x := Finset.min'_le _ _ (Finset.mem_univ _)
     have hy0 : y ≤ y_0 := Finset.le_max' _ _ (Finset.mem_univ _)
