@@ -759,82 +759,37 @@ lemma regularSplits_props {α S : Type*}
     IsNormalized (regularSplits a xs sX sY) ∧
     IsRamsey σ (regularSplits a xs sX sY) := by
   constructor
-  · unfold IsNormalized
-    apply Fin.ext
-    dsimp [regularSplits]
-    simp only [h_min_in, ↓reduceDIte]
-    rw [h_min_sX, h_max_val]
+  · ext
+    simp only [regularSplits, h_min_in, ↓reduceDIte, h_min_sX, h_max_val]
     omega
   · intro x y hlt hsr
-    let s := regularSplits a xs sX sY
-    have h_eval_not_X : ∀ z, z ∉ xs →
-        (s z).val < nSElement a - nD (IsGreenD.eqvClass a) := by
+    have rank_lt_diff_of_not_mem : ∀ z, z ∉ xs →
+        (regularSplits a xs sX sY z).val < nSElement a - nD (IsGreenD.eqvClass a) := by
       intro z hz
-      dsimp [s, regularSplits]
-      split_ifs with h_ex
-      · exact @hsY_strict _ ⟨⟨z, Classical.choose_spec h_ex⟩⟩ _
-      · obtain ⟨i, h1, h2, hb⟩ := h_cov z hz
-        exact False.elim (h_ex ⟨i, h1, h2, hb⟩)
+      have h_ex := h_cov z hz
+      simp only [regularSplits, hz, h_ex, ↓reduceDIte]
+      exact @hsY_strict _ ⟨⟨z, Classical.choose_spec h_ex⟩⟩ ⟨z, Classical.choose_spec h_ex⟩
     by_cases hx : x ∈ xs
     · have hy : y ∈ xs := by
         by_contra hny
-        have h1 := h_eval_not_X y hny
-        have h3 : (s x).val = (s y).val := congrArg Fin.val hsr.left
-        have h_sx : (s x).val = (sX ⟨x, hx⟩).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
-          dsimp [s, regularSplits]
-          simp [hx]
+        specialize rank_lt_diff_of_not_mem y hny
+        have rank_eq : (regularSplits a xs sX sY x).val = (regularSplits a xs sX sY y).val :=
+          congrArg Fin.val hsr.left
+        have val_x_eq : (regularSplits a xs sX sY x).val =
+            (sX ⟨x, hx⟩).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
+          simp only [regularSplits, hx, ↓reduceDIte]
         omega
       have hsr_X : SplitRelation sX ⟨x, hx⟩ ⟨y, hy⟩ := by
         constructor
-        · apply Fin.ext
-          have eqxy : (s x).val = (s y).val := congrArg Fin.val hsr.left
-          have h_sx : (s x).val = (sX ⟨x, hx⟩).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
-            dsimp [s, regularSplits]
-            simp [hx]
-          have h_sy : (s y).val = (sX ⟨y, hy⟩).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
-            dsimp [s, regularSplits]
-            simp [hy]
-          omega
+        · ext
+          simpa [regularSplits, hx, hy] using hsr.left
         · intro z hz1 hz2
-          have h_min_eq : min (⟨x, hx⟩ : {x // x ∈ xs}) ⟨y, hy⟩ = ⟨x, hx⟩ :=
-            min_eq_left (le_of_lt hlt)
-          have h_max_eq : max (⟨x, hx⟩ : {x // x ∈ xs}) ⟨y, hy⟩ = ⟨y, hy⟩ :=
-            max_eq_right (le_of_lt hlt)
-          have hz1' : ⟨x, hx⟩ ≤ z := by rwa [h_min_eq] at hz1
-          have hz2' : z ≤ ⟨y, hy⟩ := by rwa [h_max_eq] at hz2
-          have h_min_alpha : min x y = x := min_eq_left (le_of_lt hlt)
-          have h_max_alpha : max x y = y := max_eq_right (le_of_lt hlt)
-          have h_le1 : min x y ≤ z.val := by
-            rw [h_min_alpha]
-            exact hz1'
-          have h_le2 : z.val ≤ max x y := by
-            rw [h_max_alpha]
-            exact hz2'
-          have h_sz := hsr.right z.val h_le1 h_le2
-          have h_sz_val := Fin.le_iff_val_le_val.mp h_sz
-          have hz_eq : (s z.val).val = (sX z).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
-            dsimp [s, regularSplits]
-            simp [z.property]
-          have hx_eq :
-            (s (min x y)).val = (sX ⟨x, hx⟩).val + (nSElement a - nD (IsGreenD.eqvClass a)) := by
-              dsimp [s, regularSplits]
-              rw [h_min_alpha]
-              simp [hx]
-          rw [hz_eq, hx_eq] at h_sz_val
-          apply Fin.le_iff_val_le_val.mpr
-          rw [h_min_eq]
-          omega
-      have h_idem_X := hsX_ramsey ⟨x, hx⟩ ⟨y, hy⟩ hlt hsr_X
-      rwa [h_σ_X] at h_idem_X
-    · obtain ⟨i, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
-        h_interval_ramsey x y hx hlt hsr
-      have hlt_Y : x_val < y_val := by
-        have h_lt_copy := hlt
-        rw [← hx_eq, ← hy_eq] at h_lt_copy
-        exact h_lt_copy
-      haveI : Nonempty (OpenIntervalType xs i) := ⟨x_val⟩
-      have h_idem_Y := hsY_ramsey i x_val y_val hlt_Y hsr_Y
-      rwa [h_σ_Y i x_val y_val, hx_eq, hy_eq] at h_idem_Y
+          have h_le : (⟨x, hx⟩ : {x // x ∈ xs}) ≤ ⟨y, hy⟩ := le_of_lt hlt
+          simpa [regularSplits, hx, z.property, min_eq_left (le_of_lt hlt), min_eq_left h_le] using
+            hsr.right z.val (by aesop) (by aesop)
+      simpa only [h_σ_X] using hsX_ramsey ⟨x, hx⟩ ⟨y, hy⟩ hlt hsr_X
+    · obtain ⟨i, x_val, y_val, rfl, rfl, hsr_Y⟩ := h_interval_ramsey x y hx hlt hsr
+      simpa only [h_σ_Y] using @hsY_ramsey i ⟨x_val⟩ x_val y_val hlt hsr_Y
 
 noncomputable def irregularSplits {α S : Type*}
     [LinearOrder α] [Fintype α] [Nonempty α] [Semigroup S] [Fintype S]
@@ -880,39 +835,28 @@ lemma irregularSplits_props {α S : Type*}
     σ.σ x y * σ.σ x y = σ.σ x y) :
     IsNormalized (irregularSplits a xs sY) ∧
     IsRamsey σ (irregularSplits a xs sY) := by
-      constructor
-      · unfold IsNormalized
-        apply Fin.ext
-        simp [irregularSplits, h_min_in, h_max_val]
-      · intro x y hlt hsr
-        let s := irregularSplits a xs sY
-        have h_eval_not_X : ∀ z, z ∉ xs → (s z).val < nSElement a - 1 := by
-          intro z hz
-          dsimp [s, irregularSplits]
-          split_ifs with h_ex
-          · exact @hsY_strict (Classical.choose h_ex)
-              ⟨⟨z, Classical.choose_spec h_ex⟩⟩ ⟨z, Classical.choose_spec h_ex⟩
-          · obtain ⟨i, h1, h2, hb⟩ := h_cov z hz
-            exact False.elim (h_ex ⟨i, h1, h2, hb⟩)
-        by_cases hx : x ∈ xs
-        · have hy : y ∈ xs := by
-            by_contra hny
-            have h1 := h_eval_not_X y hny
-            have h3 : (s x).val = (s y).val := congrArg Fin.val hsr.left
-            have h_sx : (s x).val = nSElement a - 1 := by
-              dsimp [s, irregularSplits]
-              simp [hx]
-            omega
-          exact h_X_ramsey x y hx hy hlt hsr
-        · obtain ⟨i, x_val, y_val, hx_eq, hy_eq, hsr_Y⟩ :=
-            h_interval_ramsey x y hx hlt hsr
-          have hlt_Y : x_val < y_val := by
-            have h_lt_copy := hlt
-            rw [← hx_eq, ← hy_eq] at h_lt_copy
-            exact h_lt_copy
-          haveI : Nonempty (OpenIntervalType xs i) := ⟨x_val⟩
-          have h_idem_Y := hsY_ramsey i x_val y_val hlt_Y hsr_Y
-          rwa [h_σ_Y i x_val y_val, hx_eq, hy_eq] at h_idem_Y
+  constructor
+  · ext
+    simp only [irregularSplits, h_min_in, ↓reduceDIte, h_max_val]
+  · intro x y hlt hsr
+    have rank_lt_of_not_mem : ∀ z, z ∉ xs →
+        (irregularSplits a xs sY z).val < nSElement a - 1 := by
+      intro z hz
+      have h_ex := h_cov z hz
+      simp only [irregularSplits, hz, h_ex, ↓reduceDIte]
+      exact @hsY_strict _ ⟨⟨z, Classical.choose_spec h_ex⟩⟩ ⟨z, Classical.choose_spec h_ex⟩
+    by_cases hx : x ∈ xs
+    · have hy : y ∈ xs := by
+        by_contra hny
+        specialize rank_lt_of_not_mem y hny
+        have rank_eq : (irregularSplits a xs sY x).val = (irregularSplits a xs sY y).val :=
+          congrArg Fin.val hsr.left
+        have val_x_eq : (irregularSplits a xs sY x).val = nSElement a - 1 := by
+          simp only [irregularSplits, hx, ↓reduceDIte]
+        omega
+      exact h_X_ramsey x y hx hy hlt hsr
+    · obtain ⟨i, x_val, y_val, rfl, rfl, hsr_Y⟩ := h_interval_ramsey x y hx hlt hsr
+      simpa only [h_σ_Y] using @hsY_ramsey i ⟨x_val⟩ x_val y_val hlt hsr_Y
 
 lemma buildXSeq_covers {S α : Type*} [Semigroup S] [LinearOrder α] [Fintype α]
     (a : S) (σ : MultiplicativeLabeling S α) (x₀ : α) (x : α) :
