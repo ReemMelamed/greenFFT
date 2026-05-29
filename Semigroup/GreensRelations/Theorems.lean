@@ -32,33 +32,19 @@ theorem isRegularDClass_iff_exists_idempotent [Finite S]
   obtain ⟨x₀, rfl⟩ := hD
   constructor
   · intro hReg
-    have hx₀_in : x₀ ∈ IsGreenD.eqvClass x₀ := IsGreenD.refl x₀
-    obtain ⟨s, hs⟩ := hReg x₀ hx₀_in
-    let e := x₀ * s
-    have he_idem : e * e = e := by grind
-    have he_R_x₀ : IsGreenR e x₀ := by
-      constructor
-      · right; exact ⟨s, rfl⟩
-      · right; exact ⟨x₀, hs.symm⟩
-    have he_D_x₀ : IsGreenD e x₀ := ⟨e, IsGreenL.refl e, he_R_x₀⟩
-    exact ⟨e, he_D_x₀, he_idem⟩
-  · rintro ⟨e, heD, he_idem⟩
-    intro y hyD
-    have h_ye : IsGreenD y e := IsGreenD.trans hyD (IsGreenD.symm heD)
-    obtain ⟨z, hL_yz, hR_ze⟩ := h_ye
-    have h_ez_z : e * z = z := by
-      rcases hR_ze.left with rfl | ⟨v, hv⟩ <;> grind [mul_assoc]
-    have hz_reg : ∃ u, z * u * z = z := by
-      rcases hR_ze.right with rfl | ⟨u, hu⟩
+    obtain ⟨s, hs⟩ := hReg x₀ (IsGreenD.refl x₀)
+    exact ⟨x₀ * s, ⟨x₀ * s, IsGreenL.refl _, ⟨Or.inr ⟨s, rfl⟩, Or.inr ⟨x₀, hs.symm⟩⟩⟩, by grind⟩
+  · rintro ⟨e, heD, he_idem⟩ y hyD
+    let ⟨z, hL_yz, hR_ze⟩ := hyD.trans heD.symm
+    have h_ez_z : e * z = z := by rcases hR_ze.left with rfl | ⟨v, rfl⟩ <;> grind [mul_assoc]
+    obtain ⟨u, hu_z⟩ : ∃ u, z * u * z = z := by
+      rcases hR_ze.right with rfl | ⟨u, rfl⟩
       · exact ⟨e, by simp [he_idem]⟩
-      · exact ⟨u, by simp [← hu, h_ez_z]⟩
-    obtain ⟨u, hu_z⟩ := hz_reg
-    have hy_uz : y * u * z = y := by
-      rcases hL_yz.left with rfl | ⟨p, hp⟩ <;> grind [mul_assoc]
-    rcases hL_yz.right with rfl | ⟨q, hq⟩
+      · exact ⟨u, by simp [h_ez_z]⟩
+    have hy_uz : y * u * z = y := by rcases hL_yz.left with rfl | ⟨p, rfl⟩ <;> grind [mul_assoc]
+    rcases hL_yz.right with rfl | ⟨q, rfl⟩
     · exact ⟨u, hy_uz⟩
-    · use u * q
-      rw [← mul_assoc y u q, mul_assoc (y * u) q y, ← hq, hy_uz]
+    · exact ⟨u * q, by grind [mul_assoc]⟩
 
 /-- A bijection between the `H`-classes of two `L`-related elements. -/
 noncomputable def equivHClassOfIsGreenL {a b : S} (h_L_ab : IsGreenL a b) :
@@ -97,13 +83,12 @@ open Classical in
 theorem card_greenHClass_eq_of_isGreenD [Fintype S] {a b : S} (h : IsGreenD a b) :
     Fintype.card (IsGreenH.eqvClass a) = Fintype.card (IsGreenH.eqvClass b) :=
   let ⟨_, hL, hR⟩ := h
-  (Fintype.card_congr (equivHClassOfIsGreenL hL)).trans
-      (Fintype.card_congr (equivHClassOfIsGreenR hR))
+  Eq.trans (Fintype.card_congr (equivHClassOfIsGreenL hL))
+    (Fintype.card_congr (equivHClassOfIsGreenR hR))
 
 /-- If `a` and `b` are `J`-related in a finite semigroup, they are also `D`-related. -/
 lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a b := by
-  rcases h with ⟨hab, hba⟩
-  cases hab <;> cases hba <;>
+  cases h.left <;> cases h.right <;>
     grind [isGreenD_of_left_left, isGreenD_of_left_right,
         isGreenD_of_right_left, isGreenD_of_right_right,
         isGreenD_of_JRel_left_both, isGreenD_of_JRel_right_both,
@@ -140,15 +125,19 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
       · exact ⟨w * a, by rw [hw, ← mul_assoc], Or.inr ⟨w, rfl⟩⟩
     obtain ⟨i, j, hij, heq⟩ := leftMulSeq_pigeonhole c b
     have hR_all : ∀ n, IsGreenR b (leftMulSeq c b n) := by
-      intro n; induction n with
+      intro n
+      induction n with
       | zero => exact IsGreenR.refl b
       | succ n ih => exact IsGreenR.trans hR_bz (IsGreenR.mul_left c ih)
     have h_b_eq_ckb : ∃ k > 0, b = leftMulSeq c b k := by
       obtain ⟨k, hk_pos, hk_eq_j⟩ : ∃ k > 0, i + k = j := ⟨j - i, by omega, by omega⟩
       have hs : ∀ m, leftMulSeq c b (i + m) = leftMulSeq c (leftMulSeq c b i) m := by
-        intro m; induction m with
+        intro m
+        induction m with
         | zero => rfl
-        | succ m ih => rw [← add_assoc]; exact congrArg (fun x ↦ c * x) ih
+        | succ m ih =>
+          rw [← add_assoc]
+          exact congrArg (fun x ↦ c * x) ih
       have h_gi_k : leftMulSeq c (leftMulSeq c b i) k = leftMulSeq c b i := by
         rw [← hs k, hk_eq_j, ← heq]
       rcases (hR_all i).left with heq_b | ⟨v_outer, hv⟩
@@ -159,10 +148,8 @@ lemma isGreenL_sl_of_isGreenD_sl [Finite S] {a b : S} (h : IsGreenD b (a * b)) :
     rcases hc_dvd with hc_eq_a | ⟨w, hw⟩
     · rcases m with _ | m_pred
       · exact Or.inl (by grind [leftMulSeq])
-      · exact Or.inr ⟨leftMulSeq c c m_pred, by
-          grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
-    · exact Or.inr ⟨leftMulSeq c w m, by
-        grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
+      · exact Or.inr ⟨leftMulSeq c c m_pred, by grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
+    · exact Or.inr ⟨leftMulSeq c w m, by grind [leftMulSeq_mul_pull, leftMulSeq_pull_c]⟩
   exact ⟨h_b_dvd_ab, h_ab_dvd_b⟩
 
 open MulOpposite in
@@ -219,19 +206,14 @@ lemma isGroup_isGreenH_eqvClass_iff_idempotent
   · right
     push Not at h
     obtain ⟨x₀, y₀, hx₀, hy₀, hxy₀⟩ := h
-    have hx₀H : IsGreenH x₀ a := hx₀
-    have hy₀H : IsGreenH y₀ a := hy₀
-    have hxy₀H : IsGreenH (x₀ * y₀) a := hxy₀
-    have hx₀D : x₀ ∈ IsGreenD.eqvClass a := ⟨a, hx₀H.left, IsGreenR.refl a⟩
-    have hy₀D : y₀ ∈ IsGreenD.eqvClass a := ⟨a, hy₀H.left, IsGreenR.refl a⟩
-    have hxy₀D : x₀ * y₀ ∈ IsGreenD.eqvClass a := ⟨a, hxy₀H.left, IsGreenR.refl a⟩
+    have hx₀D : x₀ ∈ IsGreenD.eqvClass a := ⟨a, hx₀.left, IsGreenR.refl a⟩
+    have hy₀D : y₀ ∈ IsGreenD.eqvClass a := ⟨a, hy₀.left, IsGreenR.refl a⟩
+    have hxy₀D : x₀ * y₀ ∈ IsGreenD.eqvClass a := ⟨a, hxy₀.left, IsGreenR.refl a⟩
     have hD_ex : Exists (fun y ↦ IsGreenD.eqvClass a = IsGreenD.eqvClass y) := ⟨a, rfl⟩
-    obtain ⟨hRL_unused, e, heD, he_idem, hLx₀e, hRy₀e⟩ :=
+    obtain ⟨_, e, heD, he_idem, hLx₀e, hRy₀e⟩ :=
       mul_mem_isGreenD_eqvClass_properties hD_ex x₀ y₀ hx₀D hy₀D hxy₀D
-    have hLx₀a : IsGreenL x₀ a := hx₀H.left
-    have hRy₀a : IsGreenR y₀ a := hy₀H.right
-    have hLae : IsGreenL a e := IsGreenL.trans (IsGreenL.symm hLx₀a) hLx₀e
-    have hRae : IsGreenR a e := IsGreenR.trans (IsGreenR.symm hRy₀a) hRy₀e
+    have hLae : IsGreenL a e := IsGreenL.trans (IsGreenL.symm hx₀.left) hLx₀e
+    have hRae : IsGreenR a e := IsGreenR.trans (IsGreenR.symm hy₀.right) hRy₀e
     have heH : e ∈ IsGreenH.eqvClass a := ⟨IsGreenL.symm hLae, IsGreenR.symm hRae⟩
     exact ⟨e, heH, he_idem, fun u v huH hvH ↦ by
       let hue : IsGreenH u e := huH.trans heH.symm
