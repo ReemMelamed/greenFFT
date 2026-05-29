@@ -92,22 +92,19 @@ lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :
 /-- Any element in a `leftMulSeq` starting from `a` is a left multiple of `a`. -/
 lemma leftMulSeq_isGreenLeftDvd (c a : S) (m : ℕ) :
     IsGreenLeftDvd (leftMulSeq c a m) a := by
-  cases m with
+  induction m with
   | zero => exact Or.inl rfl
-  | succ m =>
-    induction m with
-    | zero => exact Or.inr ⟨c, rfl⟩
-    | succ m ih =>
-      rcases ih with h_eq | ⟨w, hw⟩
-      · exact Or.inr ⟨c, by rw [leftMulSeq, h_eq]⟩
-      · exact Or.inr ⟨c * w, by rw [leftMulSeq, hw, ← mul_assoc]⟩
+  | succ m ih =>
+    rcases ih with h_eq | ⟨w, hw⟩
+    · exact Or.inr ⟨c, by simp [leftMulSeq, h_eq]⟩
+    · exact Or.inr ⟨c * w, by simp [leftMulSeq, hw, mul_assoc]⟩
 
 /-- Left divisibility is preserved by left multiplication. -/
 lemma isGreenLeftDvd_mul_left (a b x : S) (h : IsGreenLeftDvd a b) :
     IsGreenLeftDvd (x * a) b := by
-  rcases h with rfl | ⟨w, hw⟩
+  rcases h with rfl | ⟨w, rfl⟩
   · exact Or.inr ⟨x, rfl⟩
-  · exact Or.inr ⟨x * w, by rw [hw, ← mul_assoc]⟩
+  · exact Or.inr ⟨x * w, by simp [mul_assoc]⟩
 
 /-- Left and right multiplication sequences commute. -/
 lemma leftMulSeq_rightMulSeq_comm (c x d : S) (i k : ℕ) :
@@ -201,7 +198,7 @@ lemma isGreenR_of_eq_mul_mul_mul [Finite S] {b c u y : S} (h : b = c * b * (u * 
   grind [op_mul, mul_assoc, isGreenR_iff_isGreenL_op, isGreenL_of_eq_mul_mul_mul]
 
 /-- If `a` is a two-sided multiple of `b`, and `b` is a two-sided multiple of `a`,
-then `a` and `b` are Green's D-related. -/
+  then `a` and `b` are Green's D-related. -/
 lemma isGreenD_of_JRel_both [Finite S] {a b x y z u : S}
     (h1 : a = z * b * u) (h2 : b = x * a * y) : IsGreenD a b := by
   have h_b_eq : b = (x * z) * b * (u * y) := by grind [mul_assoc]
@@ -260,8 +257,10 @@ lemma exists_idempotent_in_greenL_of_regular {S : Type*} [Semigroup S] {a : S}
   use s * a
   constructor
   · constructor
-    · right; use s
-    · right; use a
+    · right
+      use s
+    · right
+      use a
       rw [← mul_assoc]
       exact hs.symm
   · have h_assoc : (s * a) * (s * a) = s * (a * s * a) := by simp [mul_assoc]
@@ -284,18 +283,18 @@ lemma exists_idempotent_in_greenR_of_regular {S : Type*} [Semigroup S] {a : S}
 
 /-- Two H-related idempotents must be equal. -/
 lemma eq_of_isGreenH_of_idempotent {S : Type*} [Semigroup S] {a b : S}
-    (hab : IsGreenH a b) (ha : a * a = a) (hb : b * b = b) : a = b := by
+    (h : IsGreenH a b) (ha : a * a = a) (hb : b * b = b) : a = b :=
   have h1 : a * b = b := by
-    rcases hab.right.right with rfl | ⟨x, rfl⟩ <;> simp [← mul_assoc, ha]
+    rcases h.right.right with rfl | ⟨x, rfl⟩ <;> simp [← mul_assoc, ha]
   have h2 : a * b = a := by
-    rcases hab.left.left with rfl | ⟨y, rfl⟩ <;> simp [mul_assoc, ha, hb]
-  rw [← h2, h1]
+    rcases h.left.left with rfl | ⟨y, rfl⟩ <;> simp [mul_assoc, hb]
+  h2.symm.trans h1
 
-/-- If `a` is H-related to an idempotent `e`, multiplying `a` by `e` leaves `a` unchanged. -/
+/-- If `a` is H-related to an idempotent `e`,
+  multiplying `a` by `e` leaves `a` unchanged. -/
 lemma mul_eq_self_of_isGreenH_idempotent {S : Type*} [Semigroup S] {a e : S}
-    (hae : IsGreenH a e) (he : e * e = e) : a * e = a ∧ e * a = a := by
-  constructor
-  · rcases hae.left.left with rfl | ⟨w, rfl⟩ <;> simp [mul_assoc, he]
-  · rcases hae.right.left with rfl | ⟨w, rfl⟩ <;> simp [← mul_assoc, he]
+    (h : IsGreenH a e) (he : e * e = e) : a * e = a ∧ e * a = a :=
+  ⟨by rcases h.left.left with rfl | ⟨w, rfl⟩ <;> simp [mul_assoc, he],
+   by rcases h.right.left with rfl | ⟨v, rfl⟩ <;> simp [← mul_assoc, he]⟩
 
 end MulSeq

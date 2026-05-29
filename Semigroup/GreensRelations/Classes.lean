@@ -112,26 +112,20 @@ instance [Inhabited S] : Inhabited (GreenLClass S) := ⟨mk default⟩
 
 /-- `IsGreenLeftDvd` is well-defined with respect to Green's L relation. -/
 lemma isGreenLeftDvd_respects (a₁ b₁ a₂ b₂ : S)
-    (ha : IsGreenL a₁ a₂) (hb : IsGreenL b₁ b₂) :
+    (h1 : IsGreenL a₁ a₂) (h2 : IsGreenL b₁ b₂) :
     IsGreenLeftDvd a₁ b₁ = IsGreenLeftDvd a₂ b₂ :=
   propext ⟨
-    fun h ↦ IsGreenLeftDvd.trans (IsGreenLeftDvd.trans ha.right h) hb.left,
-    fun h ↦ IsGreenLeftDvd.trans (IsGreenLeftDvd.trans ha.left h) hb.right
+    fun h ↦ h1.right.trans (h.trans h2.left),
+    fun h ↦ h1.left.trans (h.trans h2.right)
   ⟩
 
-/-- The partial order on L-classes. `[a] ≤ [b]` iff `a` is a left multiple of `b`. -/
+/-- The partial order on L-classes.
+`[a] ≤ [b]` iff `a` is a left multiple of `b`. -/
 instance : PartialOrder (GreenLClass S) where
   le := Quotient.lift₂ IsGreenLeftDvd isGreenLeftDvd_respects
-  le_refl := fun q ↦ Quot.inductionOn q fun a ↦ IsGreenLeftDvd.refl a
-  le_trans := fun q₁ q₂ q₃ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    Quot.inductionOn q₃ fun _ ↦
-    fun hab hbc ↦ IsGreenLeftDvd.trans hab hbc
-  le_antisymm := fun q₁ q₂ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    fun hab hba ↦ mk_eq_mk_iff.mpr ⟨hab, hba⟩
+  le_refl := by rintro ⟨a⟩; exact IsGreenLeftDvd.refl a
+  le_trans := by rintro ⟨a⟩ ⟨b⟩ ⟨c⟩ hab hbc; exact hab.trans hbc
+  le_antisymm := by rintro ⟨a⟩ ⟨b⟩ hab hba; exact mk_eq_mk_iff.mpr ⟨hab, hba⟩
 
 end GreenLClass
 

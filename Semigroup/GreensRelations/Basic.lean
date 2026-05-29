@@ -193,12 +193,12 @@ namespace IsGreenH
 @[refl] theorem refl (a : S) : IsGreenH a a := ⟨IsGreenL.refl a, IsGreenR.refl a⟩
 
 /-- Green's H relation is symmetric. -/
-@[symm] theorem symm {a b : S} (h : IsGreenH a b) : IsGreenH b a :=
-    ⟨IsGreenL.symm h.left, IsGreenR.symm h.right⟩
+@[symm] theorem symm {a b : S} (hab : IsGreenH a b) : IsGreenH b a :=
+  ⟨hab.left.symm, hab.right.symm⟩
 
 /-- Green's H relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenH a b) (hbc : IsGreenH b c) : IsGreenH a c :=
-  ⟨IsGreenL.trans hab.left hbc.left, IsGreenR.trans hab.right hbc.right⟩
+  ⟨hab.left.trans hbc.left, hab.right.trans hbc.right⟩
 
 /-- Green's H relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
@@ -235,24 +235,17 @@ namespace IsGreenD
 @[refl] theorem refl (a : S) : IsGreenD a a := ⟨a, IsGreenL.refl a, IsGreenR.refl a⟩
 
 /-- Green's D relation is symmetric. -/
-@[symm] theorem symm {a b : S} (h : IsGreenD a b) : IsGreenD b a := by
-  obtain ⟨z, hL, hR⟩ := h
-  obtain ⟨z', h_x_R_z', h_z'_L_y⟩ := isGreenL_commutes_isGreenR hL hR
-  exact ⟨z', IsGreenL.symm h_z'_L_y, IsGreenR.symm h_x_R_z'⟩
+@[symm] theorem symm {a b : S} (hab : IsGreenD a b) : IsGreenD b a :=
+  let ⟨_, hL1, hR1⟩ := hab
+  let ⟨y, hR2, hL2⟩ := isGreenL_commutes_isGreenR hL1 hR1
+  ⟨y, hL2.symm, hR2.symm⟩
 
 /-- Green's D relation is transitive. -/
-@[trans] theorem trans {a b c : S} (hab : IsGreenD a b)
-    (hbc : IsGreenD b c) : IsGreenD a c := by
-  obtain ⟨z1, h_x_L_z1, h_z1_R_y⟩ := hab
-  obtain ⟨z2, h_y_L_z2, h_z2_R_z⟩ := hbc
-  have h_z2_L_y : IsGreenL z2 b := IsGreenL.symm h_y_L_z2
-  have h_y_R_z1 : IsGreenR b z1 := IsGreenR.symm h_z1_R_y
-  obtain ⟨z3, h_z2_R_z3, h_z3_L_z1⟩ := isGreenL_commutes_isGreenR h_z2_L_y h_y_R_z1
-  have h_z1_L_z3 : IsGreenL z1 z3 := IsGreenL.symm h_z3_L_z1
-  have h_z3_R_z2 : IsGreenR z3 z2 := IsGreenR.symm h_z2_R_z3
-  have h_x_L_z3 : IsGreenL a z3 := IsGreenL.trans h_x_L_z1 h_z1_L_z3
-  have h_z3_R_z : IsGreenR z3 c := IsGreenR.trans h_z3_R_z2 h_z2_R_z
-  exact ⟨z3, h_x_L_z3, h_z3_R_z⟩
+@[trans] theorem trans {a b c : S} (hab : IsGreenD a b) (hbc : IsGreenD b c) : IsGreenD a c :=
+  let ⟨_, hL1, hR1⟩ := hab
+  let ⟨_, hL2, hR2⟩ := hbc
+  let ⟨z, hR3, hL3⟩ := isGreenL_commutes_isGreenR hL2.symm hR1.symm
+  ⟨z, hL1.trans hL3.symm, hR3.symm.trans hR2⟩
 
 /-- Green's D relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
@@ -262,16 +255,17 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 open MulOpposite in
 /-- Green's D relation is self-dual under the opposite semigroup. -/
 lemma isGreenD_iff_isGreenD_op {a b : S} :
-    IsGreenD a b ↔ IsGreenD (op a) (op b) := by
-  constructor
-  · rintro ⟨z, hL, hR⟩
-    obtain ⟨z', hR', hL'⟩ := isGreenL_commutes_isGreenR hL hR
-    exact ⟨op z', isGreenR_iff_isGreenL_op.mp hR', isGreenL_iff_isGreenR_op.mp hL'⟩
-  · rintro ⟨z, hL, hR⟩
-    have h1 : IsGreenR a (unop z) := isGreenR_iff_isGreenL_op.mpr hL
-    have h2 : IsGreenL (unop z) b := isGreenL_iff_isGreenR_op.mpr hR
-    obtain ⟨z', hR_bz', hL_z'a⟩ := isGreenL_commutes_isGreenR (IsGreenL.symm h2) (IsGreenR.symm h1)
-    exact ⟨z', IsGreenL.symm hL_z'a, IsGreenR.symm hR_bz'⟩
+    IsGreenD a b ↔ IsGreenD (op a) (op b) :=
+  ⟨fun hab ↦
+    let ⟨_, hL1, hR1⟩ := hab
+    let ⟨y, hR2, hL2⟩ := isGreenL_commutes_isGreenR hL1 hR1
+    ⟨op y, isGreenR_iff_isGreenL_op.mp hR2, isGreenL_iff_isGreenR_op.mp hL2⟩,
+   fun hab_op ↦
+    let ⟨z, hL1, hR1⟩ := hab_op
+    let hR_unop : IsGreenR a (unop z) := isGreenR_iff_isGreenL_op.mpr hL1
+    let hL_unop : IsGreenL (unop z) b := isGreenL_iff_isGreenR_op.mpr hR1
+    let ⟨y, hR2, hL2⟩ := isGreenL_commutes_isGreenR hL_unop.symm hR_unop.symm
+    ⟨y, hL2.symm, hR2.symm⟩⟩
 
 end IsGreenD
 
@@ -285,7 +279,7 @@ namespace IsGreenJ
 
 /-- Green's J relation is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJ a b) (hbc : IsGreenJ b c) : IsGreenJ a c :=
-  ⟨IsGreenJRel.trans hab.left hbc.left, IsGreenJRel.trans hbc.right hab.right⟩
+  ⟨hab.left.trans hbc.left, hbc.right.trans hab.right⟩
 
 /-- Green's J relation defines a setoid on `S`. -/
 protected def setoid (S : Type*) [Semigroup S] : Setoid S where
