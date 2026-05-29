@@ -65,40 +65,23 @@ noncomputable def equivHClassOfIsGreenL {a b : S} (h_L_ab : IsGreenL a b) :
     IsGreenH.eqvClass a ≃ IsGreenH.eqvClass b := by
   by_cases ha_eq_b : a = b
   · exact ha_eq_b ▸ Equiv.refl _
-  · have h_exists_w : ∃ w, a = w * b := h_L_ab.left.resolve_left ha_eq_b
-    have h_exists_z : ∃ z, b = z * a := h_L_ab.right.resolve_left (Ne.symm ha_eq_b)
-    choose w ha_eq_wb using h_exists_w
-    choose z hb_eq_za using h_exists_z
-    have hwza_eq_a : w * z * a = a := by rw [mul_assoc, ← hb_eq_za, ← ha_eq_wb]
-    have hzwb_eq_b : z * w * b = b := by rw [mul_assoc, ← ha_eq_wb, ← hb_eq_za]
+  · choose w hw using h_L_ab.left.resolve_left ha_eq_b
+    choose z hz using h_L_ab.right.resolve_left (Ne.symm ha_eq_b)
+    have hwza : w * z * a = a := by simp only [mul_assoc, ← hz, ← hw]
+    have hzwb : z * w * b = b := by simp only [mul_assoc, ← hw, ← hz]
     exact {
-      toFun := fun ⟨x, hx_in_H⟩ ↦ ⟨z * x, by
-        have hR_zx_za : IsGreenR (z * x) (z * a) := IsGreenR.mul_left z hx_in_H.right
-        have hR_zx_b : IsGreenR (z * x) b := by rwa [← hb_eq_za] at hR_zx_za
-        have hwzx_eq_x : w * z * x = x := IsGreenR.cancellation hx_in_H.right hwza_eq_a
-        have hL_zx_x : IsGreenL (z * x) x :=
-          ⟨Or.inr ⟨z, rfl⟩, Or.inr ⟨w, by simp [← mul_assoc, hwzx_eq_x]⟩⟩
-        have hL_zx_b : IsGreenL (z * x) b :=
-          IsGreenL.trans hL_zx_x (IsGreenL.trans hx_in_H.left h_L_ab)
-        exact ⟨hL_zx_b, hR_zx_b⟩⟩
-      invFun := fun ⟨y, hy_in_H⟩ ↦ ⟨w * y, by
-        have hR_wy_wb : IsGreenR (w * y) (w * b) := IsGreenR.mul_left w hy_in_H.right
-        have hR_wy_a : IsGreenR (w * y) a := by rwa [← ha_eq_wb] at hR_wy_wb
-        have hzwy_eq_y : z * w * y = y := IsGreenR.cancellation hy_in_H.right hzwb_eq_b
-        have hdvd_wy_y : IsGreenLeftDvd (w * y) y := Or.inr ⟨w, rfl⟩
-        have hdvd_y_wy : IsGreenLeftDvd y (w * y) := Or.inr ⟨z, by rw [← mul_assoc, hzwy_eq_y]⟩
-        have hL_wy_y : IsGreenL (w * y) y := ⟨hdvd_wy_y, hdvd_y_wy⟩
-        have hL_wy_a : IsGreenL (w * y) a := IsGreenL.trans hL_wy_y
-            (IsGreenL.trans hy_in_H.left (IsGreenL.symm h_L_ab))
-        exact ⟨hL_wy_a, hR_wy_a⟩⟩
-      left_inv := fun ⟨x, hx_in_H⟩ ↦ Subtype.ext (by
-        dsimp only
-        rw [← mul_assoc]
-        exact IsGreenR.cancellation hx_in_H.right hwza_eq_a)
-      right_inv := fun ⟨y, hy_in_H⟩ ↦ Subtype.ext (by
-        dsimp only
-        rw [← mul_assoc]
-        exact IsGreenR.cancellation hy_in_H.right hzwb_eq_b)
+      toFun := fun ⟨x, hL, hR⟩ ↦ ⟨z * x,
+        ⟨IsGreenL.trans ⟨Or.inr ⟨z, rfl⟩, Or.inr ⟨w, by
+          simpa [← mul_assoc] using (IsGreenR.cancellation hR hwza).symm⟩⟩
+          (hL.trans h_L_ab), hz.symm ▸ IsGreenR.mul_left z hR⟩⟩
+      invFun := fun ⟨y, hL, hR⟩ ↦ ⟨w * y,
+        ⟨IsGreenL.trans ⟨Or.inr ⟨w, rfl⟩, Or.inr ⟨z, by
+          simpa [← mul_assoc] using (IsGreenR.cancellation hR hzwb).symm⟩⟩
+          (hL.trans h_L_ab.symm), hw.symm ▸ IsGreenR.mul_left w hR⟩⟩
+      left_inv := fun ⟨x, _, hR⟩ ↦ Subtype.ext <| by
+        simpa [← mul_assoc] using IsGreenR.cancellation hR hwza
+      right_inv := fun ⟨y, _, hR⟩ ↦ Subtype.ext <| by
+        simpa [← mul_assoc] using IsGreenR.cancellation hR hzwb
     }
 
 open MulOpposite in

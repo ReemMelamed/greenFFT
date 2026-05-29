@@ -71,21 +71,14 @@ lemma leftMulSeq_mul_pull (c : S) (m : ℕ) (x v : S) :
     leftMulSeq c (x * v) m = leftMulSeq c x m * v := by
   induction m with
   | zero => rfl
-  | succ m ih =>
-    calc leftMulSeq c (x * v) (m + 1) = c * leftMulSeq c (x * v) m := rfl
-      _ = c * (leftMulSeq c x m * v) := by rw [ih]
-      _ = (c * leftMulSeq c x m) * v := (mul_assoc c (leftMulSeq c x m) v).symm
-      _ = leftMulSeq c x (m + 1) * v := rfl
+  | succ m ih => exact (congrArg (c * ·) ih).trans (mul_assoc ..).symm
 
 /-- Extracting a left multiplication from the base of a `leftMulSeq`. -/
 lemma leftMulSeq_pull_c (c : S) (n : ℕ) (x : S) :
     leftMulSeq c x (n + 1) = leftMulSeq c (c * x) n := by
   induction n with
   | zero => rfl
-  | succ n ih =>
-    calc leftMulSeq c x (n + 1 + 1) = c * leftMulSeq c x (n + 1) := rfl
-      _ = c * leftMulSeq c (c * x) n := by rw [ih]
-      _ = leftMulSeq c (c * x) (n + 1) := rfl
+  | succ n ih => exact congrArg (c * ·) ih
 
 /-- In a finite semigroup, a `leftMulSeq` eventually repeats. -/
 lemma leftMulSeq_pigeonhole [Finite S] (c a : S) :

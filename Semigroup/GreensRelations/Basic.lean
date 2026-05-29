@@ -142,21 +142,17 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 
 /-- Green's L relation is preserved by right multiplication. -/
 theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
-  rcases h with ⟨h1, h2⟩
-  constructor
-  · rcases h1 with rfl | ⟨z, hz⟩
+  have f : ∀ {x y}, IsGreenLeftDvd x y → IsGreenLeftDvd (x * c) (y * c) := by
+    intro x y hxy
+    rcases hxy with rfl | ⟨z, rfl⟩
     · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
-  · rcases h2 with rfl | ⟨z, hz⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, by rw [hz, mul_assoc]⟩
+    · exact Or.inr ⟨z, mul_assoc ..⟩
+  exact ⟨f h.1, f h.2⟩
 
 /-- Right cancellation property for elements related by Green's L relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :
     x * u * v = x := by
-  rcases hx.left with rfl | ⟨k, rfl⟩
-  · exact h_cancel
-  · simp only [mul_assoc, h_cancel]
+  rcases hx.left with rfl | ⟨k, rfl⟩ <;> simp [mul_assoc, h_cancel]
 
 end IsGreenL
 
@@ -187,9 +183,7 @@ theorem mul_left (c : S) {a b : S} (h : IsGreenR a b) : IsGreenR (c * a) (c * b)
 /-- Left cancellation property for elements related by Green's R relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenR x a) (h_cancel : v * u * a = a) :
     v * u * x = x := by
-  rcases hx.left with rfl | ⟨k, rfl⟩
-  · exact h_cancel
-  · simp only [← mul_assoc, h_cancel]
+  rcases hx.left with rfl | ⟨k, rfl⟩ <;> simp [← mul_assoc, h_cancel]
 
 end IsGreenR
 
@@ -213,35 +207,27 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 
 open MulOpposite in
 /-- Green's H relation is self-dual under the opposite semigroup. -/
-lemma isGreenH_iff_isGreenH_op {a b : S} :
-    IsGreenH a b ↔ IsGreenH (op a) (op b) := by
-  constructor
-  · rintro ⟨hL, hR⟩
-    exact ⟨isGreenR_iff_isGreenL_op.mp hR, isGreenL_iff_isGreenR_op.mp hL⟩
-  · rintro ⟨hL_op, hR_op⟩
-    exact ⟨isGreenL_iff_isGreenR_op.mpr hR_op, isGreenR_iff_isGreenL_op.mpr hL_op⟩
+lemma isGreenH_iff_isGreenH_op {a b : S} : IsGreenH a b ↔ IsGreenH (op a) (op b) :=
+  ⟨fun ⟨hL, hR⟩ ↦ ⟨isGreenR_iff_isGreenL_op.mp hR, isGreenL_iff_isGreenR_op.mp hL⟩,
+   fun ⟨hL, hR⟩ ↦ ⟨isGreenL_iff_isGreenR_op.mpr hR, isGreenR_iff_isGreenL_op.mpr hL⟩⟩
 
 end IsGreenH
 
 /-- Green's L and R relations commute: `L ∘ R = R ∘ L`. -/
 lemma isGreenL_commutes_isGreenR {a b z : S} (hL : IsGreenL a z) (hR : IsGreenR z b) :
     ∃ z', IsGreenR a z' ∧ IsGreenL z' b := by
-  have h_az : IsGreenLeftDvd a z := hL.left
-  have h_za : IsGreenLeftDvd z a := hL.right
-  have h_zb : IsGreenRightDvd z b := hR.left
-  have h_bz : IsGreenRightDvd b z := hR.right
-  rcases h_az with rfl | ⟨u, hu⟩; · exact ⟨b, hR, IsGreenL.refl b⟩
-  rcases h_za with rfl | ⟨v, hv⟩; · exact ⟨b, hR, IsGreenL.refl b⟩
-  rcases h_zb with rfl | ⟨x, hx⟩; · exact ⟨a, IsGreenR.refl a, hL⟩
-  rcases h_bz with rfl | ⟨y, hy⟩; · exact ⟨a, IsGreenR.refl a, hL⟩
-  use a * y
-  constructor
-  · constructor
-    · right; use x; simp [hu, ← hy, ← hx, mul_assoc]
-    · right; exact ⟨y, rfl⟩
-  · constructor
-    · right; use u; simp [hu, ← hy, mul_assoc]
-    · right; use v; simp [← hv, hy, ← mul_assoc]
+  rcases hL.left with rfl | ⟨u, hu⟩
+  · exact ⟨b, hR, IsGreenL.refl b⟩
+  rcases hL.right with rfl | ⟨v, hv⟩
+  · exact ⟨b, hR, IsGreenL.refl b⟩
+  rcases hR.left with rfl | ⟨x, hx⟩
+  · exact ⟨a, IsGreenR.refl a, hL⟩
+  rcases hR.right with rfl | ⟨y, hy⟩
+  · exact ⟨a, IsGreenR.refl a, hL⟩
+  exact ⟨a * y,
+    ⟨Or.inr ⟨x, by simp [hu, ← hy, ← hx, mul_assoc]⟩, Or.inr ⟨y, rfl⟩⟩,
+    ⟨Or.inr ⟨u, by simp [hu, ← hy, mul_assoc]⟩, Or.inr ⟨v, by
+      simp [← hv, hy, ← mul_assoc]⟩⟩⟩
 
 namespace IsGreenD
 
