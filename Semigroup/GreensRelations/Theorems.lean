@@ -22,8 +22,7 @@ variable {S : Type*} [Semigroup S]
 open MulSeq
 
 /-- A `D`-class is regular if and only if it contains an idempotent. -/
-theorem isRegularDClass_iff_exists_idempotent [Finite S]
-  (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
+theorem isRegularDClass_iff_exists_idempotent (D : Set S) (hD : ∃ x, D = IsGreenD.eqvClass x) :
     IsRegularDClass D ↔ ∃ e ∈ D, e * e = e := by
   obtain ⟨x₀, rfl⟩ := hD
   constructor

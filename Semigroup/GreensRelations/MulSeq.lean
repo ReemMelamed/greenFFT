@@ -237,12 +237,12 @@ lemma isGreenD_of_right_left [Finite S] {a b v x : S} (h1 : a = b * v) (h2 : b =
   ⟨b, h2.symm ▸ greenL_of_eq_mul_mul (h2 ▸ h1), IsGreenR.refl b⟩
 
 /-- If `a` is a left multiple of `b` and `b` is a left multiple of `a`, they are D-related. -/
-lemma isGreenD_of_left_left [Finite S] {a b u x : S} (h1 : a = u * b) (h2 : b = x * a) :
+lemma isGreenD_of_left_left {a b u x : S} (h1 : a = u * b) (h2 : b = x * a) :
   IsGreenD a b :=
   ⟨b, ⟨Or.inr ⟨u, h1⟩, Or.inr ⟨x, h2⟩⟩, IsGreenR.refl b⟩
 
 /-- If `a` is a right multiple of `b` and `b` is a right multiple of `a`, they are D-related. -/
-lemma isGreenD_of_right_right [Finite S] {a b v y : S} (h1 : a = b * v) (h2 : b = a * y) :
+lemma isGreenD_of_right_right {a b v y : S} (h1 : a = b * v) (h2 : b = a * y) :
   IsGreenD a b :=
   ⟨a, IsGreenL.refl a, ⟨Or.inr ⟨v, h1⟩, Or.inr ⟨y, h2⟩⟩⟩
 
