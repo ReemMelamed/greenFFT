@@ -41,15 +41,11 @@ def IsGreenLeftDvd (a b : S) := a = b ∨ ∃ z, a = z * b
 def IsGreenRightDvd (a b : S) := a = b ∨ ∃ z, a = b * z
 
 /-- `IsGreenJRel a b` represents the basic step of being a two-sided multiple.
-`a` is related to `b` if `a = b`, `a = u * b`, `a = b * v`, or `a = u * b * v`. -/
+  `a` is related to `b` if `a = b`, `a = u * b`, `a = b * v`, or `a = u * b * v`. -/
 inductive IsGreenJRel (a b : S) : Prop
-  /-- `a` and `b` are equal. -/
-  | eq (h : a = b)
-  /-- `a` is a left multiple of `b`. -/
+  | refl (h : a = b)
   | mul_left (u : S) (h : a = u * b)
-  /-- `a` is a right multiple of `b`. -/
   | mul_right (v : S) (h : a = b * v)
-  /-- `a` is a two-sided multiple of `b` (i.e. `a = u * b * v`). -/
   | mul_both (u v : S) (h : a = u * b * v)
 
 /-- Green's L relation: `a` and `b` generate the same principal left ideal. -/
