@@ -19,7 +19,7 @@ required to prove the main theorems of Green's relations.
 
 ## References
 
-* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+* [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
 variable {S : Type*} [Semigroup S]

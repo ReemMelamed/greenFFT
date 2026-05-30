@@ -20,7 +20,7 @@ This file defines the basic structures for the Factorization Forest Theorem
 and proves specific cases (e.g., the group H-class case and regular D-class case).
 
 ## References
-* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+* [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
 section SplitDefinitions

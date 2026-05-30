@@ -13,7 +13,7 @@ This file proves the foundational equivalences and duality properties of Green's
 establishing them as setoids over a semigroup.
 
 ## References
-* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+* [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
 variable {S : Type*} [Semigroup S]

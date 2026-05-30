@@ -24,7 +24,7 @@ It also introduces the concepts of regular elements and regular D-classes.
 
 ## References
 
-* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+* [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
 variable {S : Type*} [Semigroup S]

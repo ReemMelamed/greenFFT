@@ -14,7 +14,7 @@ in finite semigroups, and conditions for H-classes to be subgroups.
 
 ## References
 
-* [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
+* [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
 variable {S : Type*} [Semigroup S]
