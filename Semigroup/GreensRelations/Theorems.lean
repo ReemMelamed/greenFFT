@@ -94,7 +94,7 @@ lemma isGreenD_of_isGreenJ [Finite S] {a b : S} (h : IsGreenJ a b) : IsGreenD a 
 lemma isGreenJRel_of_isGreenD {a b : S} (h : IsGreenD a b) : IsGreenJRel a b :=
   let ⟨z, hL, hR⟩ := h
   match hL.left, hR.left with
-  | .inl rfl, .inl rfl => .eq rfl
+  | .inl rfl, .inl rfl => .of_eq rfl
   | .inl rfl, .inr ⟨v, hv⟩ => .mul_right v hv
   | .inr ⟨u, hu⟩, .inl rfl => .mul_left u hu
   | .inr ⟨u, hu⟩, .inr ⟨v, hv⟩ => .mul_both u v (hu ▸ hv ▸ (mul_assoc u b v).symm)

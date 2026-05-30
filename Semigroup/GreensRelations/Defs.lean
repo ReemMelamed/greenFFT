@@ -40,7 +40,7 @@ def IsGreenRightDvd (a b : S) : Prop := a = b ∨ ∃ z, a = b * z
   `a` is related to `b` if `a = b`, `a = u * b`, `a = b * v`, or `a = u * b * v`. -/
 inductive IsGreenJRel (a b : S) : Prop
   /-- `a` and `b` are equal. -/
-  | refl (h : a = b)
+  | of_eq (h : a = b)
   /-- `a` is a left multiple of `b`. -/
   | mul_left (u : S) (h : a = u * b)
   /-- `a` is a right multiple of `b`. -/
