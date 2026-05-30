@@ -15,11 +15,11 @@ on a general semigroup.
 * `IsGreenLeftDvd`: Left divisibility in a semigroup.
 * `IsGreenRightDvd`: Right divisibility in a semigroup.
 * `IsGreenJRel`: The basic step of being a two-sided multiple.
-* `IsGreenL`: Green's L relation (generating the same principal left ideal).
-* `IsGreenR`: Green's R relation (generating the same principal right ideal).
+* `IsGreenL`: Green's L relation (generating the same left ideal).
+* `IsGreenR`: Green's R relation (generating the same right ideal).
 * `IsGreenH`: Green's H relation (the intersection of L and R).
-* `IsGreenD`: Green's D relation (the join of L and R, defined via an intermediate element).
-* `IsGreenJ`: Green's J relation (generating the same principal two-sided ideal).
+* `IsGreenD`: Green's D relation (the composition of L and R).
+* `IsGreenJ`: Green's J relation (generating the same two-sided ideal).
 
 ## References
 
@@ -48,18 +48,18 @@ inductive IsGreenJRel (a b : S) : Prop
   /-- `a` is a two-sided multiple of `b`. -/
   | mul_both (u v : S) (h : a = u * b * v)
 
-/-- Green's L relation: `a` and `b` generate the same principal left ideal. -/
+/-- Green's L relation: `a` and `b` generate the same left ideal. -/
 def IsGreenL (a b : S) : Prop := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
 
-/-- Green's R relation: `a` and `b` generate the same principal right ideal. -/
+/-- Green's R relation: `a` and `b` generate the same right ideal. -/
 def IsGreenR (a b : S) : Prop := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
 
 /-- Green's H relation: the intersection of Green's L and Green's R relations. -/
 def IsGreenH (a b : S) : Prop := IsGreenL a b ∧ IsGreenR a b
 
-/-- Green's D relation: the join of Green's L and Green's R relations.
+/-- Green's D relation: the composition of Green's L and Green's R relations.
 Here defined explicitly as the existence of an intermediate element `z`. -/
 def IsGreenD (a b : S) : Prop := ∃ z, IsGreenL a z ∧ IsGreenR z b
 
-/-- Green's J relation: `a` and `b` generate the same principal two-sided ideal. -/
+/-- Green's J relation: `a` and `b` generate the same two-sided ideal. -/
 def IsGreenJ (a b : S) : Prop := IsGreenJRel a b ∧ IsGreenJRel b a
