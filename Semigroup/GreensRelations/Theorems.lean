@@ -15,10 +15,6 @@ in finite semigroups, and conditions for H-classes to be subgroups.
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
-
-## Tags
-
-green's relations, green's lemma, green's theorem, finite semigroup, regular class, idempotent
 -/
 
 variable {S : Type*} [Semigroup S]

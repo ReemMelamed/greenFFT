@@ -20,10 +20,6 @@ required to prove the main theorems of Green's relations.
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
-
-## Tags
-
-multiplication sequence, finite semigroup, regular element, idempotent, pigeonhole principle
 -/
 
 variable {S : Type*} [Semigroup S]

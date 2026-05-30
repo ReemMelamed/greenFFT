@@ -21,9 +21,6 @@ and proves specific cases (e.g., the group H-class case and regular D-class case
 
 ## References
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
-
-## Tags
-factorization forest, semigroup, green's relations, simon
 -/
 
 section SplitDefinitions

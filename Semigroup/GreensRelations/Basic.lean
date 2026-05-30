@@ -14,9 +14,6 @@ establishing them as setoids over a semigroup.
 
 ## References
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
-
-## Tags
-green's relations, semigroup, setoid, duality, opposite semigroup
 -/
 
 variable {S : Type*} [Semigroup S]

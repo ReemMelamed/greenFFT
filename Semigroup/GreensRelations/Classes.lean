@@ -25,10 +25,6 @@ It also introduces the concepts of regular elements and regular D-classes.
 ## References
 
 * [T. Colombet, *The Factorization Forest Theorem*][colombet2008]
-
-## Tags
-
-green's relations, equivalence class, quotient, poset, regular element, regular class
 -/
 
 variable {S : Type*} [Semigroup S]
