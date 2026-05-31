@@ -5,6 +5,7 @@ Authors: Re'em Melamed-Katz
 -/
 module
 
+-- public import Mathlib.Algebra.Group.GreensRelations.Defs
 public import Semigroup.GreensRelations.Defs
 public import Mathlib.Data.Setoid.Basic
 public import Mathlib.Algebra.Group.Opposite
@@ -29,23 +30,25 @@ open MulOpposite
 
 /-- Left and right divisibility are dual under the opposite semigroup. -/
 lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
-    IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) :=
-  ⟨fun
-    | .inl rfl => .inl rfl
-    | .inr ⟨z, rfl⟩ => .inr ⟨op z, rfl⟩,
-   fun
-    | .inl h => .inl (op_injective h)
-    | .inr ⟨z, h⟩ => .inr ⟨unop z, op_injective h⟩⟩
+    IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) := by
+  constructor
+  · rintro (rfl | ⟨z, rfl⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨op z, rfl⟩
+  · rintro (h | ⟨z, h⟩)
+    · exact Or.inl (op_injective h)
+    · exact Or.inr ⟨unop z, op_injective h⟩
 
 /-- Left and right divisibility are dual under the opposite semigroup. -/
 lemma isGreenLeftDvd_iff_isGreenRightDvd_op {a b : S} :
-    IsGreenLeftDvd a b ↔ IsGreenRightDvd (op a) (op b) :=
-  ⟨fun
-    | .inl rfl => .inl rfl
-    | .inr ⟨z, rfl⟩ => .inr ⟨op z, rfl⟩,
-   fun
-    | .inl h => .inl (op_injective h)
-    | .inr ⟨z, h⟩ => .inr ⟨unop z, op_injective h⟩⟩
+    IsGreenLeftDvd a b ↔ IsGreenRightDvd (op a) (op b) := by
+  constructor
+  · rintro (rfl | ⟨z, rfl⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨op z, rfl⟩
+  · rintro (h | ⟨z, h⟩)
+    · exact Or.inl (op_injective h)
+    · exact Or.inr ⟨unop z, op_injective h⟩
 
 /-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenR_iff_isGreenL_op {a b : S} :
