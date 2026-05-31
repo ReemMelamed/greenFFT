@@ -1,10 +1,13 @@
-/- Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
+/-
+Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Re'em Melamed-Katz -/
+Authors: Re'em Melamed-Katz
+-/
+module
 
-import Semigroup.GreensRelations.Defs
-import Mathlib.Data.Setoid.Basic
-import Mathlib.Algebra.Group.Opposite
+public import Semigroup.GreensRelations.Defs
+public import Mathlib.Data.Setoid.Basic
+public import Mathlib.Algebra.Group.Opposite
 
 /-!
 # Basic Properties of Green's Relations
@@ -16,6 +19,8 @@ establishing them as setoids over a semigroup.
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
 
+public section
+
 variable {S : Type*} [Semigroup S]
 
 section Duality
@@ -24,25 +29,23 @@ open MulOpposite
 
 /-- Left and right divisibility are dual under the opposite semigroup. -/
 lemma isGreenRightDvd_iff_isGreenLeftDvd_op {a b : S} :
-    IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) := by
-  constructor
-  · rintro (rfl | ⟨z, rfl⟩)
-    · exact Or.inl rfl
-    · exact Or.inr ⟨op z, rfl⟩
-  · rintro (h | ⟨z, h⟩)
-    · exact Or.inl (op_injective h)
-    · exact Or.inr ⟨unop z, op_injective h⟩
+    IsGreenRightDvd a b ↔ IsGreenLeftDvd (op a) (op b) :=
+  ⟨fun
+    | .inl rfl => .inl rfl
+    | .inr ⟨z, rfl⟩ => .inr ⟨op z, rfl⟩,
+   fun
+    | .inl h => .inl (op_injective h)
+    | .inr ⟨z, h⟩ => .inr ⟨unop z, op_injective h⟩⟩
 
 /-- Left and right divisibility are dual under the opposite semigroup. -/
 lemma isGreenLeftDvd_iff_isGreenRightDvd_op {a b : S} :
-    IsGreenLeftDvd a b ↔ IsGreenRightDvd (op a) (op b) := by
-  constructor
-  · rintro (rfl | ⟨z, rfl⟩)
-    · exact Or.inl rfl
-    · exact Or.inr ⟨op z, rfl⟩
-  · rintro (h | ⟨z, h⟩)
-    · exact Or.inl (op_injective h)
-    · exact Or.inr ⟨unop z, op_injective h⟩
+    IsGreenLeftDvd a b ↔ IsGreenRightDvd (op a) (op b) :=
+  ⟨fun
+    | .inl rfl => .inl rfl
+    | .inr ⟨z, rfl⟩ => .inr ⟨op z, rfl⟩,
+   fun
+    | .inl h => .inl (op_injective h)
+    | .inr ⟨z, h⟩ => .inr ⟨unop z, op_injective h⟩⟩
 
 /-- Green's L and R relations are dual under the opposite semigroup. -/
 lemma isGreenR_iff_isGreenL_op {a b : S} :
