@@ -1,10 +1,13 @@
-/- Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
+/-
+Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Re'em Melamed-Katz -/
+Authors: Re'em Melamed-Katz
+-/
+module
 
-import Semigroup.GreensRelations.Defs
-import Mathlib.Data.Setoid.Basic
-import Mathlib.Algebra.Group.Opposite
+public import Semigroup.GreensRelations.Defs
+public import Mathlib.Data.Setoid.Basic
+public import Mathlib.Algebra.Group.Opposite
 
 /-!
 # Basic Properties of Green's Relations
@@ -15,6 +18,8 @@ establishing them as setoids over a semigroup.
 ## References
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
+
+public section
 
 variable {S : Type*} [Semigroup S]
 
