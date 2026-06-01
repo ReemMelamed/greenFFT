@@ -5,6 +5,7 @@ Authors: Re'em Melamed-Katz
 -/
 module
 
+-- public import Mathlib.Algebra.Group.GreensRelations.Defs
 public import Semigroup.GreensRelations.Defs
 public import Mathlib.Data.Setoid.Basic
 public import Mathlib.Algebra.Group.Opposite
@@ -18,6 +19,8 @@ establishing them as setoids over a semigroup.
 ## References
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
+
+public section
 
 public section
 

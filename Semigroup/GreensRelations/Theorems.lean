@@ -1,9 +1,12 @@
-/- Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
+/-
+Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Re'em Melamed-Katz -/
+Authors: Re'em Melamed-Katz
+-/
+module
 
-import Semigroup.GreensRelations.MulSeq
-import Mathlib.Data.Fintype.Card
+public import Semigroup.GreensRelations.MulSeq
+public import Mathlib.Data.Fintype.Card
 
 /-!
 # Main Theorems of Green's Relations
@@ -16,6 +19,8 @@ in finite semigroups, and conditions for H-classes to be subgroups.
 
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
+
+public section
 
 variable {S : Type*} [Semigroup S]
 

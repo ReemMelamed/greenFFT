@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
 module
+Authors: Re'em Melamed-Katz
+-/
+module
 
+public import Mathlib.Algebra.Group.Basic
 public import Mathlib.Algebra.Group.Basic
 
 /-!
@@ -31,14 +35,18 @@ on a general semigroup.
 
 public section
 
+public section
+
 variable {S : Type*} [Semigroup S]
 
 /-- `IsGreenLeftDvd a b` means that `a` is a left multiple of `b`,
   i.e., `a = b` or `a = z * b`. -/
 abbrev IsGreenLeftDvd (a b : S) : Prop := a = b ∨ ∃ z, a = z * b
+abbrev IsGreenLeftDvd (a b : S) : Prop := a = b ∨ ∃ z, a = z * b
 
 /-- `IsGreenRightDvd a b` means that `a` is a right multiple of `b`,
   i.e., `a = b` or `a = b * z`. -/
+abbrev IsGreenRightDvd (a b : S) : Prop := a = b ∨ ∃ z, a = b * z
 abbrev IsGreenRightDvd (a b : S) : Prop := a = b ∨ ∃ z, a = b * z
 
 /-- `IsGreenJRel a b` represents the basic step of being a two-sided multiple.
@@ -55,11 +63,14 @@ inductive IsGreenJRel (a b : S) : Prop
 
 /-- Green's L relation: `a` and `b` generate the same left ideal. -/
 abbrev IsGreenL (a b : S) : Prop := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
+abbrev IsGreenL (a b : S) : Prop := IsGreenLeftDvd a b ∧ IsGreenLeftDvd b a
 
 /-- Green's R relation: `a` and `b` generate the same right ideal. -/
 abbrev IsGreenR (a b : S) : Prop := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
+abbrev IsGreenR (a b : S) : Prop := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
 
 /-- Green's H relation: the intersection of Green's L and Green's R relations. -/
+abbrev IsGreenH (a b : S) : Prop := IsGreenL a b ∧ IsGreenR a b
 abbrev IsGreenH (a b : S) : Prop := IsGreenL a b ∧ IsGreenR a b
 
 /-- Green's D relation: the composition of Green's L and Green's R relations.
@@ -67,4 +78,5 @@ Here abbrevined explicitly as the existence of an intermediate element `z`. -/
 abbrev IsGreenD (a b : S) : Prop := ∃ z, IsGreenL a z ∧ IsGreenR z b
 
 /-- Green's J relation: `a` and `b` generate the same two-sided ideal. -/
+abbrev IsGreenJ (a b : S) : Prop := IsGreenJRel a b ∧ IsGreenJRel b a
 abbrev IsGreenJ (a b : S) : Prop := IsGreenJRel a b ∧ IsGreenJRel b a
