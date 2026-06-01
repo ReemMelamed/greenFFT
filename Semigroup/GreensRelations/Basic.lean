@@ -102,26 +102,9 @@ namespace IsGreenJRel
 /-- The basic J-relation step is transitive. -/
 @[trans] theorem trans {a b c : S} (hab : IsGreenJRel a b)
     (hbc : IsGreenJRel b c) : IsGreenJRel a c := by
-  cases hab
-  case of_eq h => exact h ▸ hbc
-  case mul_left u1 h1 =>
-    cases hbc
-    case of_eq h2 => exact h2.symm ▸ mul_left u1 h1
-    case mul_left u2 h2 => exact mul_left (u1 * u2) (by simp [h1, h2, mul_assoc])
-    case mul_right v2 h2 => exact mul_both u1 v2 (by simp [h1, h2, mul_assoc])
-    case mul_both u2 v2 h2 => exact mul_both (u1 * u2) v2 (by simp [h1, h2, mul_assoc])
-  case mul_right v1 h1 =>
-    cases hbc
-    case of_eq h2 => exact h2.symm ▸ mul_right v1 h1
-    case mul_left u2 h2 => exact mul_both u2 v1 (by simp [h1, h2, mul_assoc])
-    case mul_right v2 h2 => exact mul_right (v2 * v1) (by simp [h1, h2, mul_assoc])
-    case mul_both u2 v2 h2 => exact mul_both u2 (v2 * v1) (by simp [h1, h2, mul_assoc])
-  case mul_both u1 v1 h1 =>
-    cases hbc
-    case of_eq h2 => exact h2.symm ▸ mul_both u1 v1 h1
-    case mul_left u2 h2 => exact mul_both (u1 * u2) v1 (by simp [h1, h2, mul_assoc])
-    case mul_right v2 h2 => exact mul_both u1 (v2 * v1) (by simp [h1, h2, mul_assoc])
-    case mul_both u2 v2 h2 => exact mul_both (u1 * u2) (v2 * v1) (by simp [h1, h2, mul_assoc])
+  rcases hab, hbc with
+    ⟨(h | ⟨_, h⟩ | ⟨_, h⟩ | ⟨_, _, h⟩), (h' | ⟨_, h'⟩ | ⟨_, h'⟩ | ⟨_, _, h'⟩)⟩ <;>
+  (simp [← mul_assoc, h' ▸ h]; grind [mul_assoc, IsGreenJRel])
 
 end IsGreenJRel
 
