@@ -22,8 +22,6 @@ establishing them as setoids over a semigroup.
 
 public section
 
-public section
-
 variable {S : Type*} [Semigroup S]
 
 section Duality
