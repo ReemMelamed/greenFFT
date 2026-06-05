@@ -3,11 +3,11 @@ Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
+module
 
--- public import Mathlib.Algebra.Group.GreensRelations.Defs
-import Semigroup.GreensRelations.Defs
-import Mathlib.Data.Setoid.Basic
-import Mathlib.Algebra.Group.Opposite
+public import Semiroup.GreensRelations.Defs
+public import Mathlib.Data.Setoid.Basic
+public import Mathlib.Algebra.Group.Opposite
 
 /-!
 # Basic Properties of Green's Relations
@@ -18,6 +18,8 @@ establishing them as setoids over a semigroup.
 ## References
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
+
+public section
 
 variable {S : Type*} [Semigroup S]
 
@@ -125,12 +127,7 @@ protected def setoid (S : Type*) [Semigroup S] : Setoid S where
 
 /-- Green's L relation is preserved by right multiplication. -/
 theorem mul_right (c : S) {a b : S} (h : IsGreenL a b) : IsGreenL (a * c) (b * c) := by
-  have f : ∀ {x y}, IsGreenLeftDvd x y → IsGreenLeftDvd (x * c) (y * c) := by
-    intro x y hxy
-    rcases hxy with rfl | ⟨z, rfl⟩
-    · exact Or.inl rfl
-    · exact Or.inr ⟨z, mul_assoc ..⟩
-  exact ⟨f h.1, f h.2⟩
+  grind [mul_assoc]
 
 /-- Right cancellation property for elements related by Green's L relation. -/
 theorem cancellation {a x u v : S} (hx : IsGreenL x a) (h_cancel : a * u * v = a) :

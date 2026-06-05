@@ -3,17 +3,17 @@ Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
+module
 
-import Mathlib.Algebra.Group.Basic
-import Mathlib.Algebra.Group.Basic
+public import Mathlib.Algebra.Group.Basic
 
 /-!
-# Green's Relations abbrevinitions
+# Green's Relations Definitions
 
-This file contains the fundamental abbrevinitions of Green's relations (L, R, H, D, and J)
+This file contains the fundamental definitions of Green's relations (L, R, H, D, and J)
 on a general semigroup.
 
-## Main abbrevinitions
+## Main definitions
 
 * `IsGreenLeftDvd`: Left divisibility in a semigroup.
 * `IsGreenRightDvd`: Right divisibility in a semigroup.
@@ -28,6 +28,8 @@ on a general semigroup.
 
 * [T. Colcombet, *The Factorization Forest Theorem*][colcombet2008]
 -/
+
+public section
 
 variable {S : Type*} [Semigroup S]
 
@@ -61,7 +63,7 @@ abbrev IsGreenR (a b : S) : Prop := IsGreenRightDvd a b ∧ IsGreenRightDvd b a
 abbrev IsGreenH (a b : S) : Prop := IsGreenL a b ∧ IsGreenR a b
 
 /-- Green's D relation: the composition of Green's L and Green's R relations.
-Here abbrevined explicitly as the existence of an intermediate element `z`. -/
+Here defined explicitly as the existence of an intermediate element `z`. -/
 abbrev IsGreenD (a b : S) : Prop := ∃ z, IsGreenL a z ∧ IsGreenR z b
 
 /-- Green's J relation: `a` and `b` generate the same two-sided ideal. -/

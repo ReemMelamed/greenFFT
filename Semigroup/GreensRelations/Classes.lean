@@ -3,11 +3,12 @@ Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
+module
 
-import Semigroup.GreensRelations.Basic
-import Mathlib.Data.Set.Basic
-import Mathlib.Order.Basic
-import Mathlib.Data.Finite.Defs
+public import Semigroup.GreensRelations.Basic
+public import Mathlib.Data.Set.Basic
+public import Mathlib.Order.Basic
+public import Mathlib.Data.Finite.Defs
 
 /-!
 # Green's Equivalence Classes and Posets
@@ -28,6 +29,8 @@ It also introduces the concepts of regular elements and regular D-classes.
 
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
+
+public section
 
 variable {S : Type*} [Semigroup S]
 
@@ -88,7 +91,7 @@ end SetsAndRegularity
 section QuotientAPI
 
 /-- The quotient type of `S` by Green's L relation. -/
-def GreenLClass (S : Type*) [Semigroup S] := Quotient (IsGreenL.setoid S)
+abbrev GreenLClass (S : Type*) [Semigroup S] := Quotient (IsGreenL.setoid S)
 
 namespace GreenLClass
 
@@ -98,9 +101,6 @@ def mk (x : S) : GreenLClass S := Quotient.mk (IsGreenL.setoid S) x
 /-- The projection map to Green's L-classes is surjective. -/
 lemma mk_surjective : Function.Surjective (mk : S → GreenLClass S) :=
   @Quotient.exists_rep _ (IsGreenL.setoid S)
-
-/-- The quotient constructor is definitionally equal to `mk a`. -/
-lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenL.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's L-class if and only if they are L-related. -/
 lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenL a b :=
@@ -117,8 +117,7 @@ lemma isGreenLeftDvd_respects (a₁ b₁ a₂ b₂ : S)
     fun h ↦ h1.left.trans (h.trans h2.right)
   ⟩
 
-/-- The partial order on L-classes.
-`[a] ≤ [b]` iff `a` is a left multiple of `b`. -/
+/-- The partial order on L-classes. `[a] ≤ [b]` iff `a` is a left multiple of `b`. -/
 instance : PartialOrder (GreenLClass S) where
   le := Quotient.lift₂ IsGreenLeftDvd isGreenLeftDvd_respects
   le_refl := by rintro ⟨a⟩; exact IsGreenLeftDvd.refl a
@@ -129,7 +128,7 @@ end GreenLClass
 
 
 /-- The quotient type of `S` by Green's R relation. -/
-def GreenRClass (S : Type*) [Semigroup S] := Quotient (IsGreenR.setoid S)
+abbrev GreenRClass (S : Type*) [Semigroup S] := Quotient (IsGreenR.setoid S)
 
 namespace GreenRClass
 
@@ -139,9 +138,6 @@ def mk (x : S) : GreenRClass S := Quotient.mk (IsGreenR.setoid S) x
 /-- The projection map to Green's R-classes is surjective. -/
 lemma mk_surjective : Function.Surjective (mk : S → GreenRClass S) :=
   @Quotient.exists_rep _ (IsGreenR.setoid S)
-
-/-- The quotient constructor is definitionally equal to `mk a`. -/
-lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenR.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's R-class if and only if they are R-related. -/
 lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenR a b :=
@@ -161,22 +157,15 @@ lemma isGreenRightDvd_respects (a₁ b₁ a₂ b₂ : S)
 /-- The partial order on R-classes. `[a] ≤ [b]` iff `a` is a right multiple of `b`. -/
 instance : PartialOrder (GreenRClass S) where
   le := Quotient.lift₂ IsGreenRightDvd isGreenRightDvd_respects
-  le_refl := fun q ↦ Quot.inductionOn q fun a ↦ IsGreenRightDvd.refl a
-  le_trans := fun q₁ q₂ q₃ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    Quot.inductionOn q₃ fun _ ↦
-    fun hab hbc ↦ IsGreenRightDvd.trans hab hbc
-  le_antisymm := fun q₁ q₂ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    fun hab hba ↦ mk_eq_mk_iff.mpr ⟨hab, hba⟩
+  le_refl := by rintro ⟨a⟩; exact IsGreenRightDvd.refl a
+  le_trans := by rintro ⟨a⟩ ⟨b⟩ ⟨c⟩ hab hbc; exact IsGreenRightDvd.trans hab hbc
+  le_antisymm := by rintro ⟨a⟩ ⟨b⟩ hab hba; exact mk_eq_mk_iff.mpr ⟨hab, hba⟩
 
 end GreenRClass
 
 
 /-- The quotient type of `S` by Green's J relation. -/
-def GreenJClass (S : Type*) [Semigroup S] := Quotient (IsGreenJ.setoid S)
+abbrev GreenJClass (S : Type*) [Semigroup S] := Quotient (IsGreenJ.setoid S)
 
 namespace GreenJClass
 
@@ -186,9 +175,6 @@ def mk (x : S) : GreenJClass S := Quotient.mk (IsGreenJ.setoid S) x
 /-- The projection map to Green's J-classes is surjective. -/
 lemma mk_surjective : Function.Surjective (mk : S → GreenJClass S) :=
   @Quotient.exists_rep _ (IsGreenJ.setoid S)
-
-/-- The quotient constructor is definitionally equal to `mk a`. -/
-lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenJ.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's J-class if and only if they are J-related. -/
 lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenJ a b :=
@@ -208,22 +194,15 @@ lemma isGreenJRel_respects (a₁ b₁ a₂ b₂ : S)
 /-- The partial order on J-classes. `[a] ≤ [b]` iff `a` is a two-sided multiple of `b`. -/
 instance : PartialOrder (GreenJClass S) where
   le := Quotient.lift₂ IsGreenJRel isGreenJRel_respects
-  le_refl := fun q ↦ Quot.inductionOn q fun a ↦ IsGreenJRel.refl a
-  le_trans := fun q₁ q₂ q₃ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    Quot.inductionOn q₃ fun _ ↦
-    fun hab hbc ↦ IsGreenJRel.trans hab hbc
-  le_antisymm := fun q₁ q₂ ↦
-    Quot.inductionOn q₁ fun _ ↦
-    Quot.inductionOn q₂ fun _ ↦
-    fun hab hba ↦ mk_eq_mk_iff.mpr ⟨hab, hba⟩
+  le_refl := by rintro ⟨a⟩; exact IsGreenJRel.refl a
+  le_trans := by rintro ⟨a⟩ ⟨b⟩ ⟨c⟩ hab hbc; exact IsGreenJRel.trans hab hbc
+  le_antisymm := by rintro ⟨a⟩ ⟨b⟩ hab hba; exact mk_eq_mk_iff.mpr ⟨hab, hba⟩
 
 end GreenJClass
 
 
 /-- The quotient type of `S` by Green's H relation. -/
-def GreenHClass (S : Type*) [Semigroup S] := Quotient (IsGreenH.setoid S)
+abbrev GreenHClass (S : Type*) [Semigroup S] := Quotient (IsGreenH.setoid S)
 
 namespace GreenHClass
 
@@ -233,9 +212,6 @@ def mk (x : S) : GreenHClass S := Quotient.mk (IsGreenH.setoid S) x
 /-- The projection map to Green's H-classes is surjective. -/
 lemma mk_surjective : Function.Surjective (mk : S → GreenHClass S) :=
   @Quotient.exists_rep _ (IsGreenH.setoid S)
-
-/-- The quotient constructor is definitionally equal to `mk a`. -/
-lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenH.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's H-class if and only if they are H-related. -/
 lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenH a b :=
@@ -247,7 +223,7 @@ end GreenHClass
 
 
 /-- The quotient type of `S` by Green's D relation. -/
-def GreenDClass (S : Type*) [Semigroup S] := Quotient (IsGreenD.setoid S)
+abbrev GreenDClass (S : Type*) [Semigroup S] := Quotient (IsGreenD.setoid S)
 
 namespace GreenDClass
 
@@ -257,9 +233,6 @@ def mk (x : S) : GreenDClass S := Quotient.mk (IsGreenD.setoid S) x
 /-- The projection map to Green's D-classes is surjective. -/
 lemma mk_surjective : Function.Surjective (mk : S → GreenDClass S) :=
   @Quotient.exists_rep _ (IsGreenD.setoid S)
-
-/-- The quotient constructor is definitionally equal to `mk a`. -/
-lemma quotient_mk_eq_mk (a : S) : Quotient.mk (IsGreenD.setoid S) a = mk a := rfl
 
 /-- Two elements have the same Green's D-class if and only if they are D-related. -/
 lemma mk_eq_mk_iff {a b : S} : mk a = mk b ↔ IsGreenD a b :=
