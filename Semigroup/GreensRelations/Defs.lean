@@ -3,10 +3,9 @@ Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
-module
 
-public import Mathlib.Algebra.Group.Basic
-public import Mathlib.Algebra.Group.Basic
+import Mathlib.Algebra.Group.Basic
+import Mathlib.Algebra.Group.Basic
 
 /-!
 # Green's Relations abbrevinitions
@@ -29,8 +28,6 @@ on a general semigroup.
 
 * [T. Colcombet, *The Factorization Forest Theorem*][colcombet2008]
 -/
-
-public section
 
 variable {S : Type*} [Semigroup S]
 

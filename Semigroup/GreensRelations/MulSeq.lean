@@ -3,10 +3,9 @@ Copyright (c) 2026 Re'em Melamed-Katz. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Re'em Melamed-Katz
 -/
-module
 
-public import Semigroup.GreensRelations.Classes
-public import Mathlib.Data.Fintype.Pigeonhole
+import Semigroup.GreensRelations.Classes
+import Mathlib.Data.Fintype.Pigeonhole
 
 /-!
 # Multiplication Sequences and Helper Lemmas
@@ -24,8 +23,6 @@ required to prove the main theorems of Green's relations.
 
 * [T. Colcombet, *The Factorization Forest Theorem*][colombet2008]
 -/
-
-public section
 
 variable {S : Type*} [Semigroup S]
 
