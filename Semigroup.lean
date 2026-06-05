@@ -1,9 +1,6 @@
-module
-
-public import Semigroup.Green
-public import Semigroup.FFT
-public import Semigroup.GreensRelations.Basic
-public import Semigroup.GreensRelations.Defs
-public import Semigroup.GreensRelations.Classes
-public import Semigroup.GreensRelations.MulSeq
-public import Semigroup.GreensRelations.Theorems
+import Semigroup.Simon
+import Semigroup.GreensRelations.Basic
+import Semigroup.GreensRelations.Defs
+import Semigroup.GreensRelations.Classes
+import Semigroup.GreensRelations.MulSeq
+import Semigroup.GreensRelations.Theorems
